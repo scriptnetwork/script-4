@@ -209,7 +209,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 
 	printWelcomeBanner()
 
-	var password string
+	//var password string
 	var nodeAddrss common.Address
 	//password = "nopasswd" //nodes don't need a password to run. Redundant security.
 	if numAddrs == 0 {
