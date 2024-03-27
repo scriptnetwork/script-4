@@ -192,7 +192,8 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 	}
 
 	keysDir := path.Join(keyPath, "key")
-	keystore, err := ks.NewKeystoreEncrypted(keysDir, ks.StandardScryptN, ks.StandardScryptP)
+//	keystore, err := ks.NewKeystoreEncrypted(keysDir, ks.StandardScryptN, ks.StandardScryptP)
+	keystore, err := ks.NewKeystorePlain(keysDir)
 	if err != nil {
 		log.Fatalf("Failed to create key store: %v", err)
 	}
@@ -203,14 +204,14 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 
 	numAddrs := len(addresses)
 	if numAddrs > 1 {
-		return nil, fmt.Errorf("Multiple encrypted keys detected under %v. Please keep only one key.", path.Join(keysDir, "encrypted"))
+		return nil, fmt.Errorf("Multiple keys detected under %v. Please keep only one key.", path.Join(keysDir, "plain"))
 	}
 
 	printWelcomeBanner()
 
 	var password string
 	var nodeAddrss common.Address
-	password = "nopasswd" //nodes don't need a password to run. Redundant security.
+	//password = "nopasswd" //nodes don't need a password to run. Redundant security.
 	if numAddrs == 0 {
 /*
 		if len(nodePassword) != 0 {
@@ -252,7 +253,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		}
 
 		key := ks.NewKey(privKey)
-		err = keystore.StoreKey(key, password)
+		err = keystore.StoreKey(key, "")
 		if err != nil {
 			return nil, err
 		}
@@ -275,7 +276,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		nodeAddrss = addresses[0]
 	}
 
-	nodeKey, err := keystore.GetKey(nodeAddrss, password)
+	nodeKey, err := keystore.GetKey(nodeAddrss, "")
 	if err != nil {
 		return nil, err
 	}
