@@ -20,11 +20,11 @@ func OpenWallet(cfgPath string, walletType types.WalletType, encrypted bool) (ty
 
 	keysDirPath := path.Join(cfgPath, "keys")
 	if walletType == types.WalletTypeSoft {
-		if encrypted {
-			wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypeEncrypted)
-		} else {
+//		if encrypted {
+//			wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypeEncrypted)
+//		} else {
 			wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypePlain)
-		}
+//		}
 		if err != nil {
 			return nil, err
 		}
