@@ -78,6 +78,7 @@ func SoftWalletUnlock(cfgPath, addressStr string, password string) (wtypes.Walle
 		return nil, common.Address{}, err
 	}
 
+/*
 	if password == "" || len(password) == 0 {
 		prompt := fmt.Sprintf("Please enter password: ")
 		password, err = utils.GetPassword(prompt)
@@ -86,6 +87,7 @@ func SoftWalletUnlock(cfgPath, addressStr string, password string) (wtypes.Walle
 			return nil, common.Address{}, err
 		}
 	}
+*/
 
 	address := common.HexToAddress(addressStr)
 	err = wallet.Unlock(address, password, nil)

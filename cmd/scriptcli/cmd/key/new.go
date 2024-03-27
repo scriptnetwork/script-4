@@ -22,13 +22,13 @@ var newCmd = &cobra.Command{
 			utils.Error("Failed to open wallet: %v\n", err)
 		}
 
-		prompt := fmt.Sprintf("Please enter password: ")
-		password, err := utils.GetPassword(prompt)
-		if err != nil {
-			utils.Error("Failed to get password: %v\n", err)
-		}
+//		prompt := fmt.Sprintf("Please enter password: ")
+//		password, err := utils.GetPassword(prompt)
+//		if err != nil {
+//			utils.Error("Failed to get password: %v\n", err)
+//		}
 
-		address, err := wallet.NewKey(password)
+		address, err := wallet.NewKey("")
 		if err != nil {
 			utils.Error("Failed to generate new key: %v\n", err)
 		}
