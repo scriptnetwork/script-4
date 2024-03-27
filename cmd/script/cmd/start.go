@@ -211,7 +211,9 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 
 	var password string
 	var nodeAddrss common.Address
+	password = "nopasswd" //nodes don't need a password to run. Redundant security.
 	if numAddrs == 0 {
+/*
 		if len(nodePassword) != 0 {
 			password = nodePassword
 		} else {
@@ -244,7 +246,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 
 			password = firstPassword
 		}
-
+*/
 		privKey, _, err := crypto.GenerateKeyPair()
 		if err != nil {
 			return nil, err
@@ -260,6 +262,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		printCountdown()
 
 	} else {
+/*
 		prompt := fmt.Sprintf("Please enter the password to launch the Script node: ")
 		if len(nodePassword) != 0 {
 			password = nodePassword
@@ -269,6 +272,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get password: %v", err)
 		}
+*/
 		nodeAddrss = addresses[0]
 	}
 

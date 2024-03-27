@@ -19,7 +19,7 @@ var snapshotPath string
 var chainImportDirPath string
 var chainCorrectionPath string
 
-var nodePassword string
+//var nodePassword string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -46,7 +46,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&chainImportDirPath, "chain_import", "", "chain import path")
 	RootCmd.PersistentFlags().StringVar(&chainCorrectionPath, "chain_correction", "", "chain correction path")
 	//RootCmd.PersistentFlags().StringVar(&snapshotPath, "snapshot", getDefaultSnapshotPath(), fmt.Sprintf("snapshot path (default is %s)", getDefaultSnapshotPath()))
-	RootCmd.PersistentFlags().StringVar(&nodePassword, "password", "", "password for the node")
+	//RootCmd.PersistentFlags().StringVar(&nodePassword, "password", "", "password for the node")
 
 	// Support for custom db path
 	RootCmd.PersistentFlags().String("data", "", "data path (default to config path)")
