@@ -1,10 +1,10 @@
 ## scriptcli key password
 
-Change the password for a key
+Change the password for a key. --Disabled--
 
 ### Synopsis
 
-Change the password for a key.
+Change the password for a key. --Disabled--.
 
 ```
 scriptcli key password [flags]
