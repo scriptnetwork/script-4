@@ -90,7 +90,7 @@ func (g *LightningEngine) StartNewRound() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.round <= maxRound { // TODO: maxRound should be a non-including bound.
+	if g.round < maxRound {
 		g.round++
 		if g.nextVote != nil {
 			g.currVote = g.nextVote.Copy()

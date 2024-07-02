@@ -49,7 +49,7 @@ func NewState(db store.Store, chain *blockchain.Chain, forcedLastVote *core.Vote
 		lastFinalizedBlock: chain.Root().Hash(),
 		epoch:              chain.Root().Epoch,
 	}
-	err := s.Load(forcedLastVote)
+	err := s.load(forcedLastVote)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -93,7 +93,7 @@ func (s *State) commit() error {
 	return s.db.Put(key, stub)
 }
 
-func (s *State) Load(forcedLastVote *core.Vote) (err error) {
+func (s *State) load(forcedLastVote *core.Vote) (err error) {
 	key := []byte(DBStateStubKey)
 	stub := &StateStub{}
 	s.db.Get(key, stub)

@@ -111,7 +111,8 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 	logger = util.GetLoggerForModule("consensus")
 	e.logger = logger
 
-	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
+//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
+	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PrivateKey().ToBytes()))) //non-predictable seed, still random oracle for each privateKey
 	if err != nil {
 		e.logger.Panic(err)
 	}
