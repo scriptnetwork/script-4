@@ -834,7 +834,7 @@ type GetLightningInfoResult struct {
 func (t *ScriptRPCService) GetLightningInfo(args *GetLightningInfoArgs, result *GetLightningInfoResult) (err error) {
 	privKey := t.consensus.PrivateKey()
 //	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PublicKey().ToBytes())))   //Script version
-	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PrivateKey().ToBytes())))  //Using unpredictable seed, keeping random oracle properties
+	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.ToBytes())))  //Using unpredictable seed, keeping random oracle properties
 	if err != nil {
 		return fmt.Errorf("Failed to get BLS key: %v", err.Error())
 	}
