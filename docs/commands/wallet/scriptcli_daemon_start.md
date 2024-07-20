@@ -13,20 +13,20 @@ scriptcli daemon start [flags]
 ### Examples
 
 ```
-scriptcli daemon start --port=15673
+scriptcli daemon start --port=10002
 ```
 
 ### Options
 
 ```
   -h, --help          help for start
-      --port string   Port to run the ScriptCli Daemon (default "15673")
+      --port string   Port to run the ScriptCli Daemon (default "10002")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
 ```
 
 ### SEE ALSO

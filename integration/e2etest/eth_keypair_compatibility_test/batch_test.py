@@ -12,7 +12,7 @@ NEW_ACCOUNT_PASSWORD_FILEPATH = './new_account_password.txt'
 FAUCET_ADDRESS = '0x9f1233798e905e173560071255140b4a8abd3ec6'
 FAUCET_PASSWORD = 'qwertyuiop'
 UNLOCK_KEY_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"scriptcli.UnlockKey","params":[{"address":"%s", "password":"%s"}],"id":1}' http://localhost:16673/rpc"""
-SEND_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"scriptcli.Send","params":[{"chain_id":"testnet", "from":"%s", "to":"%s", "scptwei":"%s", "spaywei":"%s", "fee":"1000000000000", "sequence":"%s", "async":false}],"id":1}' --silent --output /dev/null http://localhost:15673/rpc"""
+SEND_CMD_TMPL = """curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"scriptcli.Send","params":[{"chain_id":"testnet", "from":"%s", "to":"%s", "scptwei":"%s", "spaywei":"%s", "fee":"1000000000000", "sequence":"%s", "async":false}],"id":1}' --silent --output /dev/null http://localhost:10002/rpc"""
 
 def GenerateNewKeystore():
   geth_cmd = 'geth account new --datadir "%s" --password %s'%(ETHEREUM_ROOT, NEW_ACCOUNT_PASSWORD_FILEPATH)
@@ -91,7 +91,7 @@ def BatchTest(init_faucet_seq):
 # __MAIN__
 #
 # Before running this script, we need to launch both the `script` and `scriptcli` daemon connected 
-# to the testnet, and running  at port 15672 and 15673 respectively. Also need to install Geth
+# to the testnet, and running  at port 10001 and 10002 respectively. Also need to install Geth
 # to generate new ethereum accounts
 #
 if __name__ == '__main__':

@@ -231,7 +231,7 @@ func init() {
 	// viper.SetDefault(CfgP2PRecvRate, 10240000) // 10 MB/s
 
 	viper.SetDefault(CfgRPCAddress, "0.0.0.0")
-	viper.SetDefault(CfgRPCPort, "15672")
+	viper.SetDefault(CfgRPCPort, "10001")
 	viper.SetDefault(CfgRPCMaxConnections, 200)
 	viper.SetDefault(CfgRPCTimeoutSecs, 60)
 	viper.SetDefault(CfgRPCGetBlocksHeavyQueryThreshold, 500)

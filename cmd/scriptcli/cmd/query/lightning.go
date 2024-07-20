@@ -32,6 +32,9 @@ type LightningResult struct {
 }
 
 func doLightningCmd(cmd *cobra.Command, args []string) {
+//	cfgPath := cmd.Flag("config").Value.String()
+//panic(fmt.Errorf("fatal error config file: %w", cfgPath))
+
 	client := rpcc.NewRPCClient(viper.GetString(utils.CfgRemoteRPCEndpoint))
 
 	res, err := client.Call("script.GetLightningInfo", rpc.GetLightningInfoArgs{})

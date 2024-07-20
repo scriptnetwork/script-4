@@ -11,12 +11,11 @@ import (
 
 // startDaemonCmd runs the scriptcli daemon
 // Example:
-//		scriptcli daemon start --port=15673
 var startDaemonCmd = &cobra.Command{
 	Use:     "start",
 	Short:   "Run the thatacli daemon",
-	Long:    `Run the thatacli daemon.`,
-	Example: `scriptcli daemon start --port=15673`,
+	Long:    `Run the thatacli daemon (port testnet=10002/mainnet=11002.`,
+	Example: `scriptcli daemon start --port=10002`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgPath := cmd.Flag("config").Value.String()
 		server, err := rpc.NewScriptCliRPCServer(cfgPath, portFlag)
@@ -32,7 +31,7 @@ var startDaemonCmd = &cobra.Command{
 }
 
 func init() {
-	startDaemonCmd.Flags().StringVar(&portFlag, "port", "15673", "Port to run the ScriptCli Daemon")
+	startDaemonCmd.Flags().StringVar(&portFlag, "port", "10002", "Port to run the ScriptCli Daemon")
 }
 
 type ScriptCliDaemon struct {
