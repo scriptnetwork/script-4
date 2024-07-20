@@ -14,7 +14,7 @@ Moreover, the ledger storage system leverages the microservice architecture and 
 and is thus able to adapt to different computing environments, ranging from high-end data center server clusters to commodity PCs and laptops.
 
 The ledger also supports Turing-Complete smart contracts, which enables rich user experiences for DApps built on top of 
-the Script Ledger. For more technical details, please refer to our [docs](https://docs.script.tv).
+the Script Ledger. For more details, please refer to our [docs](https://docs.script.tv).
 
 To learn more about the Script Network in general, visit [ScriptTV home page](https://script.tv).
 
