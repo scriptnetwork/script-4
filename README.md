@@ -25,17 +25,17 @@ To learn more about the Script Network in general, visit [ScriptTV home page](ht
 
 ### Presequisites. Build Dependencies:
 
-        sudo apt install build-essential golang bc
+	sudo apt install build-essential golang bc
 
 ### Build and Install. Debian based Linux
 
 For debug mode execute:
 
-        bin/build_install
+	bin/build_install
 
 For release/optimized mode execute:
 
-        bin/build_install release
+	bin/build_install release
 
 ### Shell environment vars
 
