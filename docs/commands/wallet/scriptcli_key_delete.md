@@ -25,7 +25,7 @@ scriptcli delete 26d813157F7503a9057FB2DB6Eb2f83a35c4FdD7
 ### Options inherited from parent commands
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
 ```
 
 ### SEE ALSO

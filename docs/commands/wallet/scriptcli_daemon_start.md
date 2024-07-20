@@ -1,10 +1,10 @@
 ## scriptcli daemon start
 
-Run the thatacli daemon
+Run the scriptcli daemon
 
 ### Synopsis
 
-Run the thatacli daemon.
+Run the scriptcli daemon.
 
 ```
 scriptcli daemon start [flags]

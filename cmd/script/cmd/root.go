@@ -40,6 +40,10 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(&cfgPath, "config", "", fmt.Sprintf("config path (default is %s)", getDefaultConfigPath()))
+
+//fmt.Println("cfgPath=", cfgPath)
+
+
 	viper.BindPFlag(common.CfgConfigPath, RootCmd.PersistentFlags().Lookup("config"))
 
 	RootCmd.PersistentFlags().StringVar(&snapshotPath, "snapshot", "", "snapshot path")

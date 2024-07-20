@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"fmt"
 	"context"
 	"log"
 	"sync"
@@ -13,11 +14,14 @@ import (
 // Example:
 var startDaemonCmd = &cobra.Command{
 	Use:     "start",
-	Short:   "Run the thatacli daemon",
-	Long:    `Run the thatacli daemon (port testnet=10002/mainnet=11002.`,
+	Short:   "Run the scriptcli daemon",
+	Long:    `Run the scriptcli daemon (port testnet=10002/mainnet=11002.`,
 	Example: `scriptcli daemon start --port=10002`,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		cfgPath := cmd.Flag("config").Value.String()
+fmt.Println("daemon start cfgPath=", cfgPath)
+
 		server, err := rpc.NewScriptCliRPCServer(cfgPath, portFlag)
 		if err != nil {
 			log.Fatalf("Failed to run the ScriptCli Daemon: %v", err)

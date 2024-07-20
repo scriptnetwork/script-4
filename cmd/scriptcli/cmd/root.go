@@ -41,6 +41,8 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVar(&cfgPath, "config", getDefaultConfigPath(), fmt.Sprintf("config path (default is %s)", getDefaultConfigPath()))
 
+//fmt.Println("Hello World! %s", cfgPath)
+
 	RootCmd.AddCommand(daemon.DaemonCmd)
 	RootCmd.AddCommand(key.KeyCmd)
 	RootCmd.AddCommand(tx.TxCmd)

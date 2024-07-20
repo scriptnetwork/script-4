@@ -26,7 +26,7 @@ scriptcli query tx --hash=0x2fe41732b40ca852e9c36f52b278dde78f0fe34f28f9c9408311
 ### Options inherited from parent commands
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
 ```
 
 ### SEE ALSO

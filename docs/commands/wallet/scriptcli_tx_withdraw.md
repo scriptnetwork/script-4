@@ -32,7 +32,7 @@ scriptcli tx withdraw --chain="scriptnet" --source=2E833968E5bB786Ae419c4d13189f
 ### Options inherited from parent commands
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
 ```
 
 ### SEE ALSO

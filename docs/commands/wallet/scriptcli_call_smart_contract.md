@@ -40,7 +40,7 @@ scriptcli call smart_contract [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
 ```
 
 ### SEE ALSO

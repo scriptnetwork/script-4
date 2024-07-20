@@ -9,7 +9,7 @@ Script wallet.
 ### Options
 
 ```
-      --config string   config path (default is /Users/<username>/.scriptcli) (default "/Users/<username>/.scriptcli")
+      --config string   config path
   -h, --help            help for scriptcli
 ```
 
