@@ -1,4 +1,4 @@
-# Script Blockchain Ledger Protocol
+# Script-4 - The script.tv blockchain
 
 The Script Blockchain Ledger is a Proof-of-Stake decentralized ledger designed for the video streaming industry.
 It powers the Script token economy which incentives end users to share their redundant bandwidth and storage resources,
@@ -17,6 +17,11 @@ The ledger also supports Turing-Complete smart contracts, which enables rich use
 the Script Ledger. For more technical details, please refer to our [docs](https://docs.script.tv).
 
 To learn more about the Script Network in general, visit [ScriptTV home page](https://script.tv).
+
+### Tested Operating Systems:
+
+* Debian GNU/Linux 
+* Ubuntu GNU/Linux 
 
 ### Presequisites. Build Dependencies:
 
