@@ -44,17 +44,17 @@ This file can be used to define environmental variables useful for invoking bina
 
 Variables defined are:
 
-        GOPATH
-        SCRIPT_HOME
-        GO111MODULE
-        GOBIN
+	GOPATH
+	SCRIPT_HOME
+	GO111MODULE
+	GOBIN
 
 
 ### View/Load env vars
 
-        cat /tmp/tmp65958   #View
-        . /tmp/tmp65958     #Load
-        echo $GOBIN         #Check
+	cat /tmp/tmp65958   #View
+	. /tmp/tmp65958     #Load
+	echo $GOBIN         #Check
 
 
 ### Invoke binaries. e.g. script (governance) or scriptcli (wallet)
