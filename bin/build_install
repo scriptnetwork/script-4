@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+build_mode=release
+
+if [[ "_$1" != "_" ]]; then
+    if [[ "_${build_mode}" != "_$1" ]]; then
+        echo "Overriding build_mode: ${build_mode}. New value: $1"
+        build_mode=$1
+    fi
+fi
+
+function prepare_sources__0 {
+    if [[ "_${build_date}" == "_" ]]; then
+        build_date="$(date -u)"
+    fi
+    if [[ "_${git_version}" == "_" ]]; then
+        git_version="$(git rev-parse HEAD)"
+    fi
+    local script="$(pwd)"
+
+	mkdir -p _gohome
+    pushd _gohome > /dev/null
+        export GOPATH=$(pwd)
+        echo "GOPATH=${GOPATH}"
+        mkdir -p $GOPATH/src/github.com/scripttoken
+        if [[ ! -d $GOPATH/src/github.com/scripttoken/script ]]; then
+            pushd $GOPATH/src/github.com/scripttoken > /dev/null
+                ln -s $script script
+            popd > /dev/null
+        fi
+    popd > /dev/null
+    version_number="$(cat version/version_number.txt)"
+    cat << EOF > version/version_generated.go
+package version
+const (
+  Timestamp = "${build_date}"
+  Version = "${version_number}"
+  GitHash = "${git_version}"
+)
+EOF
+
+}
+
+function build_install {
+
+    output=_output
+    mkdir -p ${output}
+    export GOBIN=$(realpath _output)
+    echo "GOBIN=${GOBIN}"
+    curdir=$(pwd)
+
+    pushd _gohome > /dev/null
+        export GOPATH=$(pwd)
+        export SCRIPT_HOME=$GOPATH/src/github.com/scripttoken/script
+        echo "GOPATH=${GOPATH}"
+        echo "SCRIPT_HOME=${SCRIPT_HOME}"
+        pushd ${SCRIPT_HOME} > /dev/null
+            echo "compiling in ${build_mode} mode from $(pwd)"
+            export GO111MODULE=on
+            if [[ "_${build_mode}" == "_release" ]]; then
+                #27M script, 19M scriptcli
+                go install -ldflags "-s -w" ./cmd/... ./integration/tools/...
+                #               fi
+            else
+                #46M scriptm 34M scriptcli
+                #go install -race ./cmd/...  ./integration/tools/...  #-race option, which add some runtime checks. One the checks gives (kinda) false-positive and crashes program
+                go install ./cmd/...  ./integration/tools/...
+            fi
+            r=$?
+            if [[ $r -ne 0 ]]; then
+                >&2 echo "KO 39682 Compile"
+                exit 1
+            fi
+        popd > /dev/null
+    popd > /dev/null
+}
+
+function filter_errors {
+    while read -r line; do
+        let is_error=0 #TODO: apply heuristics to determine line is error or debug
+        if [[ is_error -eq 1 ]]; then
+            >&2 echo "$line"
+        else
+            echo "$line"
+        fi
+    done
+}
+
+prepare_sources__0
+build_install 2> >(filter_errors)
+if [[ $? -ne 0 ]]; then
+    >&2 echo "KO 32249"
+    exit 1
+fi
+cat << EOF | tee /tmp/tmp65958
+# source this file for env vars:
+# . /tmp/tmp65958
+GOPATH=${GOPATH}
+SCRIPT_HOME=${SCRIPT_HOME}
+GO111MODULE=${GO111MODULE}
+GOBIN=${GOBIN}
+EOF
+exit 0
+

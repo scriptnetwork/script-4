@@ -58,6 +58,9 @@ tools:
 clean:
 	@rm -rf ./vendor
 	@rm -rf ./build
+	touch _gohome
+	chmod +rw _gohome -R
+	$(RM) -r _gohome
 
 gen_doc:
 	cd ./docs/commands/;go build -o generator.exe; ./generator.exe
