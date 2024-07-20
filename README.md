@@ -57,10 +57,10 @@ Variables defined are:
         echo $GOBIN         #Check
 
 
-### Invoke binaries. e.g. script (governance) or scriptcli
+### Invoke binaries. e.g. script (governance) or scriptcli (wallet)
 
 	#Produce config template ${HOME}/.scriptcli/config.yaml
-        $GOBIN/script --config=${HOME}/.script init
+	$GOBIN/script --config=${HOME}/.script init
 
 	#Initiate gov daemon
 	$GOBIN/script start --config=${HOME}/.script
@@ -71,7 +71,7 @@ Variables defined are:
 	#Inititate wallet daemon listening on port 10002 (testnet), or 11002 (mainnet
 	REMOTERPCENDPOINT=http://127.0.0.1:10001/rpc $GOBIN/scriptcli daemon start --config=/home/stv/script4/wallet --port 10002
 
-        $GOBIN/script --help
-        $GOBIN/scriptcli --help
+	$GOBIN/script --help
+	$GOBIN/scriptcli --help
 
 
