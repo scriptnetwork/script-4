@@ -75,3 +75,8 @@ Variables defined are:
 	$GOBIN/scriptcli --help
 
 
+### Alternative setups
+
+#### The 1-liner node pre-compiled installer
+
+[https://download.script.tv](https://download.script.tv)
