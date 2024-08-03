@@ -170,7 +170,7 @@ func (s *ValidatorSet) Validators() []Validator {
 
 var (
 	MinValidatorStakeDeposit     *big.Int
-	MinValidatorStakeDeposit200K *big.Int
+	//MinValidatorStakeDeposit200K *big.Int
 )
 
 func init() {
@@ -178,7 +178,7 @@ func init() {
 	MinValidatorStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(1000000), new(big.Int).SetUint64(1000000000000000000))
 
 	// Minimum Validator stake deposit reduced to 1,000,000 Script
-	MinValidatorStakeDeposit200K = new(big.Int).Mul(new(big.Int).SetUint64(1000000), new(big.Int).SetUint64(1000000000000000000))
+	//MinValidatorStakeDeposit200K = new(big.Int).Mul(new(big.Int).SetUint64(1000000), new(big.Int).SetUint64(1000000000000000000))
 }
 
 type ValidatorCandidatePool struct {
@@ -204,9 +204,9 @@ func (vcp *ValidatorCandidatePool) GetTopStakeHolders(maxNumStakeHolders int) []
 
 func (vcp *ValidatorCandidatePool) DepositStake(source common.Address, holder common.Address, amount *big.Int, blockHeight uint64) (err error) {
 	minValidatorStake := MinValidatorStakeDeposit
-	if blockHeight >= common.HeightValidatorStakeChangedTo200K {
-		minValidatorStake = MinValidatorStakeDeposit200K
-	}
+	//if blockHeight >= common.HeightValidatorStakeChangedTo200K {
+	//	minValidatorStake = MinValidatorStakeDeposit200K
+	//}
 	if amount.Cmp(minValidatorStake) < 0 {
 		return fmt.Errorf("insufficient stake: %v", amount)
 	}

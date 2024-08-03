@@ -157,7 +157,7 @@ func (a *AggregatedVotes) Copy() *AggregatedVotes {
 var (
 	MinLightningStakeDeposit *big.Int
 
-	MinLightningStakeDeposit1000 *big.Int
+//	MinLightningStakeDeposit1000 *big.Int
 )
 
 func init() {
@@ -165,7 +165,7 @@ func init() {
 	MinLightningStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
 
 	// Lowering the lightning stake threshold to 10,000 Script
-	MinLightningStakeDeposit1000 = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
+	//MinLightningStakeDeposit1000 = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
 
 }
 
@@ -299,9 +299,9 @@ func (gcp *LightningCandidatePool) Hash() common.Hash {
 
 func (gcp *LightningCandidatePool) DepositStake(source common.Address, holder common.Address, amount *big.Int, pubkey *bls.PublicKey, blockHeight uint64) (err error) {
 	minLightningStake := MinLightningStakeDeposit
-	if blockHeight >= common.HeightLowerGNStakeThresholdTo1000 {
-		minLightningStake = MinLightningStakeDeposit1000
-	}
+	//if blockHeight >= common.HeightLowerGNStakeThresholdTo1000 {
+	//	minLightningStake = MinLightningStakeDeposit1000
+	//}
 	if amount.Cmp(minLightningStake) < 0 {
 		return fmt.Errorf("Insufficient stake: %v", amount)
 	}

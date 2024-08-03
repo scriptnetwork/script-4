@@ -83,9 +83,9 @@ func (exec *DepositStakeExecutor) sanityCheck(chainID string, view *st.StoreView
 	// Minimum stake deposit requirement to avoid spamming
 	if tx.Purpose == core.StakeForValidator {
 		minValidatorStake := core.MinValidatorStakeDeposit
-		if blockHeight >= common.HeightValidatorStakeChangedTo200K {
-			minValidatorStake = core.MinValidatorStakeDeposit200K
-		}
+		//if blockHeight >= common.HeightValidatorStakeChangedTo200K {
+		//	minValidatorStake = core.MinValidatorStakeDeposit200K
+		//}
 		if stake.SCPTWei.Cmp(minValidatorStake) < 0 {
 			return result.Error("Insufficient amount of stake, at least %v SCPTWei is required for each validator deposit", minValidatorStake).
 				WithErrorCode(result.CodeInsufficientStake)
@@ -94,9 +94,9 @@ func (exec *DepositStakeExecutor) sanityCheck(chainID string, view *st.StoreView
 
 	if tx.Purpose == core.StakeForLightning {
 		minLightningStake := core.MinLightningStakeDeposit
-		if blockHeight >= common.HeightLowerGNStakeThresholdTo1000 {
-			minLightningStake = core.MinLightningStakeDeposit1000
-		}
+		//if blockHeight >= common.HeightLowerGNStakeThresholdTo1000 {
+		//	minLightningStake = core.MinLightningStakeDeposit1000
+		//}
 		if stake.SCPTWei.Cmp(minLightningStake) < 0 {
 			return result.Error("Insufficient amount of stake, at least %v SCPTWei is required for each lightning deposit", minLightningStake).
 				WithErrorCode(result.CodeInsufficientStake)

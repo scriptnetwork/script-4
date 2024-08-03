@@ -7,7 +7,7 @@ const HeightEnableValidatorReward uint64 = 1
 const HeightEnableScript2 uint64 = 1
 
 // HeightLowerGNStakeThresholdTo1000 specifies the minimal block height to lower the GN Stake Threshold to 1,000 SCRIPT
-const HeightLowerGNStakeThresholdTo1000 uint64 = 1
+//const HeightLowerGNStakeThresholdTo1000 uint64 = 1
 
 // HeightEnableSmartContract specifies the minimal block height to eanble the Turing-complete smart contract support
 const HeightEnableSmartContract uint64 = 1
@@ -31,7 +31,7 @@ const HeightTxWrapperExtension uint64 = 1
 const HeightSupportScriptTokenInSmartContract uint64 = 1
 
 // HeightValidatorStakeChangedTo200K specifies the block height to lower the validator stake to 200,000 Script
-const HeightValidatorStakeChangedTo200K uint64 = 1
+//const HeightValidatorStakeChangedTo200K uint64 = 1
 
 // HeightSupportWrappedScript specifies the block height to support wrapped Script
 const HeightSupportWrappedScript uint64 = 1
@@ -40,7 +40,7 @@ const HeightSupportWrappedScript uint64 = 1
 const HeightEnableMetachainSupport uint64 = 1
 
 // CheckpointInterval defines the interval between checkpoints.
-const CheckpointInterval = int64(100)
+const CheckpointInterval = int64(1000)
 
 // IsCheckPointHeight returns if a block height is a checkpoint.
 func IsCheckPointHeight(height uint64) bool {
