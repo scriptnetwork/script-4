@@ -65,8 +65,7 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		//fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-	else {
+	} else {
 		fmt.Println("KO 99283 Could not use config file:", viper.ConfigFileUsed())
 	}
 }
