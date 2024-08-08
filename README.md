@@ -74,9 +74,20 @@ Variables defined are:
 	$GOBIN/script --help
 	$GOBIN/scriptcli --help
 
-
 ### Alternative setups
 
 #### The 1-liner node pre-compiled installer
 
 [https://download.script.tv](https://download.script.tv)
+
+## Documentation
+
+### Console-Client
+
+[script functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/ledger)
+[scriptcli functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/wallet)
+
+### RPC
+
+
+
