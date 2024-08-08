@@ -84,8 +84,8 @@ Variables defined are:
 
 ### Console-Client
 
-[script functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/ledger)
-[scriptcli functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/wallet)
+* [script functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/ledger)
+* [scriptcli functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/wallet)
 
 ### RPC
 
