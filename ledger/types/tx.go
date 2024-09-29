@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strconv"
-	"strings"
+//	"strconv"
+//	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -18,6 +18,8 @@ import (
 	"github.com/scripttoken/script/crypto/bls"
 	"github.com/scripttoken/script/rlp"
 	"golang.org/x/crypto/sha3"
+
+	"github.com/scripttoken/script/dotool"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "ledger"})
@@ -815,7 +817,7 @@ func RLPHash(x interface{}) (h common.Hash) {
 }
 
 func (tx *SmartContractTx) EthSigningHash(chainID string, blockHeight uint64) common.Hash {
-	ethChainID := MapChainID(chainID, blockHeight)
+	ethChainID := dotool.Eth_chain_id //MapChainID(chainID, blockHeight)
 
 	var toAddress *common.Address
 	if (tx.To.Address != common.Address{}) {
@@ -1091,6 +1093,7 @@ func ChangeEthereumTxWrapper(origSignBytes common.Bytes, wrapperVersion uint) co
 	return common.Bytes{}
 }
 
+/*
 // For replay attack protection
 // https://chainid.network/
 const CHAIN_ID_OFFSET int64 = 360
@@ -1164,3 +1167,5 @@ func extractSubchainID(chainIDStr string) (*big.Int, error) {
 
 	return big.NewInt(int64(chainID)), nil
 }
+*/
+

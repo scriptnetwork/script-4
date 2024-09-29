@@ -16,6 +16,7 @@ import (
 	"github.com/scripttoken/script/rlp"
 )
 
+/*
 var chainID string = "test_chain"
 
 func TestChainID(t *testing.T) {
@@ -114,6 +115,7 @@ func TestChainID(t *testing.T) {
 
 	// assert.True(t, false)
 }
+*/
 
 func TestCoinbaseTxSignable(t *testing.T) {
 	chainID := "test_chain_id"

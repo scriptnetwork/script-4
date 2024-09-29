@@ -7,6 +7,7 @@ import (
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/ledger/vm/params"
+	"github.com/scripttoken/script/dotool"
 )
 
 type BlockInfo struct {
@@ -36,9 +37,9 @@ func Execute(parentBlockInfo *BlockInfo, tx *types.SmartContractTx, statedb Stat
 		Time:        parentBlockInfo.Timestamp,
 		Difficulty:  new(big.Int).SetInt64(0),
 	}
-	chainIDBigInt := types.MapChainID(parentBlockInfo.ChainID, context.BlockNumber.Uint64())
+	//chainIDBigInt := types.MapChainID(parentBlockInfo.ChainID, context.BlockNumber.Uint64())
 	chainConfig := &params.ChainConfig{
-		ChainID: chainIDBigInt,
+		ChainID: big.NewInt(dotool.Eth_chain_id), //chainIDBigInt,
 	}
 	config := Config{}
 	evm := NewEVM(context, statedb, chainConfig, config)

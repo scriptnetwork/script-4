@@ -445,11 +445,11 @@ func (t *ScriptRPCService) GetBlockByHeight(args *GetBlockByHeightArgs, result *
 
 	if blockHeight == 0 && block == nil { // special handling for a node starting from a non-genesis snapshot
 		var genesisHash common.Hash
-		if t.consensus.Chain().ChainID == core.MainnetChainID {
-			genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
-		} else {
+		//if t.consensus.Chain().ChainID == core.MainnetChainID {
+		//	genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
+		//} else {
 			genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
-		}
+		//}
 
 		result.GetBlockResultInner = &GetBlockResultInner{}
 		result.ChainID = t.consensus.Chain().ChainID
@@ -500,11 +500,11 @@ func (t *ScriptRPCService) GetBlocksByRange(args *GetBlocksByRangeArgs, result *
 	// }
 	genesisBlock := &GetBlockResultInner{}
 	var genesisHash common.Hash
-	if t.consensus.Chain().ChainID == core.MainnetChainID {
-		genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
-	} else {
-		genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
-	}
+	//if t.consensus.Chain().ChainID == core.MainnetChainID {
+	//	genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
+	//} else {
+	genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
+	//}
 	genesisBlock.ChainID = t.consensus.Chain().ChainID
 	genesisBlock.Children = []common.Hash{}
 	genesisBlock.Status = core.BlockStatusDirectlyFinalized
@@ -672,11 +672,11 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	}
 
 	var genesisHash common.Hash
-	if t.consensus.Chain().ChainID == core.MainnetChainID {
-		genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
-	} else {
-		genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
-	}
+	//if t.consensus.Chain().ChainID == core.MainnetChainID {
+	//	genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
+	//} else {
+	genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
+	//}
 	result.GenesisBlockHash = genesisHash
 	result.SnapshotBlockHeight = common.JSONUint64(t.chain.Root().Block.BlockHeader.Height)
 	result.SnapshotBlockHash = t.chain.Root().Block.BlockHeader.Hash()

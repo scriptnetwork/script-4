@@ -27,7 +27,7 @@ import (
 var depositStakeCmd = &cobra.Command{
 	Use:     "deposit",
 	Short:   "Deposit stake to a validator or lightning",
-	Example: `scriptcli tx deposit --chain="scriptnet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --stake=6000000 --purpose=0 --seq=7`,
+	Example: `scriptcli tx deposit --chain="testnet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --stake=6000000 --purpose=0 --seq=7`,
 	Run:     doDepositStakeCmd,
 }
 

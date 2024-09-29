@@ -892,11 +892,11 @@ func checkGenesisBlock(block *core.BlockHeader, db database.Database) (*core.Val
 	}
 
 	var expectedGenesisHash string
-	if block.ChainID == core.MainnetChainID {
-		expectedGenesisHash = core.MainnetGenesisBlockHash
-	} else {
-		expectedGenesisHash = viper.GetString(common.CfgGenesisHash)
-	}
+	//if block.ChainID == core.MainnetChainID {
+	//	expectedGenesisHash = core.MainnetGenesisBlockHash
+	//} else {
+	expectedGenesisHash = viper.GetString(common.CfgGenesisHash)
+	//}
 
 	// logger.Infof("Expected genesis hash: %v", expectedGenesisHash)
 	// logger.Infof("Acutal   genesis hash: %v", block.Hash().Hex())

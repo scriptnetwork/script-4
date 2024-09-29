@@ -17,8 +17,7 @@ function prepare_sources__0 {
         git_version="$(git rev-parse HEAD)"
     fi
     local script="$(pwd)"
-
-	mkdir -p _gohome
+    mkdir -p _gohome
     pushd _gohome > /dev/null
         export GOPATH=$(pwd)
         echo "GOPATH=${GOPATH}"
@@ -42,13 +41,11 @@ EOF
 }
 
 function build_install {
-
     output=_output
     mkdir -p ${output}
     export GOBIN=$(realpath _output)
     echo "GOBIN=${GOBIN}"
     curdir=$(pwd)
-
     pushd _gohome > /dev/null
         export GOPATH=$(pwd)
         export SCRIPT_HOME=$GOPATH/src/github.com/scripttoken/script
@@ -87,6 +84,19 @@ function filter_errors {
 }
 
 prepare_sources__0
+
+if [[ ! -f dotool/dotool.go ]]; then
+    mkdir -p dotool
+    cat << EOF > dotool/dotool.go
+package dotool
+
+const (
+        Eth_chain_id int64 = 62854
+        ChainID string = "testnet"
+)
+EOF
+fi
+
 build_install 2> >(filter_errors)
 if [[ $? -ne 0 ]]; then
     >&2 echo "KO 32249"
@@ -101,4 +111,3 @@ GO111MODULE=${GO111MODULE}
 GOBIN=${GOBIN}
 EOF
 exit 0
-

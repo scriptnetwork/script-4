@@ -9,6 +9,7 @@ import (
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store"
+	"github.com/scripttoken/script/dotool"
 )
 
 // txIndexKey constructs the DB key for the given transaction hash.
@@ -251,7 +252,7 @@ func CalcEthTxHash(block *core.ExtendedBlock, rawTxBytes []byte) (common.Hash, e
 	}
 
 	r, s, v := crypto.DecodeSignature(sctx.From.Signature)
-	chainID := types.MapChainID(block.ChainID, block.Height)
+	chainID := big.NewInt(dotool.Eth_chain_id) //types.MapChainID(block.ChainID, block.Height)
 	vPrime := big.NewInt(1).Mul(chainID, big.NewInt(2))
 	vPrime = big.NewInt(0).Add(vPrime, big.NewInt(8))
 	vPrime = big.NewInt(0).Add(vPrime, v)

@@ -20,7 +20,7 @@ import (
 var releaseFundCmd = &cobra.Command{
 	Use:     "release",
 	Short:   "Release fund",
-	Example: `scriptcli tx release --chain="scriptnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8`,
+	Example: `scriptcli tx release --chain="testnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8`,
 	Run:     doReleaseFundCmd,
 }
 

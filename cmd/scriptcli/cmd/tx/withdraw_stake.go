@@ -21,7 +21,7 @@ import (
 var withdrawStakeCmd = &cobra.Command{
 	Use:     "withdraw",
 	Short:   "withdraw stake to a validator or lightning",
-	Example: `scriptcli tx withdraw --chain="scriptnet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --purpose=0 --seq=8`,
+	Example: `scriptcli tx withdraw --chain="testnet" --source=2E833968E5bB786Ae419c4d13189fB081Cc43bab --holder=2E833968E5bB786Ae419c4d13189fB081Cc43bab --purpose=0 --seq=8`,
 	Run:     doWithdrawStakeCmd,
 }
 

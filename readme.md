@@ -1,5 +1,7 @@
 # Script-4 - The script.tv blockchain
 
+	For installing a pre-compiled node (testnet or mainnet) go to https://downloads.script.tv
+
 The Script Blockchain Ledger is a Proof-of-Stake decentralized ledger designed for the video streaming industry.
 It powers the Script token economy which incentives end users to share their redundant bandwidth and storage resources,
 and encourage them to engage more actively with video platforms and content creators.
@@ -31,11 +33,11 @@ To learn more about the Script Network in general, visit [ScriptTV home page](ht
 
 For debug mode execute:
 
-	bin/build_install
+	make debug
 
 For release/optimized mode execute:
 
-	bin/build_install release
+	make
 
 ### Shell environment vars
 
@@ -86,8 +88,5 @@ Variables defined are:
 
 * [script functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/ledger)
 * [scriptcli functions](https://github.com/scriptnetwork/script-4/tree/master/docs/commands/wallet)
-
-### RPC
-
 
 

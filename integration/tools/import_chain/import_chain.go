@@ -14,6 +14,7 @@ import (
 	"github.com/scripttoken/script/snapshot"
 	"github.com/scripttoken/script/store/database/backend"
 	"github.com/scripttoken/script/store/kvstore"
+	"github.com/scripttoken/script/dotool"
 )
 
 func handleError(err error) {
@@ -49,7 +50,7 @@ func main() {
 
 	root := core.NewBlock()
 	if chainID == "" {
-		root.ChainID = core.MainnetChainID
+		root.ChainID = dotool.ChainID // core.MainnetChainID
 	} else {
 		root.ChainID = chainID
 	}
