@@ -613,6 +613,7 @@ type GetStatusArgs struct{}
 type GetStatusResult struct {
 	Address                    string            `json:"address"`
 	ChainID                    string            `json:"chain_id"`
+	EthChainID                 int64             `json:"eth_chain_id"`
 	PeerID                     string            `json:"peer_id"`
 	LatestFinalizedBlockHash   common.Hash       `json:"latest_finalized_block_hash"`
 	LatestFinalizedBlockHeight common.JSONUint64 `json:"latest_finalized_block_height"`
@@ -635,6 +636,7 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	//result.PeerID = t.dispatcher.ID()
 	result.PeerID = t.dispatcher.LibP2PID() // TODO: use ID() instead after 1.3.0 upgrade
 	result.ChainID = t.consensus.Chain().ChainID
+	result.EthChainID = dotool.Eth_chain_id
 	latestFinalizedHash := s.LastFinalizedBlock
 	var latestFinalizedBlock *core.ExtendedBlock
 	if !latestFinalizedHash.IsEmpty() {
