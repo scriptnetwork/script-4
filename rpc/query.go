@@ -22,6 +22,7 @@ import (
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/mempool"
 	"github.com/scripttoken/script/version"
+	"github.com/scripttoken/script/dotool"
 )
 
 // ------------------------------- GetVersion -----------------------------------
