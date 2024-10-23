@@ -37,6 +37,7 @@ Transaction Types:
  - WithdrawStakeTx         Withdraw stake from a target address (e.g. a validator)
  - SmartContractTx         Execute smart contract
  - StakeRewardDistribution Defines how stake reward is distributed
+ - LicenseTx               Broadcast License information
 */
 
 // Gas of regular transactions
@@ -969,6 +970,75 @@ func (tx *WithdrawStakeTx) SetSignature(addr common.Address, sig *crypto.Signatu
 func (tx *WithdrawStakeTx) String() string {
 	return fmt.Sprintf("WithdrawStakeTx{%v <- %v, stake: %v, purpose: %v}",
 		tx.Source.Address, tx.Holder.Address, tx.Source.Coins.SCPTWei, tx.Purpose)
+}
+
+//-----------------------------------------------------------------------------
+
+type LicenseTx struct {
+	Fee      Coins     // Transaction fee
+	Licenses []core.License // Slice of License objects to be included in the transaction
+	Issuer   TxInput   // Issuer's account details
+}
+
+type LicenseTxJSON struct {
+	Fee      Coins     `json:"fee"`      // Transaction fee
+	Licenses []core.License `json:"licenses"` // Slice of License objects
+	Issuer   TxInput   `json:"issuer"`   // Issuer's account details
+}
+
+func NewLicenseTxJSON(a LicenseTx) LicenseTxJSON {
+	return LicenseTxJSON{
+		Fee:      a.Fee,
+		Licenses: a.Licenses,
+		Issuer:   a.Issuer,
+	}
+}
+
+func (a LicenseTxJSON) LicenseTx() LicenseTx {
+	return LicenseTx{
+		Fee:      a.Fee,
+		Licenses: a.Licenses,
+		Issuer:   a.Issuer,
+	}
+}
+
+func (a LicenseTx) MarshalJSON() ([]byte, error) {
+	return json.Marshal(NewLicenseTxJSON(a))
+}
+
+func (a *LicenseTx) UnmarshalJSON(data []byte) error {
+	var b LicenseTxJSON
+	if err := json.Unmarshal(data, &b); err != nil {
+		return err
+	}
+	*a = b.LicenseTx()
+	return nil
+}
+
+func (_ *LicenseTx) AssertIsTx() {}
+
+func (tx *LicenseTx) SignBytes(chainID string) []byte {
+	signBytes := encodeToBytes(chainID)
+	sig := tx.Issuer.Signature
+	tx.Issuer.Signature = nil
+	txBytes, _ := TxToBytes(tx)
+	signBytes = append(signBytes, txBytes...)
+	signBytes = addPrefixForSignBytes(signBytes)
+
+	tx.Issuer.Signature = sig
+	return signBytes
+}
+
+func (tx *LicenseTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
+	if tx.Issuer.Address == addr {
+		tx.Issuer.Signature = sig
+		return true
+	}
+	return false
+}
+
+func (tx *LicenseTx) String() string {
+	return fmt.Sprintf("LicenseTx{fee: %v, licenses: %v, issuer: %v}", tx.Fee, tx.Licenses, tx.Issuer)
 }
 
 //-----------------------------------------------------------------------------
