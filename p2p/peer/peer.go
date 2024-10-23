@@ -35,6 +35,7 @@ type Peer struct {
 	isOutbound   bool
 	isSeed       bool
 	netAddress   *nu.NetAddress
+	isLicenseValid bool
 
 	nodeInfo p2ptypes.NodeInfo // information of the blockchain node of the peer
 	nodeType cmn.NodeType
@@ -218,6 +219,19 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 	}
 
 	peer.nodeType = common.NodeType(peerType)
+
+	if(peer.nodeType == common.NodeType.NodeTypeBlockchainNode){
+		err = ValidateLicense(targetPeerNodeInfo.PubKey.Address.().Hex())
+	  if err != nil {
+	  		peer.isLicenseValid = false
+			logger.Warnf("License validation failed: %v\n", err)
+			return err
+	  } else {
+			logger.Infof("License validation succeeded")
+			peer.isLicenseValid = true
+	  }
+	}
+	//set licenseValid in node above^
 
 	remotePub, err := peer.connection.DoEncHandshake(
 		crypto.PrivKeyToECDSA(sourceNodeInfo.PrivKey), crypto.PubKeyToECDSA(targetNodePubKey))
