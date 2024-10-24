@@ -19,6 +19,7 @@ import (
 	nu "github.com/scripttoken/script/p2p/netutil"
 	p2ptypes "github.com/scripttoken/script/p2p/types"
 	"github.com/scripttoken/script/rlp"
+	"github.com/scripttoken/script/core"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "p2p"})
@@ -220,8 +221,8 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 
 	peer.nodeType = common.NodeType(peerType)
 
-	if(peer.nodeType == common.NodeType.NodeTypeBlockchainNode){
-		err = ValidateLicense(targetPeerNodeInfo.PubKey.Address().Hex())
+	if(peer.nodeType == common.NodeTypeBlockchainNode) { //	NodeTypeBlockchainNode
+		err = core.ValidateLicense(targetPeerNodeInfo.PubKey.Address().Hex())
 	  if err != nil {
 	  		peer.isLicenseValid = false
 			logger.Warnf("License validation failed: %v\n", err)
