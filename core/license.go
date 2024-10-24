@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-
-
-	"github.com/scripttoken/script/crypto"
+	"time"
 	"github.com/scripttoken/script/crypto/bls"
 	"github.com/scripttoken/script/common"
 )
@@ -137,5 +135,27 @@ func isLicenseForValidatorNode(items []string) bool {
 		}
 	}
 	return false
+}
+
+func concatenateLicenseData(license License) []byte {
+	// Convert fields to byte slices or strings
+	issuerBytes := []byte(license.Issuer.Hex())               
+	licenseeBytes := []byte(license.Licensee.Hex())           
+	fromBytes := license.From.Bytes()                        
+	toBytes := license.To.Bytes()                             
+
+	// Concatenate the items list (assuming it's strings)
+	itemsBytes := []byte{}
+	for _, item := range license.Items {
+		itemsBytes = append(itemsBytes, []byte(item)...)
+	}
+
+	// Concatenate all data into a single byte slice
+	concatenatedData := append(issuerBytes, licenseeBytes...)
+	concatenatedData = append(concatenatedData, fromBytes...)
+	concatenatedData = append(concatenatedData, toBytes...)
+	concatenatedData = append(concatenatedData, itemsBytes...)
+
+	return concatenatedData
 }
 
