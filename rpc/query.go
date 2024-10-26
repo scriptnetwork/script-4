@@ -661,7 +661,7 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	maxVoteHeight := uint64(0)
 	epochVotes, err := t.consensus.State().GetEpochVotes()
 	if err != nil {
-	        log.Error("KO 44930. " + err);
+	        log.Error("KO 44930. " + err.Error());
 		return err
 	}
     log.Debug("GetStatus 4. " + result.ChainID + " " + strconv.FormatInt(result.EthChainID,10));
