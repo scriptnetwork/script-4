@@ -656,12 +656,16 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	}
 	result.CurrentEpoch = common.JSONUint64(s.Epoch)
 	result.CurrentTime = (*common.JSONBig)(big.NewInt(time.Now().Unix()))
+    log.Debug("GetStatus 3. " + result.ChainID + " " + strconv.FormatInt(result.EthChainID,10));
 
 	maxVoteHeight := uint64(0)
 	epochVotes, err := t.consensus.State().GetEpochVotes()
 	if err != nil {
+	        log.Error("KO 44930. " + err);
 		return err
 	}
+    log.Debug("GetStatus 4. " + result.ChainID + " " + strconv.FormatInt(result.EthChainID,10));
+
 	if epochVotes != nil {
 		for _, v := range epochVotes.Votes() {
 			if v.Height > maxVoteHeight {
