@@ -631,12 +631,16 @@ type GetStatusResult struct {
 }
 
 func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResult) (err error) {
+    logger.log("GetStatus 1");
+
 	s := t.consensus.GetSummary()
 	result.Address = t.consensus.ID()
 	//result.PeerID = t.dispatcher.ID()
 	result.PeerID = t.dispatcher.LibP2PID() // TODO: use ID() instead after 1.3.0 upgrade
 	result.ChainID = t.consensus.Chain().ChainID
 	result.EthChainID = int64(viper.GetUint64(common.CfgGenesisEthChainID))
+    logger.log("GetStatus 2. " + result.ChainID + " " + result.EthChainID);
+
 	latestFinalizedHash := s.LastFinalizedBlock
 	var latestFinalizedBlock *core.ExtendedBlock
 	if !latestFinalizedHash.IsEmpty() {
