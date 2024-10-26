@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -631,7 +632,7 @@ type GetStatusResult struct {
 }
 
 func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResult) (err error) {
-    logger.log("GetStatus 1");
+    log.Debug("GetStatus 1");
 
 	s := t.consensus.GetSummary()
 	result.Address = t.consensus.ID()
@@ -639,7 +640,7 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	result.PeerID = t.dispatcher.LibP2PID() // TODO: use ID() instead after 1.3.0 upgrade
 	result.ChainID = t.consensus.Chain().ChainID
 	result.EthChainID = int64(viper.GetUint64(common.CfgGenesisEthChainID))
-    logger.log("GetStatus 2. " + result.ChainID + " " + result.EthChainID);
+    log.Debug("GetStatus 2. " + result.ChainID + " " + strconv.FormatInt(result.EthChainID,10));
 
 	latestFinalizedHash := s.LastFinalizedBlock
 	var latestFinalizedBlock *core.ExtendedBlock
