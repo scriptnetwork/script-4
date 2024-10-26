@@ -19,10 +19,9 @@ const (
 	// CfgForceValidateSnapshot defines wether validation of snapshot can be skipped
 	CfgForceValidateSnapshot = "snapshot.force_validate"
 
-	// CfgGenesisHash defines the hash of the genesis block
-	CfgGenesisHash = "genesis.hash"
-	// CfgGenesisChainID defines the chainID.
-	CfgGenesisChainID = "genesis.chainID"
+	CfgGenesisHash = "genesis.hash"	        // CfgGenesisHash defines the hash of the genesis block
+	CfgGenesisChainID = "genesis.chainID"	// CfgGenesisChainID defines the chainID.
+	CfgGenesisEthChainID = "genesis.ethChainID"   // Ethereum bridge numeric chain id
 
 	// CfgConsensusMaxEpochLength defines the maxium length of an epoch.
 	CfgConsensusMaxEpochLength = "consensus.maxEpochLength"
@@ -166,6 +165,12 @@ const (
 
 // InitialConfig is the default configuration produced by init command.
 const InitialConfig = `# Script configuration
+
+genesis:
+  hash: ""
+  chainID: "noname"
+  ethChainID: 0
+
 p2p:
   port: 5000
   seeds: 127.0.0.1:6000,127.0.0.1:7000
@@ -174,6 +179,9 @@ p2p:
 func init() {
 	viper.SetDefault(CfgNodeType, 1) // 1: blockchain node, 2: edge node
 	viper.SetDefault(CfgForceValidateSnapshot, false)
+
+	viper.SetDefault(CfgGenesisEthChainID, 0);
+	viper.SetDefault(CfgGenesisChainID, "");
 
 	viper.SetDefault(CfgConsensusMaxEpochLength, 12)
 	viper.SetDefault(CfgConsensusMinBlockInterval, 6)

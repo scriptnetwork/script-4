@@ -85,18 +85,6 @@ function filter_errors {
 
 prepare_sources__0
 
-if [[ ! -f dotool/dotool.go ]]; then
-    mkdir -p dotool
-    cat << EOF > dotool/dotool.go
-package dotool
-
-const (
-        Eth_chain_id int64 = 62854
-        ChainID string = "testnet"
-)
-EOF
-fi
-
 build_install 2> >(filter_errors)
 if [[ $? -ne 0 ]]; then
     >&2 echo "KO 32249"

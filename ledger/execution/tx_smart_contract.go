@@ -13,6 +13,7 @@ import (
 	st "github.com/scripttoken/script/ledger/state"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/ledger/vm"
+	"github.com/spf13/viper"
 )
 
 var _ TxExecutor = (*SmartContractTxExecutor)(nil)
@@ -64,7 +65,8 @@ func (exec *SmartContractTxExecutor) sanityCheck(chainID string, view *st.StoreV
 			return result.Error("Sending Script with ETH transaction is not allowed") // extra check, since ETH transaction only signs the SPAY part (i.e., value, gasPrice, gasLimit, etc)
 		}
 
-		ethSigningHash := tx.EthSigningHash(chainID, blockHeight)
+		ethChainID := int64(viper.GetUint64(common.CfgGenesisEthChainID))
+		ethSigningHash := tx.EthSigningHash(chainID, ethChainID, blockHeight)
 		err := crypto.ValidateEthSignature(tx.From.Address, ethSigningHash, tx.From.Signature)
 		if err != nil {
 			return result.Error("ETH Signature verification failed, SignBytes: %v, error: %v",

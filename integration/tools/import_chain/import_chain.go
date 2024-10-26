@@ -14,7 +14,6 @@ import (
 	"github.com/scripttoken/script/snapshot"
 	"github.com/scripttoken/script/store/database/backend"
 	"github.com/scripttoken/script/store/kvstore"
-	"github.com/scripttoken/script/dotool"
 )
 
 func handleError(err error) {
@@ -49,9 +48,7 @@ func main() {
 	initConfig(configPath)
 
 	root := core.NewBlock()
-	if chainID == "" {
-		root.ChainID = dotool.ChainID // core.MainnetChainID
-	} else {
+	if chainID != "" {
 		root.ChainID = chainID
 	}
 	store := kvstore.NewKVStore(db)

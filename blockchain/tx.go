@@ -9,7 +9,7 @@ import (
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store"
-	"github.com/scripttoken/script/dotool"
+        "github.com/spf13/viper"
 )
 
 // txIndexKey constructs the DB key for the given transaction hash.
@@ -239,8 +239,8 @@ func CalcEthTxHash(block *core.ExtendedBlock, rawTxBytes []byte) (common.Hash, e
 	if !ok {
 		return common.Hash{}, fmt.Errorf("not a smart contract transaction") // not a smart contract tx, skip ETH tx insertion
 	}
-
-	ethSigningHash := sctx.EthSigningHash(block.ChainID, block.Height)
+	ethChainID := int64(viper.GetUint64(common.CfgGenesisEthChainID))
+	ethSigningHash := sctx.EthSigningHash(block.ChainID, ethChainID, block.Height)
 	err = crypto.ValidateEthSignature(sctx.From.Address, ethSigningHash, sctx.From.Signature)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("not an ETH smart contract transaction") // it is a Script native smart contract transaction, no need to index it as an EthTxHash
@@ -251,9 +251,10 @@ func CalcEthTxHash(block *core.ExtendedBlock, rawTxBytes []byte) (common.Hash, e
 		toAddress = &sctx.To.Address
 	}
 
+
 	r, s, v := crypto.DecodeSignature(sctx.From.Signature)
-	chainID := big.NewInt(dotool.Eth_chain_id) //types.MapChainID(block.ChainID, block.Height)
-	vPrime := big.NewInt(1).Mul(chainID, big.NewInt(2))
+	bigEthChainID := big.NewInt(ethChainID) //types.MapChainID(block.ChainID, block.Height)
+	vPrime := big.NewInt(1).Mul(bigEthChainID, big.NewInt(2))
 	vPrime = big.NewInt(0).Add(vPrime, big.NewInt(8))
 	vPrime = big.NewInt(0).Add(vPrime, v)
 

@@ -49,6 +49,7 @@ type Node struct {
 
 type Params struct {
 	ChainID             string
+	EthChainID          int64
 	PrivateKey          *crypto.PrivateKey
 	Root                *core.Block
 	NetworkOld          p2p.Network

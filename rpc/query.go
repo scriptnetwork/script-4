@@ -22,7 +22,6 @@ import (
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/mempool"
 	"github.com/scripttoken/script/version"
-	"github.com/scripttoken/script/dotool"
 )
 
 // ------------------------------- GetVersion -----------------------------------
@@ -637,7 +636,7 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	//result.PeerID = t.dispatcher.ID()
 	result.PeerID = t.dispatcher.LibP2PID() // TODO: use ID() instead after 1.3.0 upgrade
 	result.ChainID = t.consensus.Chain().ChainID
-	result.EthChainID = dotool.Eth_chain_id
+	result.EthChainID = int64(viper.GetUint64(common.CfgGenesisEthChainID))
 	latestFinalizedHash := s.LastFinalizedBlock
 	var latestFinalizedBlock *core.ExtendedBlock
 	if !latestFinalizedHash.IsEmpty() {

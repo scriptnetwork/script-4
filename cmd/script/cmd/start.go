@@ -111,7 +111,23 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	root = &core.Block{BlockHeader: snapshotBlockHeader}
 
-	viper.Set(common.CfgGenesisChainID, root.ChainID)
+
+	if ! viper.IsSet(common.CfgGenesisChainID) {
+		log.Fatal("KO 40598 chainId not selected")
+	}
+	if ! viper.IsSet(common.CfgGenesisEthChainID) {
+		log.Fatal("KO 40599 ethChainId not selected")
+	}
+
+	if (viper.GetString(common.CfgGenesisChainID) != root.ChainID) {
+		log.Fatal("KO 40499 chainId mismatch. " + common.CfgGenesisChainID + " " + root.ChainID)
+	}
+	if (viper.GetUint64(common.CfgGenesisEthChainID) == 0) {
+		log.Fatal("KO 40520 invalid ethChainId")
+	}
+
+
+//	viper.Set(common.CfgGenesisChainID, root.ChainID)
 
 	// Parse seeds and filter out empty item.
 	f := func(c rune) bool {
@@ -136,6 +152,7 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	params := &node.Params{
 		ChainID:             root.ChainID,
+		EthChainID:          int64(viper.GetUint64(common.CfgGenesisEthChainID)),
 		PrivateKey:          privKey,
 		Root:                root,
 		NetworkOld:          networkOld,

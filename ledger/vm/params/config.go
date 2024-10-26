@@ -24,11 +24,11 @@ import (
 )
 
 // Genesis hashes to enforce below configs on.
-var (
-	MainnetGenesisHash = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
-	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d")
-	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
-)
+//var (
+//	MainnetGenesisHash = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+//	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d")
+//	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
+//)
 
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
@@ -98,13 +98,13 @@ var (
 	// }
 
 	// RinkebyTrustedCheckpoint contains the light client trusted checkpoint for the Rinkeby test network.
-	RinkebyTrustedCheckpoint = &TrustedCheckpoint{
-		Name:         "rinkeby",
-		SectionIndex: 93,
-		SectionHead:  common.HexToHash("0xdefb94aa217ab38f2919f7318d1d5476bd2aabf1ec9148047fe03e555615e0b4"),
-		CHTRoot:      common.HexToHash("0x52c98c2fe508a8332c27dc10538f3fead43306e2b22b597587763c2fe6586da6"),
-		BloomRoot:    common.HexToHash("0x93d83be0c1b12f732b1a027ecdfb16f39b0d020b8c10bfb90e76f3b01adfc5b6"),
-	}
+//	RinkebyTrustedCheckpoint = &TrustedCheckpoint{
+//		Name:         "rinkeby",
+//		SectionIndex: 93,
+//		SectionHead:  common.HexToHash("0xdefb94aa217ab38f2919f7318d1d5476bd2aabf1ec9148047fe03e555615e0b4"),
+//		CHTRoot:      common.HexToHash("0x52c98c2fe508a8332c27dc10538f3fead43306e2b22b597587763c2fe6586da6"),
+//		BloomRoot:    common.HexToHash("0x93d83be0c1b12f732b1a027ecdfb16f39b0d020b8c10bfb90e76f3b01adfc5b6"),
+//	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Ethash consensus.
