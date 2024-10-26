@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 	"strconv"
+        "runtime/debug"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -661,7 +662,8 @@ func (t *ScriptRPCService) GetStatus(args *GetStatusArgs, result *GetStatusResul
 	maxVoteHeight := uint64(0)
 	epochVotes, err := t.consensus.State().GetEpochVotes()
 	if err != nil {
-	        log.Error("KO 44930. " + err.Error());
+		debug.PrintStack()
+	        log.Error("KO 44930 " + err.Error())
 		return err
 	}
     log.Debug("GetStatus 4. " + result.ChainID + " " + strconv.FormatInt(result.EthChainID,10));
