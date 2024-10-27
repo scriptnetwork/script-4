@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+"runtime/debug"
 
 	"github.com/scripttoken/script/crypto/bls"
 
@@ -855,9 +856,11 @@ func (e *ConsensusEngine) shouldVoteByID(id common.Address, block common.Hash) b
 }
 
 func (e *ConsensusEngine) vote() {
+log.Debug("@@@ Vote!")
 	tip := e.GetTipToVote()
 
 	if !e.shouldVote(tip.Hash()) {
+		log.Debug("@@! I don't Vote")
 		return
 	}
 
@@ -895,9 +898,9 @@ func (e *ConsensusEngine) vote() {
 		vote = e.createVote(tip.Block)
 		e.state.SetLastVote(vote)
 	}
-	e.logger.WithFields(log.Fields{
-		"vote": vote,
-	}).Debug("Sending vote")
+log.Printf("Stack trace:\n%s", debug.Stack())
+
+	e.logger.WithFields(log.Fields{	"vote": vote, }).Debug("Sending vote")
 	e.broadcastVote(vote)
 
 	go func() {
