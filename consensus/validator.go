@@ -136,7 +136,7 @@ func (m *RotatingValidatorManager) GetNextValidatorSet(blockHash common.Hash) *c
 //
 
 func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.ValidatorSet {
-log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ MaxValidatorCount " + MaxValidatorCount.String())
+log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ MaxValidatorCount " + strconv.Itoa(MaxValidatorCount))
 	maxNumValidators := MaxValidatorCount
 	topStakeHolders := vcp.GetTopStakeHolders(maxNumValidators)
 
