@@ -97,7 +97,7 @@ func (s *State) load(forcedLastVote *core.Vote) (err error) {
 	key := []byte(DBStateStubKey)
 	stub := &StateStub{}
 
-log.Debug("D===========BStateStubKey " + DBStateStubKey)
+log.Debug("D=consensus state =LOAD=========BStateStubKey " + DBStateStubKey)
 	s.db.Get(key, stub)
 
 	if stub.Root != s.chain.Root().Hash() {
@@ -212,6 +212,11 @@ func (s *State) AddVote(vote *core.Vote) error {
 }
 
 func (s *State) GetEpochVotes() (*core.VoteSet, error) {
+log.Debug("D=consensus::state::GetEpochVotes =======BStateStubKey " + DBStateStubKey)
+log.Debug("                                  ====== DBEpochVotesKey " + DBEpochVotesKey)
+log.Debug("                                  ====== DBVoteByBlockPrefix " + DBVoteByBlockPrefix)
+
+
 	key := []byte(DBEpochVotesKey)
 	ret := core.NewVoteSet()
 	err := s.db.Get(key, ret)
