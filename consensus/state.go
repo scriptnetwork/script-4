@@ -220,6 +220,12 @@ log.Debug("                                  ====== DBVoteByBlockPrefix " + DBVo
 	key := []byte(DBEpochVotesKey)
 	ret := core.NewVoteSet()
 	err := s.db.Get(key, ret)
+	if err != nil {
+		log.Debug("                                  ===/=== s.db.Get key:[bits]DBEpochVotesKey " DBEpochVotesKey + " Err=" + err.Error())
+	else
+		log.Debug("                                  ===/=== s.db.Get key:[bits]DBEpochVotesKey " + DBEpochVotesKey)
+	}
+
 	return ret, err
 }
 
