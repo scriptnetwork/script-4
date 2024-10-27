@@ -54,6 +54,7 @@ func (m *FixedValidatorManager) getProposerFromValidators(valSet *core.Validator
 // GetValidatorSet returns the validator set for given block hash.
 func (m *FixedValidatorManager) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
 	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, false)
+log.Debug("ZZZZZZZZ/ FixedValidatorManager::GetValidatorSet length= " + strconv.Itoa(len(valSet)))
 	return valSet
 }
 
@@ -123,6 +124,7 @@ func (m *RotatingValidatorManager) getProposerFromValidators(valSet *core.Valida
 // GetValidatorSet returns the validator set for given block.
 func (m *RotatingValidatorManager) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
 	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, false)
+log.Debug("ZZZZZZZZ/ RotatingValidatorManager::GetValidatorSet length= " + strconv.Itoa(len(valSet)))
 	return valSet
 }
 
@@ -145,14 +147,14 @@ log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ MaxValidatorCount " 
 	for _, stakeHolder := range topStakeHolders {
 		valAddr := stakeHolder.Holder.Hex()
 		valStake := stakeHolder.TotalStake()
-log.Debug("      stakejolder addr " + valAddr + " stake " + valStake.String())
+log.Debug("      stakeholder addr " + valAddr + " stake " + valStake.String())
 		if valStake.Cmp(core.Zero) == 0 {
 			continue
 		}
 		validator := core.NewValidator(valAddr, valStake)
 		valSet.AddValidator(validator)
 	}
-log.Debug("ZZZZZZZZ/ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+log.Debug("ZZZZZZZZ/ SelectTopStakeHoldersAsValidators length= " + strconv.Itoa(len(valSet)))
 
 	return valSet
 }
