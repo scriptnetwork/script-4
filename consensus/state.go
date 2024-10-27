@@ -222,8 +222,7 @@ log.Debug("                                  ====== DBVoteByBlockPrefix " + DBVo
 	err := s.db.Get(key, ret)
 	if err != nil {
 		log.Debug("                                  ===/=== s.db.Get key:[bits]DBEpochVotesKey " + DBEpochVotesKey + " Err=" + err.Error())
-	}
-	else {
+	} else {
 		log.Debug("                                  ===/=== s.db.Get key:[bits]DBEpochVotesKey " + DBEpochVotesKey)
 	}
 
