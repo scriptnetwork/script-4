@@ -850,8 +850,15 @@ func (e *ConsensusEngine) shouldVote(block common.Hash) bool {
 }
 
 func (e *ConsensusEngine) shouldVoteByID(id common.Address, block common.Hash) bool {
+log.Debug("@@@ shouldVoteByID! block: " + block.Hex() + " Id addr " + id.Hex())
+
 	validators := e.validatorManager.GetValidatorSet(block)
 	_, err := validators.GetValidator(id)
+
+if err != nil {
+  log.Debug("@@@ KO 44049 " + err.Error())
+}
+
 	return err == nil
 }
 
