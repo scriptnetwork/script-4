@@ -136,6 +136,7 @@ func (m *RotatingValidatorManager) GetNextValidatorSet(blockHash common.Hash) *c
 //
 
 func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.ValidatorSet {
+log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ MaxValidatorCount " + MaxValidatorCount)
 	maxNumValidators := MaxValidatorCount
 	topStakeHolders := vcp.GetTopStakeHolders(maxNumValidators)
 
@@ -143,18 +144,19 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 	for _, stakeHolder := range topStakeHolders {
 		valAddr := stakeHolder.Holder.Hex()
 		valStake := stakeHolder.TotalStake()
+log.Debug("      stakejolder addr " + valAddr + " stake " + valStake.String())
 		if valStake.Cmp(core.Zero) == 0 {
 			continue
 		}
 		validator := core.NewValidator(valAddr, valStake)
 		valSet.AddValidator(validator)
 	}
+log.Debug("ZZZZZZZZ/ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 
 	return valSet
 }
 
 func selectTopStakeHoldersAsValidatorsForBlock(consensus core.ConsensusEngine, blockHash common.Hash, isNext bool) *core.ValidatorSet {
-log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 	vcp, err := consensus.GetLedger().GetFinalizedValidatorCandidatePool(blockHash, isNext)
 	if err != nil {
 		log.Panicf("Failed to get the validator candidate pool, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), isNext, err)
@@ -162,7 +164,6 @@ log.Debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 	if vcp == nil {
 		log.Panic("Failed to retrieve the validator candidate pool, blockHash: %v, isNext: %v", blockHash.Hex(), isNext)
 	}
-log.Debug("ZZZZZZZZ/ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 	return SelectTopStakeHoldersAsValidators(vcp)
 }
 
