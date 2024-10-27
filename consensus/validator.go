@@ -154,6 +154,7 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 }
 
 func selectTopStakeHoldersAsValidatorsForBlock(consensus core.ConsensusEngine, blockHash common.Hash, isNext bool) *core.ValidatorSet {
+log.debug("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 	vcp, err := consensus.GetLedger().GetFinalizedValidatorCandidatePool(blockHash, isNext)
 	if err != nil {
 		log.Panicf("Failed to get the validator candidate pool, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), isNext, err)
@@ -161,7 +162,7 @@ func selectTopStakeHoldersAsValidatorsForBlock(consensus core.ConsensusEngine, b
 	if vcp == nil {
 		log.Panic("Failed to retrieve the validator candidate pool, blockHash: %v, isNext: %v", blockHash.Hex(), isNext)
 	}
-
+log.debug("ZZZZZZZZ/ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
 	return SelectTopStakeHoldersAsValidators(vcp)
 }
 
