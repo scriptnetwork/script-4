@@ -3,6 +3,7 @@ package consensus
 import (
 	"math/big"
 	"math/rand"
+"strconv"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
