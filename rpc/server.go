@@ -62,8 +62,7 @@ type ScriptRPCServer struct {
 }
 
 // NewScriptRPCServer creates a new instance of ScriptRPCServer.
-func NewScriptRPCServer(mempool *mempool.Mempool, ledger *ledger.Ledger, dispatcher *dispatcher.Dispatcher,
-	chain *blockchain.Chain, consensus *consensus.ConsensusEngine) *ScriptRPCServer {
+func NewScriptRPCServer(mempool *mempool.Mempool, ledger *ledger.Ledger, dispatcher *dispatcher.Dispatcher, chain *blockchain.Chain, consensus *consensus.ConsensusEngine) *ScriptRPCServer {
 	t := &ScriptRPCServer{
 		ScriptRPCService: &ScriptRPCService{
 			wg: &sync.WaitGroup{},

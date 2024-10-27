@@ -96,6 +96,8 @@ func (s *State) commit() error {
 func (s *State) load(forcedLastVote *core.Vote) (err error) {
 	key := []byte(DBStateStubKey)
 	stub := &StateStub{}
+
+log.Debug("D===========BStateStubKey " + DBStateStubKey)
 	s.db.Get(key, stub)
 
 	if stub.Root != s.chain.Root().Hash() {
