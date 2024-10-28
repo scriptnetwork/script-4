@@ -23,6 +23,8 @@ const (
 	CfgGenesisChainID = "genesis.chainID"	// CfgGenesisChainID defines the chainID.
 	CfgGenesisEthChainID = "genesis.ethChainID"   // Ethereum bridge numeric chain id
 
+	CfgLicenseDir = "genesis.license_dir"
+
 	// CfgConsensusMaxEpochLength defines the maxium length of an epoch.
 	CfgConsensusMaxEpochLength = "consensus.maxEpochLength"
 	// CfgConsensusMinBlockTime defines the minimal block interval (in seconds)
@@ -182,6 +184,7 @@ func init() {
 
 	viper.SetDefault(CfgGenesisEthChainID, 0);
 	viper.SetDefault(CfgGenesisChainID, "");
+	viper.SetDefault(CfgLicenseDir, "");
 
 	viper.SetDefault(CfgConsensusMaxEpochLength, 12)
 	viper.SetDefault(CfgConsensusMinBlockInterval, 6)
