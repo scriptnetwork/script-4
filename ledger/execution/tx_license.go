@@ -1,7 +1,6 @@
 package execution
 
 import (
-	"encoding/json"
 	"math/big"
 
 	"github.com/scripttoken/script/common"
@@ -46,7 +45,7 @@ func (exec *LicenseTxExecutor) sanityCheck(chainID string, view *st.StoreView, v
 	}
 
 	for _, license := range tx.Licenses {
-		if license.Issuer == "" || license.Licensee == "" || len(license.Items) == 0 {
+		if license.Issuer.IsEmpty() || license.Licensee.IsEmpty() || len(license.Items) == 0 {
 			return result.Error("Invalid license information: %+v", license)
 		}
 	}
@@ -63,16 +62,16 @@ func (exec *LicenseTxExecutor) process(chainID string, view *st.StoreView, viewS
 	}
 
 
-	for _, license := range tx.License {
-		err := WriteLicenseFile(license, "")
-	    if err != nil {
-	        return result.Error("Error writing license to file: %v\n", err)
-	    }
+	for _, license := range tx.Licenses {
+		err := core.WriteLicenseFile(license, "")
+		if err != nil {
+			return common.Hash{}, result.Error("Error writing license to file: %v\n", err)
+		}
 	}
 
 	_, err := core.ReadLicenseFile("")
 	if err != nil {
-		return result.Error("Error re-reading license file: %v\n", err)
+		return common.Hash{}, result.Error("Error re-reading license file: %v\n", err)
 	}
 
 	//Deduct trx fee
@@ -97,5 +96,6 @@ func (exec *LicenseTxExecutor) getTxInfo(transaction types.Tx) *core.TxInfo {
 func (exec *LicenseTxExecutor) calculateEffectiveGasPrice(transaction types.Tx) *big.Int {
 	return new(big.Int).SetUint64(0)
 }
+
 
 
