@@ -9,8 +9,6 @@ import (
 	"time"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/common"
-
-	"github.com/scripttoken/script/dotool"
 )
 
 type License struct {
@@ -24,7 +22,7 @@ type License struct {
 
 // package-level variable to store the license map
 var licenseMap = make(map[common.Address]License)
-var licenseFile = dotool.license_dir + "/license.json"
+var licenseFile = common.CfgLicenseDir + "/license.json"
 // read license file
 func ReadFile(filename string) (map[common.Address]License, error) {
 
