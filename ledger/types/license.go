@@ -9,6 +9,9 @@ import (
 	"github.com/scripttoken/script/core"
 )
 
+type LicenseWrapper struct {
+	core.License
+}
 
 // LicenseJSON struct represents the JSON format of the License.
 type LicenseJSON struct {
@@ -45,22 +48,22 @@ func (l LicenseJSON) License() core.License {
 }
 
 // MarshalJSON marshals the License to JSON format.
-func (l core.License) MarshalJSON() ([]byte, error) {
-	return json.Marshal(NewLicenseJSON(l))
+func (lw LicenseWrapper) MarshalJSON() ([]byte, error) {
+	return json.Marshal(NewLicenseJSON(lw.License))
 }
 
 // UnmarshalJSON unmarshals the License from JSON format.
-func (l *core.License) UnmarshalJSON(data []byte) error {
+func (lw *LicenseWrapper) UnmarshalJSON(data []byte) error {
 	var lJSON LicenseJSON
 	if err := json.Unmarshal(data, &lJSON); err != nil {
 		return err
 	}
-	*l = lJSON.License()
+	lw.License = lJSON.License()
 	return nil
 }
 
 // String method for displaying License information.
-func (l core.License) String() string {
+func (lw LicenseWrapper) String() string {
 	return fmt.Sprintf("License{Issuer: %v, Licensee: %v, From: %v, To: %v, Items: %v, Signature: %v}",
-		l.Issuer, l.Licensee, l.From, l.To, l.Items, l.Signature)
+		lw.License.Issuer, lw.License.Licensee, lw.License.From, lw.License.To, lw.License.Items, lw.License.Signature)
 }
