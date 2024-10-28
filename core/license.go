@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
-	"github.com/scripttoken/script/crypto/bls"
+	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/common"
+
+	"github.com/scripttoken/script/dotool"
 )
 
 type License struct {
@@ -17,14 +19,18 @@ type License struct {
 	From      *big.Int        // Start time (unix timestamp)
 	To        *big.Int        // End time (unix timestamp)
 	Items     []string        // Items covered by the license
-	Signature *bls.Signature   // Signature of the license
+	Signature *crypto.Signature   // Signature of the license
 }
 
 // package-level variable to store the license map
 var licenseMap = make(map[common.Address]License)
-
+var licenseFile = dotool.license_dir + "/license.json"
 // read license file
 func ReadFile(filename string) (map[common.Address]License, error) {
+
+	if(filename == "") {
+		filename = licenseFile
+	}
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -57,6 +63,10 @@ func WriteLicenseFile(license License, filename string) error {
 	err := ValidateIncomingLicense(license)
 	if err != nil {
 		return fmt.Errorf("license validation failed: %v", err)
+	}
+
+	if(filename == "") {
+		filename = licenseFile
 	}
 
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
@@ -96,8 +106,11 @@ func ValidateIncomingLicense(license License) error {
 
 	dataToSign := concatenateLicenseData(license)
 
-	valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
+	/*valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
 	if !valid {
+		return fmt.Errorf("invalid license signature")
+	}*/
+	if !license.Signature.Verify(dataToSign, license.Issuer) {
 		return fmt.Errorf("invalid license signature")
 	}
 
@@ -117,10 +130,14 @@ func ValidateLicense(licensee common.Address) error {
 		return fmt.Errorf("current time is outside the valid license period")
 	}
 
-	dataToSign := concatenateLicenseData(license)
+	dataToValidate := concatenateLicenseData(license)
 
-	valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
+	/*valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
 	if !valid {
+		return fmt.Errorf("invalid license signature")
+	}*/
+
+	if !license.Signature.Verify(dataToValidate, license.Issuer) {
 		return fmt.Errorf("invalid license signature")
 	}
 

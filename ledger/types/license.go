@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/scripttoken/script/common"
-	"github.com/scripttoken/script/crypto/bls"
+	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/core"
 )
 
@@ -18,7 +18,7 @@ type LicenseJSON struct {
 	From      common.JSONBig    `json:"from"`      // Start time (unix timestamp)
 	To        common.JSONBig    `json:"to"`        // End time (unix timestamp)
 	Items     []string          `json:"items"`     // Items covered by the license
-	Signature *bls.Signature    `json:"signature"` // Signature of the license
+	Signature *crypto.Signature `json:"signature"` // Signature of the license
 }
 
 // NewLicenseJSON creates a new LicenseJSON from a License.
