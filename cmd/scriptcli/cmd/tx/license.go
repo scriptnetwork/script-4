@@ -4,14 +4,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"strconv"
+	"encoding/json"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
-	"github.com/scripttoken/script/common"
+	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
+	wtypes "github.com/scripttoken/script/wallet/types"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
@@ -30,7 +31,7 @@ func doLicenseCmd(cmd *cobra.Command, args []string) {
 		 return
 	}
 
-	if len(licensePathFlag) == 0 {
+	if len(licenseFlag) == 0 {
 		 utils.Error("The license file path cannot be empty")
 		 return
 	}
@@ -41,8 +42,8 @@ func doLicenseCmd(cmd *cobra.Command, args []string) {
     }
     defer wallet.Lock(fromAddress)
 
-	var licenses []types.License
-	if err := json.Unmarshal([]byte(licensePathFlag), &licenses); err != nil {
+	var licenses []core.License
+	if err := json.Unmarshal([]byte(licenseFlag), &licenses); err != nil {
 		utils.Error("Failed to parse license JSON: %v\n", err)
 		return
 	}
@@ -107,7 +108,7 @@ func doLicenseCmd(cmd *cobra.Command, args []string) {
 func init() {
 	licenseCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
 	licenseCmd.Flags().StringVar(&fromFlag, "from", "", "Address to send from")
-	licenseCmd.Flags().StringVar(&licensePathFlag, "license", "", "Path to the license file")
+	licenseCmd.Flags().StringVar(&licenseFlag, "license", "", "License in json")
 	licenseCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
 	licenseCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWeiJune2021), "Fee")
 	licenseCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano|trezor)")
@@ -117,5 +118,4 @@ func init() {
 	licenseCmd.MarkFlagRequired("chain")
 	licenseCmd.MarkFlagRequired("from")
 	licenseCmd.MarkFlagRequired("license")
-	licenseCmd.MarkFlagRequired("seq")
 }
