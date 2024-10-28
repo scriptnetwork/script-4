@@ -65,7 +65,7 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 	  }
 
 	  addr = common.HexToAddress(holderFlag)
-	  core.ReadLicenseFile("")
+	  core.ReadFile("")
 	  err = core.ValidateLicense(addr)
 	  if err != nil {
 			utils.Error("License validation failed: %v\n", err)
