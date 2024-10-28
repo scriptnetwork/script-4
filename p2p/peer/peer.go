@@ -222,7 +222,7 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 	peer.nodeType = common.NodeType(peerType)
 
 	if(peer.nodeType == common.NodeTypeBlockchainNode) { //	NodeTypeBlockchainNode
-		err = core.ValidateLicense(targetPeerNodeInfo.PubKey.Address().Hex())
+		err = core.ValidateLicense(targetPeerNodeInfo.PubKey.Address())
 	  if err != nil {
 	  		peer.isLicenseValid = false
 			logger.Warnf("License validation failed: %v\n", err)
