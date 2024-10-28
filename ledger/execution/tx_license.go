@@ -69,7 +69,7 @@ func (exec *LicenseTxExecutor) process(chainID string, view *st.StoreView, viewS
 		}
 	}
 
-	_, err := core.ReadLicenseFile("")
+	_, err := core.ReadFile("")
 	if err != nil {
 		return common.Hash{}, result.Error("Error re-reading license file: %v\n", err)
 	}
