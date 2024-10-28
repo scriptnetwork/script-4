@@ -26,8 +26,8 @@ func NewLicenseJSON(l core.License) LicenseJSON {
 	return LicenseJSON{
 		Issuer:    l.Issuer,
 		Licensee:  l.Licensee,
-		From:      common.JSONBig(l.From),
-		To:        common.JSONBig(l.To),
+		From:      (*common.JSONBig)(l.From),
+		To:        (*common.JSONBig)(l.To),
 		Items:     l.Items,
 		Signature: l.Signature,
 	}
@@ -38,8 +38,8 @@ func (l LicenseJSON) License() core.License {
 	return core.License{
 		Issuer:    l.Issuer,
 		Licensee:  l.Licensee,
-		From:      (*big.Int)(&l.From),
-		To:        (*big.Int)(&l.To),
+		From:      l.From.ToInt(),
+		To:        l.To.ToInt(),
 		Items:     l.Items,
 		Signature: l.Signature,
 	}
