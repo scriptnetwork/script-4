@@ -14,6 +14,7 @@ import (
 	"github.com/scripttoken/script/rpc"
 	wtypes "github.com/scripttoken/script/wallet/types"
 
+	"github.com/ybbus/jsonrpc"
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
