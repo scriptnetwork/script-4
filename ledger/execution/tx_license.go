@@ -64,13 +64,13 @@ func (exec *LicenseTxExecutor) process(chainID string, view *st.StoreView, viewS
 
 
 	for _, license := range tx.License {
-		err := WriteLicenseFile(license, "path/to/license/file.json") //Replace with license file path from config file
+		err := WriteLicenseFile(license, "")
 	    if err != nil {
 	        return result.Error("Error writing license to file: %v\n", err)
 	    }
 	}
 
-	_, err := core.ReadLicenseFile()
+	_, err := core.ReadLicenseFile("")
 	if err != nil {
 		return result.Error("Error re-reading license file: %v\n", err)
 	}
