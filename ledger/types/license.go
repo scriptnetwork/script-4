@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/crypto"
@@ -15,8 +14,8 @@ import (
 type LicenseJSON struct {
 	Issuer    common.Address    `json:"issuer"`    // Issuer's address
 	Licensee  common.Address    `json:"licensee"`  // Licensee's address
-	From      common.JSONBig    `json:"from"`      // Start time (unix timestamp)
-	To        common.JSONBig    `json:"to"`        // End time (unix timestamp)
+	From      *common.JSONBig    `json:"from"`      // Start time (unix timestamp)
+	To        *common.JSONBig    `json:"to"`        // End time (unix timestamp)
 	Items     []string          `json:"items"`     // Items covered by the license
 	Signature *crypto.Signature `json:"signature"` // Signature of the license
 }
@@ -26,8 +25,8 @@ func NewLicenseJSON(l core.License) LicenseJSON {
 	return LicenseJSON{
 		Issuer:    l.Issuer,
 		Licensee:  l.Licensee,
-		From:      (common.JSONBig)(l.From),
-		To:        (common.JSONBig)(l.To),
+		From:      (*common.JSONBig)(l.From),
+		To:        (*common.JSONBig)(l.To),
 		Items:     l.Items,
 		Signature: l.Signature,
 	}
