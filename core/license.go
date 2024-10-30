@@ -146,7 +146,7 @@ func ValidateLicense(licensee common.Address) error {
 		return fmt.Errorf("invalid license signature")
 	}
 
-	// Cache the verified status
+	// cache the verified status
 	verifiedLicenseCache[licensee] = true
 
 	// valid license
@@ -184,3 +184,25 @@ func concatenateLicenseData(license License) []byte {
 	return concatenatedData
 }
 
+// periodically check and update the cache
+func startCacheUpdater(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for range ticker.C {
+			updateCache()
+		}
+	}()
+}
+
+func updateCache() {
+	currentTime := big.NewInt(time.Now().Unix())
+	for licensee, license := range licenseMap {
+		if license.From.Cmp(currentTime) > 0 || license.To.Cmp(currentTime) < 0 {
+			delete(verifiedLicenseCache, licensee)
+		}
+	}
+}
+
+func init() {
+	startCacheUpdater(1 * time.Hour)
+}
