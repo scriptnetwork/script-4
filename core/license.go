@@ -23,6 +23,10 @@ type License struct {
 // package-level variable to store the license map
 var licenseMap = make(map[common.Address]License)
 var licenseFile = common.CfgLicenseDir + "/license.json"
+
+// cache for pre-verified licenses
+var verifiedLicenseCache = make(map[common.Address]bool)
+
 // read license file
 func ReadFile(filename string) (map[common.Address]License, error) {
 
@@ -49,6 +53,7 @@ func ReadFile(filename string) (map[common.Address]License, error) {
 	}
 
 	licenseMap = make(map[common.Address]License) // clear previous map
+	verifiedLicenseCache = make(map[common.Address]bool) // clear previous cache
 
 	for _, license := range licenses {
 		licenseMap[license.Licensee] = license
@@ -104,10 +109,6 @@ func ValidateIncomingLicense(license License) error {
 
 	dataToSign := concatenateLicenseData(license)
 
-	/*valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
-	if !valid {
-		return fmt.Errorf("invalid license signature")
-	}*/
 	if !license.Signature.Verify(dataToSign, license.Issuer) {
 		return fmt.Errorf("invalid license signature")
 	}
@@ -117,6 +118,15 @@ func ValidateIncomingLicense(license License) error {
 
 // validate license for a public key
 func ValidateLicense(licensee common.Address) error {
+	// Check cache first
+	if verified, exists := verifiedLicenseCache[licensee]; exists {
+		if verified {
+			return nil // License is already verified
+		} else {
+			return fmt.Errorf("license is not verified")
+		}
+	}
+
 	license, exists := licenseMap[licensee]
 	if !exists {
 		return fmt.Errorf("No license found for the given licensee public key")
@@ -125,19 +135,19 @@ func ValidateLicense(licensee common.Address) error {
 	currentTime := big.NewInt(time.Now().Unix())
 
 	if license.From.Cmp(currentTime) > 0 || license.To.Cmp(currentTime) < 0 {
+		verifiedLicenseCache[licensee] = false
 		return fmt.Errorf("current time is outside the valid license period")
 	}
 
 	dataToValidate := concatenateLicenseData(license)
 
-	/*valid := bls.Verify(license.Issuer, dataToSign, license.Signature)
-	if !valid {
-		return fmt.Errorf("invalid license signature")
-	}*/
-
 	if !license.Signature.Verify(dataToValidate, license.Issuer) {
+		verifiedLicenseCache[licensee] = false
 		return fmt.Errorf("invalid license signature")
 	}
+
+	// Cache the verified status
+	verifiedLicenseCache[licensee] = true
 
 	// valid license
 	return nil
