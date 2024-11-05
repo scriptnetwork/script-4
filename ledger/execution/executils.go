@@ -74,6 +74,8 @@ func isAValidator(address common.Address, validatorAddresses []common.Address) r
 // crypto.PubKey.(type) != nil, (it must be known),
 // or it must be specified in the TxInput.
 func getInputs(view *state.StoreView, ins []types.TxInput) (map[string]*types.Account, result.Result) {
+log.Debug("XXXXXXXXXXXXXXX ledger/execution/executils.go::getInputs");
+
 	accounts := map[string]*types.Account{}
 	for _, in := range ins {
 		// Account shouldn't be duplicated
