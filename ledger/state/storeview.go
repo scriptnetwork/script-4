@@ -148,6 +148,7 @@ func (sv *StoreView) SetCoinbaseTransactionProcessed(processed bool) {
 
 // GetAccount returns an account.
 func (sv *StoreView) GetAccount(addr common.Address) *types.Account {
+log.Trace("ledger/state/storeview.go::GetAccount");
 	data := sv.Get(AccountKey(addr))
 	if data == nil || len(data) == 0 {
 		return nil
