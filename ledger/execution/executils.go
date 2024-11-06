@@ -3,6 +3,7 @@ package execution
 import (
 	"encoding/hex"
 	"math/big"
+        log "github.com/sirupsen/logrus"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
