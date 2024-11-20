@@ -162,11 +162,8 @@ var (
 
 func init() {
 	// Each stake deposit needs to be at least 10,000 Script
-	MinLightningStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
-
-	// Lowering the lightning stake threshold to 10,000 Script
-	//MinLightningStakeDeposit1000 = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
-
+	//MinLightningStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(10000), new(big.Int).SetUint64(1e18))
+	MinLightningStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(1), new(big.Int).SetUint64(1e18))
 }
 
 type LightningCandidatePool struct {
