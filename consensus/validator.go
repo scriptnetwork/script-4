@@ -139,6 +139,8 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 	maxNumValidators := MaxValidatorCount
 	topStakeHolders := vcp.GetTopStakeHolders(maxNumValidators)
 
+        minValidatorTotalStake := new(big.Int).Mul(new(big.Int).SetUint64(1000000), new(big.Int).SetUint64(1000000000000000000))
+
 	valSet := core.NewValidatorSet()
 	for _, stakeHolder := range topStakeHolders {
 		valAddr := stakeHolder.Holder.Hex()
@@ -146,6 +148,9 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 		if valStake.Cmp(core.Zero) == 0 {
 			continue
 		}
+	        if valStake.Cmp(minValidatorTotalStake) < 0 {
+	                continue
+                }
 		validator := core.NewValidator(valAddr, valStake)
 		valSet.AddValidator(validator)
 	}
