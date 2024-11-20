@@ -202,9 +202,7 @@ func (vcp *ValidatorCandidatePool) GetTopStakeHolders(maxNumStakeHolders int) []
 
 func (vcp *ValidatorCandidatePool) DepositStake(source common.Address, holder common.Address, amount *big.Int, blockHeight uint64) (err error) {
 	minValidatorStake := MinValidatorStakeDeposit
-	//if blockHeight >= common.HeightValidatorStakeChangedTo200K {
-	//	minValidatorStake = MinValidatorStakeDeposit200K
-	//}
+
 	if amount.Cmp(minValidatorStake) < 0 {
 		return fmt.Errorf("insufficient stake: %v", amount)
 	}
@@ -294,10 +292,3 @@ func (vcp *ValidatorCandidatePool) sortCandidates() {
 		return stakeCmp > 0
 	})
 }
-
-// func (vcp *ValidatorCandidatePool) sortCandidates() {
-// 	sort.Slice(vcp.SortedCandidates[:], func(i, j int) bool { // descending order in totalStake
-// 		stakeCmp := vcp.SortedCandidates[i].TotalStake().Cmp(vcp.SortedCandidates[j].TotalStake())
-// 		return stakeCmp >= 0
-// 	})
-// }
