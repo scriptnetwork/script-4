@@ -181,7 +181,7 @@ func doDepositStakeCmd(cmd *cobra.Command, args []string) {
 	if res.Error != nil {
 		utils.Error("Server returned error: %v\n", res.Error)
 	}
-	fmt.Printf("Successfully broadcasted transaction%v.\n", res)
+	fmt.Printf("Successfully broadcasted transaction.\n%v\n", res)
 }
 
 func init() {
