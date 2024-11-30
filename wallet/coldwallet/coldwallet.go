@@ -90,6 +90,10 @@ func (w *ColdWallet) NewKey(password string) (common.Address, error) {
 	return common.Address{}, fmt.Errorf("Not supported for cold wallet")
 }
 
+func (w *ColdWallet) ImportKey(hexPriv string) (common.Address, error) {
+	return common.Address{}, fmt.Errorf("Not supported for cold wallet")
+}
+
 // Neither address nor password is used by the function, silently ignored
 func (w *ColdWallet) Unlock(address common.Address, password string, derivationPath types.DerivationPath) error {
 	w.stateLock.Lock() // State lock is enough since there's no connection yet at this point

@@ -3,9 +3,9 @@ package softwallet
 import (
 	"fmt"
 	"sync"
-
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/crypto"
+//	"github.com/scripttoken/script/crypto/keyutils"
 	ks "github.com/scripttoken/script/wallet/softwallet/keystore"
 	"github.com/scripttoken/script/wallet/types"
 )
@@ -88,6 +88,32 @@ func (w *SoftWallet) NewKey(password string) (common.Address, error) {
 	address := key.Address
 
 	w.keystore.StoreKey(key, password)
+
+	// newly created key is considerred unlocked
+	unlockedKey := &UnlockedKey{
+		Key: key,
+	}
+	w.unlockedKeyMap[address] = unlockedKey
+
+	return address, nil
+}
+
+func (w *SoftWallet) ImportKey(hexPriv string) (common.Address, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	privKey, err := crypto.HexToECDSA(hexPriv)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	// Wrap the *ecdsa.PrivateKey into a *crypto.PrivateKey
+	cryptoPrivKey := crypto.ECDSAToPrivKey(privKey)
+
+	key := ks.NewKey(cryptoPrivKey)
+	address := key.Address
+
+	w.keystore.StoreKey(key, "")
 
 	// newly created key is considerred unlocked
 	unlockedKey := &UnlockedKey{
