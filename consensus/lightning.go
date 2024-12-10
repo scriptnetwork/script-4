@@ -210,6 +210,8 @@ func (g *LightningEngine) processVote(vote *core.AggregatedVotes) {
 		"local.round":           g.round,
 		"local.vote.Multiplies": g.nextVote.Multiplies,
 	}).Debug("New lightning vote")
+
+    g.logger.Debug("TR-10000");
 }
 
 func (g *LightningEngine) HandleVote(vote *core.AggregatedVotes) {

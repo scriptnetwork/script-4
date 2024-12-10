@@ -291,23 +291,28 @@ func (e *ConsensusEngine) mainLoop() {
 		for {
 			select {
 			case <-e.ctx.Done():
+                e.logger.Debug("TR-00050 Done")
 				e.stopped = true
 				return
 			case msg := <-e.incoming:
+                e.logger.Debug("TR-01000 message incoming")
 				endEpoch := e.processMessage(msg)
 				if endEpoch {
 					break Epoch
 				}
 			case <-e.voteTimer.C:
+                e.logger.Debug("TR-02000 TIMER Vote.")
 				e.voteTimerReady = true
 				if e.blockProcessed {
 					e.vote()
 				}
 			case <-e.epochTimer.C:
+                e.logger.Debug("TR-02010 TIMER Epoch.")
 				e.logger.WithFields(log.Fields{"e.epoch": e.GetEpoch()}).Debug("Epoch timeout. Repeating epoch")
 				e.vote()
 				break Epoch
 			case <-e.lightningTimer.C:
+                e.logger.Debug("TR-02020 TIMER Lightning.")
 				v := e.lightning.GetVoteToBroadcast()
 
 				if v != nil {
@@ -331,17 +336,20 @@ func (e *ConsensusEngine) mainLoop() {
 // enterEpoch is called when engine enters a new epoch.
 func (e *ConsensusEngine) enterEpoch() {
 	logger.Debugf("Enter epoch %v", e.GetEpoch())
+	logger.Debug("TR-00010 Enter Epoch")
 
 	// Reset timers.
 	if e.epochTimer != nil {
 		e.epochTimer.Stop()
 	}
 	e.epochTimer = time.NewTimer(time.Duration(viper.GetInt(common.CfgConsensusMaxEpochLength)) * time.Second)
+//	e.epochTimer = time.NewTimer(time.Duration(600) * time.Second)  //10 mins like Bitcoin
 
 	if e.voteTimer != nil {
 		e.voteTimer.Stop()
 	}
 	e.voteTimer = time.NewTimer(time.Duration(viper.GetInt(common.CfgConsensusMinBlockInterval)) * time.Second)
+//	e.voteTimer = time.NewTimer(time.Duration(540) * time.Second) //9 minutes?
 
 	e.voteTimerReady = false
 	e.blockProcessed = false
@@ -364,16 +372,19 @@ func (e *ConsensusEngine) AddMessage(msg interface{}) {
 func (e *ConsensusEngine) processMessage(msg interface{}) (endEpoch bool) {
 	switch m := msg.(type) {
 	case core.Vote:
+        e.logger.Debug("TR-01010 processMessage core.Vote")
 		e.logger.WithFields(log.Fields{"vote": m}).Debug("Received vote")
 		endEpoch = e.handleVote(m)
 		e.checkCC(m.Block)
 		return endEpoch
 	case *core.Block:
+        e.logger.Debug("TR-01020 processMessage core.Block")
 		e.logger.WithFields(log.Fields{
 			"block": m.BlockHeader,
 		}).Debug("Received block")
 		e.handleBlock(m)
 	case *core.AggregatedVotes:
+        e.logger.Debug("TR-01030 processMessage AggregatedVotes (lightning vote)")
 		// e.logger.WithFields(log.Fields{"lightning vote": m}).Debug("Received lightning vote")
 		e.handleLightningVote(m)
 	case *core.EENVote:
@@ -668,6 +679,7 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 }
 
 func (e *ConsensusEngine) handleBlock(block *core.Block) {
+    e.logger.Debug("TR-0130 hadleBlock")
 	eb, err := e.chain.FindBlock(block.Hash())
 	if err != nil {
 		// Should not happen.
@@ -855,6 +867,7 @@ func (e *ConsensusEngine) shouldVoteByID(id common.Address, block common.Hash) b
 }
 
 func (e *ConsensusEngine) vote() {
+    e.logger.Debug("TR-00100 vote")
 	tip := e.GetTipToVote()
 
 	if !e.shouldVote(tip.Hash()) {
@@ -997,6 +1010,8 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 }
 
 func (e *ConsensusEngine) checkCC(hash common.Hash) {
+    e.logger.Debug("TR-00140 checkCC")
+
 	if hash.IsEmpty() {
 		return
 	}
@@ -1177,6 +1192,8 @@ func (e *ConsensusEngine) finalizeBlock(block *core.ExtendedBlock) error {
 		return nil
 	}
 
+    e.logger.Debug("TR-02000 finalizeBlock");
+
 	e.logger.WithFields(log.Fields{"block.Hash": block.Hash().Hex(), "block.Height": block.Height}).Info("Finalizing block")
 
 	e.state.SetLastFinalizedBlock(block)
@@ -1344,6 +1361,8 @@ func (e *ConsensusEngine) createProposal(shouldIncludeValidatorUpdateTxs bool) (
 }
 
 func (e *ConsensusEngine) propose() {
+	logger.Debug("TR-00020 propose")
+
 	tip := e.GetTipToExtend()
 	if !e.shouldPropose(tip, e.GetEpoch()) {
 		return
