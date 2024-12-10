@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# XX.cfg:
+#
+# add_ss__node testnet genesis
+# add_ss__node testnet user1
+#
+
+# bin/hotfix_vm (this file)
+# Invoke with hostname. Your hostname is:
+# bin/configure info_vm | grep VM_server_name
+
+hostname=$1 # vmsto04.cto.script.tv
+
+if [[ -z "$hostname" ]]; then
+    >&2 echo "bin/configure ; "
+    >&2 echo "KO 30298 hostname e.g. vmsto04.cto.script.tv; "
+    exit 1
+fi
+
+echo "make cript and scriptcli"
+make || exit 1
+echo "stopping VM"
+ssh root@${hostname} script_tv__ctl.sh stop || exit 1
+echo "copying binaries"
+scp _output/script root@vmsto04.cto.script.tv:/usr/local/bin/script_tv__script4__gov || exit 1
+scp _output/scriptcli root@vmsto04.cto.script.tv:/usr/local/bin/script_tv__script4__wallet || exit 1
+echo "starting VM"
+ssh root@${hostname} script_tv__ctl.sh start || exit 1
+
+exit 0
