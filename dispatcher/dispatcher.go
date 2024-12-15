@@ -106,6 +106,7 @@ func (dp *Dispatcher) GetData(peerIDs []string, datareq DataRequest) {
 // SendData sends out the DataResponse
 func (dp *Dispatcher) SendData(peerIDs []string, datarsp DataResponse) {
 	if len(peerIDs) == 0 {
+
 		if datarsp.ChannelID == common.ChannelIDProposal {
 			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp, false /* should send to both blockchain and edge nodes */)
 		} else if datarsp.ChannelID == common.ChannelIDLightning {
@@ -208,7 +209,9 @@ func (dp *Dispatcher) send(peerIDs []string, channelID common.ChannelIDEnum, con
 				ok := dp.p2pnet.Send(peerID, messageOld)
 				if !ok {
 					logger.Debugf("Failed to send message to [%v]: %v, %v", peerID, channelID, content)
-				}
+				} else {
+					logger.Debugf("Message sent to [%v]: %v, %v", peerID, channelID, content)
+                }
 			}
 			if !reflect.ValueOf(dp.p2plnet).IsNil() {
 				dp.p2plnet.Send(peerID, message)

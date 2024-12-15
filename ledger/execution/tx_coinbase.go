@@ -151,11 +151,11 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 		eliteEdgeNodePool = nil
 	} else if blockHeight < common.HeightEnableScript3 {
 		if lightningVotes != nil {
-			guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
+			lightningVoteBlock, err := chain.FindBlock(lightningVotes.Block)
 			if err != nil {
 				logger.Panic(err)
 			}
-			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+			storeView := st.NewStoreView(lightningVoteBlock.Height, lightningVoteBlock.StateHash, db)
 			lightningPool = storeView.GetLightningCandidatePool()
 		}
 	} else { // blockHeight >= common.HeightEnableScript3
@@ -163,11 +163,11 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 		// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
 		// the edge nodes vote for the correct checkpoint
 		if lightningVotes != nil {
-			guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
+			lightningVoteBlock, err := chain.FindBlock(lightningVotes.Block)
 			if err != nil {
 				logger.Panic(err)
 			}
-			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+			storeView := st.NewStoreView(lightningVoteBlock.Height, lightningVoteBlock.StateHash, db)
 			lightningPool = storeView.GetLightningCandidatePool()
 
 			if eliteEdgeNodeVotes != nil {
@@ -286,6 +286,8 @@ func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *
 func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes,
 	lightningPool *core.LightningCandidatePool, accountReward *map[string]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
+		logger.Debug("TR job309_REWARDS grantValidatorAndLightningReward")
+
 		return
 	}
 

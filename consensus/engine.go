@@ -285,6 +285,7 @@ func (e *ConsensusEngine) mainLoop() {
 	defer e.wg.Done()
 
 	for {
+        e.logger.Debug("TR-00000 =========================================================================.")
 		e.enterEpoch()
 		e.propose()
 	Epoch:
@@ -871,6 +872,7 @@ func (e *ConsensusEngine) vote() {
 	tip := e.GetTipToVote()
 
 	if !e.shouldVote(tip.Hash()) {
+        e.logger.Debug("TR-00101 I shouldn't vote")
 		return
 	}
 
@@ -928,6 +930,7 @@ func (e *ConsensusEngine) broadcastVote(vote core.Vote) {
 		ChannelID: common.ChannelIDVote,
 		Payload:   payload,
 	}
+    e.logger.Debug("TR-00102 Broadcast vote->peers. " + vote.String())
 	e.dispatcher.SendData([]string{}, voteMsg)
 }
 
@@ -1010,11 +1013,10 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 }
 
 func (e *ConsensusEngine) checkCC(hash common.Hash) {
-    e.logger.Debug("TR-00140 checkCC")
-
 	if hash.IsEmpty() {
 		return
 	}
+    e.logger.Debug("TR-00140 checkCC block-hash")
 	block, err := e.Chain().FindBlock(hash)
 	if err != nil {
 		e.logger.WithFields(log.Fields{"block": hash.Hex()}).Debug("checkCC: Block hash in vote is not found")
@@ -1045,7 +1047,13 @@ func (e *ConsensusEngine) checkCC(hash common.Hash) {
 
 	votes := e.chain.FindVotesByHash(hash).UniqueVoter()
 	validators := e.validatorManager.GetValidatorSet(hash)
+
+    e.logger.Debugf("TR-01145 checkCC block-hash - VOTES: %+v", votes)
+    e.logger.Debugf("TR-01146 checkCC block-hash - VALIDATORS: %+v", validators)
+
+
 	if validators.HasMajority(votes) {
+        e.logger.Debug("TR-01149 validators.HasMajority(chain.FindVotesByHash(block-hash).UniqueVoter())")
 		e.processCCBlock(block)
 	}
 }
@@ -1192,7 +1200,7 @@ func (e *ConsensusEngine) finalizeBlock(block *core.ExtendedBlock) error {
 		return nil
 	}
 
-    e.logger.Debug("TR-02000 finalizeBlock");
+    e.logger.Debug("TR-01150 finalizeBlock");
 
 	e.logger.WithFields(log.Fields{"block.Hash": block.Hash().Hex(), "block.Height": block.Height}).Info("Finalizing block")
 

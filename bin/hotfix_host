@@ -23,8 +23,8 @@ make || exit 1
 echo "stopping VM"
 ssh root@${hostname} script_tv__ctl.sh stop || exit 1
 echo "copying binaries"
-scp _output/script root@vmsto04.cto.script.tv:/usr/local/bin/script_tv__script4__gov || exit 1
-scp _output/scriptcli root@vmsto04.cto.script.tv:/usr/local/bin/script_tv__script4__wallet || exit 1
+scp _output/script root@${hostname}:/usr/local/bin/script_tv__script4__gov || exit 1
+scp _output/scriptcli root@${hostname}:/usr/local/bin/script_tv__script4__wallet || exit 1
 echo "starting VM"
 ssh root@${hostname} script_tv__ctl.sh start || exit 1
 
