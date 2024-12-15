@@ -781,6 +781,7 @@ func (e *ConsensusEngine) handleNormalBlock(eb *core.ExtendedBlock) {
 		return
 	}
 	validateBlockTime := time.Since(start1)
+	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock validated Block")
 
 	for _, vote := range block.HCC.Votes.Votes() {
 		e.handleVote(vote)
@@ -817,23 +818,28 @@ func (e *ConsensusEngine) handleNormalBlock(eb *core.ExtendedBlock) {
 		return
 	}
 	applyBlockTime := time.Since(start1)
+	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock applied Block")
 
 	start1 = time.Now()
 	go e.pruneState(block.Height)
 	pruneStateTime := time.Since(start1)
+	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock state pruned")
 
 	if hasValidatorUpdate, ok := result.Info["hasValidatorUpdate"]; ok {
 		hasValidatorUpdateBool := hasValidatorUpdate.(bool)
 		if hasValidatorUpdateBool {
+        	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock e.chain.MarkBlockHasValidatorUpdate")
 			e.chain.MarkBlockHasValidatorUpdate(block.Hash())
 		}
 	}
 
 	e.chain.MarkBlockValid(block.Hash())
+	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock e.chain.MarkBlockValid")
 
 	// Skip voting for block older than current best known epoch.
 	// Allow block with one epoch behind since votes are processed first and might advance epoch
 	// before block is processed.
+	logger.Debug("TR-job309_REWARDS 00000 voteTimerReady engine::vote. block.Epoch=%v; engine.epoch=%v; e.voteTimerReady=%v",block.Epoch,e.GetEpoch(),e.voteTimerReady)
 	if localEpoch := e.GetEpoch(); block.Epoch == localEpoch-1 || block.Epoch == localEpoch {
 		e.blockProcessed = true
 		if e.voteTimerReady {
