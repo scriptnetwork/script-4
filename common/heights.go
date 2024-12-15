@@ -40,7 +40,8 @@ const HeightSupportWrappedScript uint64 = 1
 const HeightEnableMetachainSupport uint64 = 1
 
 // CheckpointInterval defines the interval between checkpoints.
-const CheckpointInterval = int64(1000)
+//const CheckpointInterval = int64(1000)
+const CheckpointInterval = int64(10)
 
 // IsCheckPointHeight returns if a block height is a checkpoint.
 func IsCheckPointHeight(height uint64) bool {

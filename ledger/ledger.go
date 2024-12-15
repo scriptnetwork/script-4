@@ -147,6 +147,8 @@ func (ledger *Ledger) GetFinalizedValidatorCandidatePool(blockHash common.Hash, 
 
 // GetLightningCandidatePool returns the lightning candidate pool of the given block.
 func (ledger *Ledger) GetLightningCandidatePool(blockHash common.Hash) (*core.LightningCandidatePool, error) {
+	logger.Debugf("TR-job309_REWARDS 00090 Ledger.GetLightningCandidatePool, blockHash = %v", blockHash)
+
 	db := ledger.state.DB()
 	store := kvstore.NewKVStore(db)
 
@@ -337,6 +339,7 @@ func (ledger *Ledger) ApplyBlockTxs(block *core.Block) result.Result {
 	// Must always acquire locks in following order to avoid deadlock: mempool, ledger.
 	// Otherwise, could cause deadlock since mempool.InsertTransaction() also first acquires the mempool, and then the ledger lock
 	logger.Debugf("ApplyBlockTxs: Apply block transactions, block.height = %v", block.Height)
+	logger.Debug("TR-job309_REWARDS 00000 ledger::ApplyBlockTxs")
 
 	ledger.mu.Lock()
 	defer ledger.mu.Unlock()
@@ -775,8 +778,9 @@ func (ledger *Ledger) addSpecialTransactions(block *core.Block, view *st.StoreVi
 }
 
 // addCoinbaseTx adds a Coinbase transaction
-func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator,
-	validatorSet *core.ValidatorSet, rawTxs *[]common.Bytes) {
+func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator, validatorSet *core.ValidatorSet, rawTxs *[]common.Bytes) {
+	logger.Debugf("TR-job309_REWARDS 00080 Ledger.addCoinbaseTx, proposer = %v; validatorset=%v", validatorSet)
+
 	proposerAddress := proposer.Address
 	proposerTxIn := types.TxInput{
 		Address: proposerAddress,

@@ -681,6 +681,8 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 
 func (e *ConsensusEngine) handleBlock(block *core.Block) {
     e.logger.Debug("TR-0130 hadleBlock")
+	e.logger.Debug("TR-job309_REWARDS 00000 consensus::handleBlock")
+
 	eb, err := e.chain.FindBlock(block.Hash())
 	if err != nil {
 		// Should not happen.
@@ -747,6 +749,7 @@ func (e *ConsensusEngine) handleHardcodeBlock(hash common.Hash) {
 }
 
 func (e *ConsensusEngine) handleNormalBlock(eb *core.ExtendedBlock) {
+	logger.Debug("TR-job309_REWARDS 00000 consensus::handleNormalBlock")
 	start := time.Now()
 
 	block := eb.Block
@@ -834,6 +837,7 @@ func (e *ConsensusEngine) handleNormalBlock(eb *core.ExtendedBlock) {
 	if localEpoch := e.GetEpoch(); block.Epoch == localEpoch-1 || block.Epoch == localEpoch {
 		e.blockProcessed = true
 		if e.voteTimerReady {
+        	logger.Debug("TR-job309_REWARDS 00000 voteTimerReady engine::vote")
 			e.vote()
 		}
 	} else {
@@ -841,7 +845,7 @@ func (e *ConsensusEngine) handleNormalBlock(eb *core.ExtendedBlock) {
 			"block.Epoch": block.Epoch,
 			"block.Hash":  block.Hash().Hex(),
 			"e.epoch":     localEpoch,
-		}).Debug("Skipping voting for block from previous epoch")
+		}).Debug("TR-job309_REWARDS 00000 Skipping voting for block from previous epoch")
 	}
 
 	// Check and process CC.

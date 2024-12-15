@@ -179,6 +179,8 @@ func NewLightningCandidatePool() *LightningCandidatePool {
 
 // Add inserts lightning into the pool; returns false if lightning is already added.
 func (gcp *LightningCandidatePool) Add(g *Lightning) bool {
+	logger.Debug("TR-job309_REWARDS 00000 LightningCandidatePool::Add engine::vote")
+
 	k := sort.Search(gcp.Len(), func(i int) bool {
 		return bytes.Compare(gcp.SortedLightnings[i].Holder.Bytes(), g.Holder.Bytes()) >= 0
 	})

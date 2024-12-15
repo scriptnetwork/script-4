@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-
+"runtime/debug"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
@@ -49,6 +49,8 @@ func NewCoinbaseTxExecutor(db database.Database, chain *blockchain.Chain, state 
 }
 
 func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) result.Result {
+    logger.Debugf("TR-job309_REWARDS 00100 Stack trace:\n%s", debug.Stack())
+	logger.Debug("TR-job309_REWARDS 00100 sanityCheck -ok")
 	tx := transaction.(*types.CoinbaseTx)
 	validatorSet := getValidatorSet(exec.consensus.GetLedger(), exec.valMgr)
 	validatorAddresses := getValidatorAddresses(validatorSet)
@@ -97,6 +99,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 	currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
 	lightningVotes := currentBlock.LightningVotes
 	eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
+	logger.Debug("TR-job309_REWARDS 00000 lightningVotes ", lightningVotes)
 	lightningPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, lightningVotes, eliteEdgeNodeVotes)
 	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, lightningVotes, lightningPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
 
@@ -140,11 +143,11 @@ func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, view
 	return txHash, result.OK
 }
 
-func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, lightningVotes *core.AggregatedVotes,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes) (lightningPool *core.LightningCandidatePool, eliteEdgeNodePool core.EliteEdgeNodePool) {
+func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, lightningVotes *core.AggregatedVotes,	eliteEdgeNodeVotes *core.AggregatedEENVotes) (lightningPool *core.LightningCandidatePool, eliteEdgeNodePool core.EliteEdgeNodePool) {
+	logger.Debug("TR-job309_REWARDS 00000 ledger/execution/rx_coinbase::RetrievePools")
+
 	lightningPool = nil
 	eliteEdgeNodePool = nil
-
 /*
 	if blockHeight < common.HeightEnableScript2 {
 		lightningPool = nil
@@ -162,6 +165,7 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 */
 		// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
 		// the edge nodes vote for the correct checkpoint
+    	logger.Debug("TR-job309_REWARDS 00000 ledger/execution/rx_coinbase::lightningVotes $v", lightningVotes)
 		if lightningVotes != nil {
 			lightningVoteBlock, err := chain.FindBlock(lightningVotes.Block)
 			if err != nil {
@@ -187,18 +191,30 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 }
 
 // CalculateReward calculates the block reward for each account
-func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
-	lightningVotes *core.AggregatedVotes, lightningPool *core.LightningCandidatePool,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[string]types.Coins {
+func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes, lightningPool *core.LightningCandidatePool,	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[string]types.Coins {
 	accountReward := map[string]types.Coins{}
 	blockHeight := view.Height() + 1 // view points to the parent block
+	logger.Debugf("TR-job309_REWARDS 00100 CalculateReward. height %v", blockHeight)
+
+    if lightningPool == nil {
+    	logger.Debugf("TR-job309_REWARDS 00210 CalculateReward. height %v. No lightning pool", blockHeight)
+    }
+
+	if common.IsCheckPointHeight(blockHeight) {
+	logger.Debug("TR-job309_REWARDS 00102 *******PAY DAY****** grantValidatorReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
+	}
+
+
 	if blockHeight < common.HeightEnableValidatorReward {
 		grantValidatorsWithZeroReward(validatorSet, &accountReward)
 	} else if blockHeight < common.HeightEnableScript2 || lightningVotes == nil || lightningPool == nil {
+    	logger.Debugf("TR-job309_REWARDS 00210 CalculateReward. height %v. No lightning votes", blockHeight)
 		grantValidatorReward(ledger, view, validatorSet, &accountReward, blockHeight)
 	} else if blockHeight < common.HeightEnableScript3 {
+    	logger.Debugf("TR-job309_REWARDS 00220 CalculateReward. height %v. ", blockHeight)
 		grantValidatorAndLightningReward(ledger, view, validatorSet, lightningVotes, lightningPool, &accountReward, blockHeight)
 	} else { // blockHeight >= common.HeightEnableScript3
+    	logger.Debugf("TR-job309_REWARDS 00230 CalculateReward. height %v. ", blockHeight)
 		grantValidatorAndLightningReward(ledger, view, validatorSet, lightningVotes, lightningPool, &accountReward, blockHeight)
 		grantEliteEdgeNodeReward(ledger, view, lightningVotes, eliteEdgeNodeVotes, eliteEdgeNodePool, &accountReward, blockHeight)
 	}
@@ -226,8 +242,10 @@ func grantValidatorsWithZeroReward(validatorSet *core.ValidatorSet, accountRewar
 
 func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, accountReward *map[string]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
+    	logger.Debugf("TR-job309_REWARDS 00051 grantValidatorReward Not checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 		return
 	}
+	logger.Debug("TR-job309_REWARDS 00050 grantValidatorReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 
 	totalStake := validatorSet.TotalStake()
 
@@ -266,6 +284,8 @@ func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *
 	}
 
 	totalReward := big.NewInt(1).Mul(spayRewardPerBlock, big.NewInt(common.CheckpointInterval))
+	logger.Debugf("TR-job309_REWARDS 00060 grantValidatorReward totalReward=%v; spayRewardPerBlock=%v", totalReward, spayRewardPerBlock)
+
 
 	// the source of the stake divides the block reward proportional to their stake
 	for stakeSourceAddr, stakeAmountSum := range stakeSourceMap {
@@ -283,13 +303,12 @@ func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *
 }
 
 // grant block rewards to both the validators and active lightnings (they are both script stakers)
-func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes,
-	lightningPool *core.LightningCandidatePool, accountReward *map[string]types.Coins, blockHeight uint64) {
+func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes, lightningPool *core.LightningCandidatePool, accountReward *map[string]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
-		logger.Debug("TR job309_REWARDS grantValidatorAndLightningReward")
-
+    	logger.Debugf("TR-job309_REWARDS 00111 grantValidatorAndLightningReward Not checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 		return
 	}
+	logger.Debug("TR-job309_REWARDS 00110  grantValidatorAndLightningReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 
 	totalStake := validatorSet.TotalStake()
 

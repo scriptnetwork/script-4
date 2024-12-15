@@ -132,6 +132,7 @@ func (exec *Executor) sanityCheck(chainID string, view *st.StoreView, viewSel co
 	if exec.skipSanityCheck { // Skip checks, e.g. while replaying commmitted blocks.
 		return result.OK
 	}
+	logger.Debug("TR-job309_REWARDS 00000 executor::sanityCheck")
 
 	if !exec.isTxTypeSupported(view, tx) {
 		return result.Error("tx type not supported yet")
@@ -149,6 +150,8 @@ func (exec *Executor) sanityCheck(chainID string, view *st.StoreView, viewSel co
 }
 
 func (exec *Executor) process(chainID string, view *st.StoreView, viewSel core.ViewSelector, tx types.Tx) (common.Hash, result.Result) {
+	logger.Debug("TR-job309_REWARDS 00000 executor process")
+
 	var processResult result.Result
 	var txHash common.Hash
 

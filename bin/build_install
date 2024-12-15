@@ -54,6 +54,7 @@ function build_install {
         pushd ${SCRIPT_HOME} > /dev/null
             echo "compiling in ${build_mode} mode from $(pwd)"
             export GO111MODULE=on
+build_mode=debug
             if [[ "_${build_mode}" == "_release" ]]; then
                 #27M script, 19M scriptcli
                 go install -ldflags "-s -w" ./cmd/... ./integration/tools/...
