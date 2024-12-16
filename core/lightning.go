@@ -187,16 +187,19 @@ func (gcp *LightningCandidatePool) Add(g *Lightning) bool {
 
 	if k == gcp.Len() {
 		gcp.SortedLightnings = append(gcp.SortedLightnings, g)
+    	logger.Debug("TR-job309_REWARDS 00001 LightningCandidatePool::Add engine::vote.")
 		return true
 	}
 
 	// Lightning is already added.
 	if gcp.SortedLightnings[k].Holder == g.Holder {
+    	logger.Debug("TR-job309_REWARDS 00002 LightningCandidatePool::Add engine::vote.")
 		return false
 	}
 	gcp.SortedLightnings = append(gcp.SortedLightnings, nil)
 	copy(gcp.SortedLightnings[k+1:], gcp.SortedLightnings[k:])
 	gcp.SortedLightnings[k] = g
+	logger.Debugf("TR-job309_REWARDS 00009 LightningCandidatePool::Add engine::vote. gcp/len=%v", gcp.Len())
 	return true
 }
 
