@@ -428,6 +428,8 @@ func (e *ConsensusEngine) HasSynced() bool {
 }
 
 func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.ExtendedBlock) result.Result {
+    logger.Debugf("TR-job309_REWARDS 00001 validateBlock")
+
 	// Ignore old blocks.
 	if lfh := e.state.GetLastFinalizedBlock().Height; block.Height <= lfh {
 		e.logger.WithFields(log.Fields{
@@ -592,6 +594,7 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 			}).Warn("Failed to load lightning pool")
 			return result.Error("Failed to load lightning pool")
 		}
+        logger.Debugf("TR-job309_REWARDS 00000 validateBlock. gcp=%v",gcp)
 		if res := block.LightningVotes.Validate(gcp); res.IsError() {
 			e.logger.WithFields(log.Fields{
 				"block.Hash":          block.Hash().Hex(),

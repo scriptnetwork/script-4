@@ -333,6 +333,7 @@ func (gcp *LightningCandidatePool) DepositStake(source common.Address, holder co
         logger.Debugf("TR-job309_REWARDS 00001 gcp.Add New Lightning: %v", newLightning)
 		gcp.Add(newLightning)
 	}
+    logger.Debugf("TR-job309_REWARDS 00001 gcp.SortedLightnings Len=: %v", gcp.Len())
 	return nil
 }
 
