@@ -142,6 +142,7 @@ func (exec *DepositStakeExecutor) sanityCheck(chainID string, view *st.StoreView
 
 func (exec *DepositStakeExecutor) process(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) (common.Hash, result.Result) {
 	blockHeight := view.Height() + 1 // the view points to the parent of the current block
+    logger.Debugf("TR-job309_REWARDS 00001 tx_deposit_stake. minLightningStake. blockHeight %v", blockHeight)
 
 	tx := exec.castTx(transaction)
 
@@ -172,6 +173,7 @@ func (exec *DepositStakeExecutor) process(chainID string, view *st.StoreView, vi
 		}
 		view.UpdateValidatorCandidatePool(vcp)
 	} else if tx.Purpose == core.StakeForLightning {
+        logger.Debugf("TR-job309_REWARDS 00007 tx.Purpose = core.StakeForLightning")
 		sourceAccount.Balance = sourceAccount.Balance.Minus(stake)
 		stakeAmount := stake.SCPTWei
 		gcp := view.GetLightningCandidatePool()
@@ -182,11 +184,15 @@ func (exec *DepositStakeExecutor) process(chainID string, view *st.StoreView, vi
 				return common.Hash{}, checkBLSRes
 			}
 		}
+        logger.Debugf("TR-job309_REWARDS 00008 gcp.DepositStake")
 
 		err := gcp.DepositStake(sourceAddress, holderAddress, stakeAmount, tx.BlsPubkey, blockHeight)
 		if err != nil {
+            logger.Debugf("TR-job309_REWARDS 00011 tx_deposit_stake")
 			return common.Hash{}, result.Error("Failed to deposit stake, err: %v", err)
 		}
+        logger.Debugf("TR-job309_REWARDS 00012 tx_deposit_stake -> UpdateLightningCandidatePool")
+        
 		view.UpdateLightningCandidatePool(gcp)
 	} else if tx.Purpose == core.StakeForEliteEdgeNode {
 		sourceAccount.Balance = sourceAccount.Balance.Minus(stake)

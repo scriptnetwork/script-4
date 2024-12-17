@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+"runtime/debug"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
@@ -179,6 +180,7 @@ func NewLightningCandidatePool() *LightningCandidatePool {
 
 // Add inserts lightning into the pool; returns false if lightning is already added.
 func (gcp *LightningCandidatePool) Add(g *Lightning) bool {
+    logger.Debugf("TR-job309_REWARDS 00000 Stack trace:\n%s", debug.Stack())
 	logger.Debugf("TR-job309_REWARDS 00000 LightningCandidatePool::Add engine::vote. %v", g)
 
 	k := sort.Search(gcp.Len(), func(i int) bool {
@@ -187,19 +189,19 @@ func (gcp *LightningCandidatePool) Add(g *Lightning) bool {
 
 	if k == gcp.Len() {
 		gcp.SortedLightnings = append(gcp.SortedLightnings, g)
-    	logger.Debug("TR-job309_REWARDS 00001 LightningCandidatePool::Add engine::vote.")
+    	logger.Debugf("TR-job309_REWARDS 00001 LightningCandidatePool::Add (First Lightning). gcp/len=%v", gcp.Len())
 		return true
 	}
 
 	// Lightning is already added.
 	if gcp.SortedLightnings[k].Holder == g.Holder {
-    	logger.Debug("TR-job309_REWARDS 00002 LightningCandidatePool::Add engine::vote.")
+    	logger.Debug("TR-job309_REWARDS 00002 LightningCandidatePool::Add.")
 		return false
 	}
 	gcp.SortedLightnings = append(gcp.SortedLightnings, nil)
 	copy(gcp.SortedLightnings[k+1:], gcp.SortedLightnings[k:])
 	gcp.SortedLightnings[k] = g
-	logger.Debugf("TR-job309_REWARDS 00009 LightningCandidatePool::Add engine::vote. gcp/len=%v", gcp.Len())
+	logger.Debugf("TR-job309_REWARDS 00009 LightningCandidatePool::Add. gcp/len=%v", gcp.Len())
 	return true
 }
 
@@ -301,6 +303,9 @@ func (gcp *LightningCandidatePool) Hash() common.Hash {
 
 func (gcp *LightningCandidatePool) DepositStake(source common.Address, holder common.Address, amount *big.Int, pubkey *bls.PublicKey, blockHeight uint64) (err error) {
 	minLightningStake := MinLightningStakeDeposit
+
+    logger.Debugf("TR-job309_REWARDS 00001 DepositStake. DepositStake")
+
 	//if blockHeight >= common.HeightLowerGNStakeThresholdTo1000 {
 	//	minLightningStake = MinLightningStakeDeposit1000
 	//}
@@ -325,6 +330,7 @@ func (gcp *LightningCandidatePool) DepositStake(source common.Address, holder co
 			StakeHolder: NewStakeHolder(holder, []*Stake{NewStake(source, amount)}),
 			Pubkey:      pubkey,
 		}
+        logger.Debugf("TR-job309_REWARDS 00001 gcp.Add New Lightning: %v", newLightning)
 		gcp.Add(newLightning)
 	}
 	return nil
