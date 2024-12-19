@@ -389,6 +389,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] srdsr %v",srdsr)
 	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] blockHeight %v common.HeightSampleStakingReward",blockHeight,common.HeightSampleStakingReward)
 	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] effectiveStakes %v",effectiveStakes)
+	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] common.Height_hf1 %v",common.Height_hf1)
 
 	if blockHeight > common.Height_hf1 {
     	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] issueFixedReward after HF")
