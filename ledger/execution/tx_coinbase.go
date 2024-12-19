@@ -497,11 +497,14 @@ func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map
 }
 
 func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, reward *big.Int, accountRewardMap *map[string]types.Coins) {
+	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit ")
 	if srdsr == nil {
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 1 ")
 		// Should not happen
 		logger.Panic("srdsr is nil")
 	}
 	if stake.Holder.IsEmpty() {
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 2")
 		// Should not happen
 		logger.Panic("stake holder is not set")
 	}
@@ -509,10 +512,12 @@ func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, re
 	rewardDistribution := srdsr.Get(stake.Holder)
 	if rewardDistribution == nil {
 		addRewardToMap(stake.Source, reward, accountRewardMap)
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 3")
 		return
 	}
 
 	if rewardDistribution.SplitBasisPoint == 0 {
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 4")
 		// Should not happen
 		logger.Panicf("SplitBasisPoint is 0. Holder=%v, Beneficiary=%v", rewardDistribution.StakeHolder, rewardDistribution.Beneficiary)
 	}
@@ -523,15 +528,16 @@ func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, re
 
 	sourceReward := new(big.Int).Sub(reward, splitReward)
 
-	logger.Debugf("Reward redistribution metadata: splitReward = %v, sourceReward = %v, SplitBasisPoint = %v",
-		splitReward, sourceReward, rewardDistribution.SplitBasisPoint)
+	logger.Debugf("Reward redistribution metadata: splitReward = %v, sourceReward = %v, SplitBasisPoint = %v", splitReward, sourceReward, rewardDistribution.SplitBasisPoint)
 
 	if splitReward.Cmp(reward) > 0 {
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 5")
 		logger.Panic("Invalid reward redistribution metadata")
 	}
 
 	addRewardToMap(stake.Source, sourceReward, accountRewardMap)
 	addRewardToMap(rewardDistribution.Beneficiary, splitReward, accountRewardMap)
+	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 6")
 }
 
 func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, accountReward *map[string]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
@@ -605,7 +611,11 @@ func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVo
 
 	sort.Sort(BigIntSort(samples))
 
+	logger.Infof("TR-job309_REWARDS 01004 77777 samples %v", samples)
+
+
 	if srdsr != nil {
+    	logger.Infof("TR-job309_REWARDS 01004 77777 srdsr %v",*srdsr)
 		curr := 0
 		currSum := big.NewInt(0)
 
@@ -633,7 +643,7 @@ func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVo
 					tmp := new(big.Int).Mul(totalReward, big.NewInt(int64(count)))
 					rewardAmount := tmp.Div(tmp, big.NewInt(int64(spayRewardN)))
 
-					logger.Infof("%v reward for staker %v : %v (before split)", rewardType, hex.EncodeToString(stakeSourceAddr[:]), rewardAmount)
+					logger.Infof("TR-job309_REWARDS 01004 77777 %v reward for staker %v : %v (before split)", rewardType, hex.EncodeToString(stakeSourceAddr[:]), rewardAmount)
 
 					// Calculate split
 					handleSplit(stake, srdsr, rewardAmount, accountReward)
@@ -676,7 +686,7 @@ func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVo
 
 				addRewardToMap(stakeSourceAddr, rewardAmount, accountReward)
 
-				logger.Infof("%v reward for staker %v : %v (before split)", rewardType, hex.EncodeToString(stakeSourceAddr[:]), rewardAmount)
+				logger.Infof("TR-job309_REWARDS 01004 77777 %v reward for staker %v : %v (before split)", rewardType, hex.EncodeToString(stakeSourceAddr[:]), rewardAmount)
 			}
 		}
 	}
