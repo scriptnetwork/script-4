@@ -1,0 +1,20 @@
+genesis:
+  hash: "0x341ea877d8f37b27815f6dab070b57be91c3a89b35137bb21a8629a35e097a32"
+  chainID: "testnet"
+  ethChainID: 62854
+  license_dir: /home/stv/script4/gov
+storage:
+  statePruningRetainedBlocks: 2048
+p2p:
+  opt: 0
+  port: 10000
+  seeds: "3.11.2.19:10000,18.135.105.199:10000"
+  minNumPeers: 1
+  maxNumPeers: 12
+  natMapping: false
+rpc:
+  port: 10001
+  enabled: true
+  address: 127.0.0.1
+log:
+  levels: "*:error"

@@ -57,6 +57,12 @@ func runStart(cmd *cobra.Command, args []string) {
 		dbPath = cfgPath
 	}
 
+	hfPath := path.Join(dbPath, "hf.cfg")
+    err = common.Initialize_hf_values(hfPath)
+	if err != nil {
+		log.Fatalf("Failed to initialize HF values: %v", err)
+	}
+
 	mainDBPath := path.Join(dbPath, "db", "main")
 	refDBPath := path.Join(dbPath, "db", "ref")
 	db, err := backend.NewLDBDatabase(mainDBPath, refDBPath,

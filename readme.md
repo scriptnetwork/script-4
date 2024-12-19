@@ -67,8 +67,9 @@ Variables defined are:
 	#Initiate gov daemon
 	$GOBIN/script start --config=${HOME}/.script
 
-	#Config for testnet v3
-	cp v3/testnet/script/config.yaml ${HOME}/.script/
+	#Config for v4 testnet
+	cp v4/testnet/script/config.yaml ${HOME}/.script/
+	cp v4/testnet/script/hf.cfg ${HOME}/.script/
 
 	#Inititate wallet daemon listening on port 10002 (testnet), or 11002 (mainnet
 	REMOTERPCENDPOINT=http://127.0.0.1:10001/rpc $GOBIN/scriptcli daemon start --config=${HOME}/.scriptcli --port 10002

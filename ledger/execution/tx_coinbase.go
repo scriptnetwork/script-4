@@ -145,6 +145,7 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 	lightningPool = nil
 	eliteEdgeNodePool = nil
 
+/*
 	if blockHeight < common.HeightEnableScript2 {
 		lightningPool = nil
 		eliteEdgeNodePool = nil
@@ -158,6 +159,7 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 			lightningPool = storeView.GetLightningCandidatePool()
 		}
 	} else { // blockHeight >= common.HeightEnableScript3
+*/
 		// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
 		// the edge nodes vote for the correct checkpoint
 		if lightningVotes != nil {
@@ -179,7 +181,7 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 				logger.Warnf("Elite edge nodes have no vote for block %v", lightningVotes.Block.Hex())
 			}
 		}
-	}
+//	}
 
 	return lightningPool, eliteEdgeNodePool
 }
@@ -356,17 +358,18 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 		srdsr = state.NewStakeRewardDistributionRuleSet(view)
 	}
 
-	issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block") // Fix job_309; issueRandomizedReward is not dealing rewards to lighning
-/*
-	if blockHeight < common.HeightSampleStakingReward {
-		// the source of the stake divides the block reward proportional to their stake
-		issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
+	if blockHeight > common.Height_hf1 {
+
+		issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block") // Fix job_309; issueRandomizedReward is not dealing rewards to lighning
 	} else {
-		// randomly select (proportional to the stake) a constant-sized set of stakers and grand the block reward
-		issueRandomizedReward(ledger, lightningVotes, view, effectiveStakes,
-			totalStake, accountReward, totalReward, srdsr, "Block")
+		if blockHeight < common.HeightSampleStakingReward {
+			// the source of the stake divides the block reward proportional to their stake
+			issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
+		} else {
+			// randomly select (proportional to the stake) a constant-sized set of stakers and grand the block reward
+			issueRandomizedReward(ledger, lightningVotes, view, effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
+		}
 	}
-*/
 }
 
 // grant uptime mining rewards to active elite edge nodes (they are the spay stakers)
