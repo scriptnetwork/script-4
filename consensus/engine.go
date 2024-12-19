@@ -302,18 +302,18 @@ func (e *ConsensusEngine) mainLoop() {
 					break Epoch
 				}
 			case <-e.voteTimer.C:
-                e.logger.Debug("TR-02000 TIMER Vote.")
+                e.logger.Debug("TR-02000 06666 TIMER Vote.")
 				e.voteTimerReady = true
 				if e.blockProcessed {
 					e.vote()
 				}
 			case <-e.epochTimer.C:
-                e.logger.Debug("TR-02010 TIMER Epoch.")
+                e.logger.Debug("TR-02010 06666 TIMER Epoch.")
 				e.logger.WithFields(log.Fields{"e.epoch": e.GetEpoch()}).Debug("Epoch timeout. Repeating epoch")
 				e.vote()
 				break Epoch
 			case <-e.lightningTimer.C:
-                e.logger.Debug("TR-02020 TIMER Lightning.")
+                e.logger.Debug("TR-02020 06666 TIMER Lightning.")
 				v := e.lightning.GetVoteToBroadcast()
 
 				if v != nil {
@@ -373,7 +373,7 @@ func (e *ConsensusEngine) AddMessage(msg interface{}) {
 func (e *ConsensusEngine) processMessage(msg interface{}) (endEpoch bool) {
 	switch m := msg.(type) {
 	case core.Vote:
-        e.logger.Debug("TR-01010 processMessage core.Vote")
+        e.logger.Debug("TR-01010 06666 processMessage core.Vote")
 		e.logger.WithFields(log.Fields{"vote": m}).Debug("Received vote")
 		endEpoch = e.handleVote(m)
 		e.checkCC(m.Block)
@@ -382,10 +382,10 @@ func (e *ConsensusEngine) processMessage(msg interface{}) (endEpoch bool) {
         e.logger.Debug("TR-01020 processMessage core.Block")
 		e.logger.WithFields(log.Fields{
 			"block": m.BlockHeader,
-		}).Debug("Received block")
+		}).Debug("Received block. TR-01020")
 		e.handleBlock(m)
 	case *core.AggregatedVotes:
-        e.logger.Debug("TR-01030 processMessage AggregatedVotes (lightning vote)")
+        e.logger.Debug("TR-01030 06666 processMessage AggregatedVotes (lightning vote)")
 		// e.logger.WithFields(log.Fields{"lightning vote": m}).Debug("Received lightning vote")
 		e.handleLightningVote(m)
 	case *core.EENVote:
@@ -926,6 +926,7 @@ func (e *ConsensusEngine) vote() {
 	e.logger.WithFields(log.Fields{
 		"vote": vote,
 	}).Debug("Sending vote")
+    e.logger.Debug("TR-00109 bradcast vote")
 	e.broadcastVote(vote)
 
 	go func() {

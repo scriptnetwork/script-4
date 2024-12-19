@@ -3,6 +3,7 @@ package execution
 import (
 	"fmt"
 	"math/big"
+"runtime/debug"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
@@ -191,6 +192,7 @@ func (exec *DepositStakeExecutor) process(chainID string, view *st.StoreView, vi
             logger.Debugf("TR-job309_REWARDS 00011 tx_deposit_stake")
 			return common.Hash{}, result.Error("Failed to deposit stake, err: %v", err)
 		}
+        logger.Debugf("TR-job309_REWARDS 00012 Stack trace:\n%s", debug.Stack())
         logger.Debugf("TR-job309_REWARDS 00012 tx_deposit_stake -> UpdateLightningCandidatePool gcp.Len %v", gcp.Len())
         
 		view.UpdateLightningCandidatePool(gcp)

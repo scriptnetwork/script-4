@@ -198,6 +198,7 @@ func (mp *Mempool) InsertTransaction(rawTx common.Bytes) error {
 
 	// Delay tx verification when in fast sync
 	if mp.consensus.HasSynced() {
+        logger.Debugf("TR-job309_REWARDS 00600 tx_SCREENING")
 		txInfo, checkTxRes = mp.ledger.ScreenTx(rawTx)
 		if !checkTxRes.IsOK() {
 			logger.Debugf("Transaction screening failed, tx: %v, error: %v", hex.EncodeToString(rawTx), checkTxRes.Message)

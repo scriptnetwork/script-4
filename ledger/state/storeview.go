@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+"runtime/debug"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
@@ -322,8 +323,11 @@ func (sv *StoreView) UpdateValidatorCandidatePool(vcp *core.ValidatorCandidatePo
 
 // GetLightningCandidatePool gets the lightning candidate pool.
 func (sv *StoreView) GetLightningCandidatePool() *core.LightningCandidatePool {
+    logger.Debugf("TR-job309_REWARDS 00111 Stack trace:\n%s", debug.Stack())
+    logger.Debugf("TR-job309_REWARDS 00111 StoreView::UpdateLightningCandidatePool")
 	data := sv.Get(LightningCandidatePoolKey())
 	if data == nil || len(data) == 0 {
+        logger.Debugf("TR-job309_REWARDS 60140 StoreView::UpdateLightningCandidatePool - core.NewLightningCandidatePool()")
 		return core.NewLightningCandidatePool()
 	}
 	gcp := &core.LightningCandidatePool{}
@@ -332,11 +336,14 @@ func (sv *StoreView) GetLightningCandidatePool() *core.LightningCandidatePool {
 		log.Panicf("Error reading lightning candidate pool %X, error: %v",
 			data, err.Error())
 	}
+    logger.Debugf("TR-job309_REWARDS 60140 StoreView::UpdateLightningCandidatePool - Return &sv=%p &gcp=%p sz=%v", &sv, &gcp,gcp.Len())
 	return gcp
 }
 
 // UpdateLightningCandidatePool updates the lightning candidate pool.
 func (sv *StoreView) UpdateLightningCandidatePool(gcp *core.LightningCandidatePool) {
+    logger.Debugf("TR-job309_REWARDS 00110 UpdateLightningCandidatePool")
+
 	gcpBytes, err := types.ToBytes(gcp)
 	if err != nil {
 		log.Panicf("Error writing lightning candidate pool %v, error: %v",

@@ -201,7 +201,7 @@ func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.
     }
 
 	if common.IsCheckPointHeight(blockHeight) {
-	logger.Debug("TR-job309_REWARDS 00102 *******PAY DAY****** grantValidatorReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
+	    logger.Debugf("TR-job309_REWARDS 00102 *******PAY DAY****** grantValidatorReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 	}
 
 
@@ -308,7 +308,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
     	logger.Debugf("TR-job309_REWARDS 00111 grantValidatorAndLightningReward Not checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 		return
 	}
-	logger.Debug("TR-job309_REWARDS 00110  grantValidatorAndLightningReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
+	logger.Debugf("TR-job309_REWARDS 00110  grantValidatorAndLightningReward checkpoint height %v. Interval=%v", blockHeight, common.CheckpointInterval)
 
 	totalStake := validatorSet.TotalStake()
 
@@ -317,6 +317,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 		panic("lightningPool == nil || lightningVotes == nil")
 	}
 	lightningPool = lightningPool.WithStake()
+	logger.Debugf("TR-job309_REWARDS 00110  06666 grantValidatorAndLightningReward lightningPool=%v", lightningPool)
 
 	if totalStake.Cmp(big.NewInt(0)) == 0 {
 		// Should never happen
@@ -351,14 +352,19 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 	}
 
 	for i, g := range lightningPool.SortedLightnings {
+    	logger.Debugf("TR-job309_REWARDS 01000  06666 lightningPool.SortedLightningg[] %v", g)
 		if lightningVotes.Multiplies[i] == 0 {
+        	logger.Debugf("TR-job309_REWARDS 01001  06666 lightningPool.SortedLightningg[]")
 			continue
 		}
 		stakes := g.Stakes
+    	logger.Debugf("TR-job309_REWARDS 01002  06666 lightningPool.SortedLightningg[] stakes %v",stakes)
 		for _, stake := range stakes {
 			if stake.Withdrawn {
+            	logger.Debugf("TR-job309_REWARDS 01003  06666 lightningPool.SortedLightningg[]")
 				continue
 			}
+        	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] total stake %v, stake amount %v",totalStake, stake.Amount)
 
 			totalStake.Add(totalStake, stake.Amount)
 
@@ -373,21 +379,27 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 	}
 
 	totalReward := big.NewInt(1).Mul(spayRewardPerBlock, big.NewInt(common.CheckpointInterval))
+	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] totalReward %v",totalReward)
 
 	var srdsr *st.StakeRewardDistributionRuleSet
 	if blockHeight >= common.HeightEnableScript3 {
+    	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] blockHeight %v common.HeightEnableScript3 %v",blockHeight,common.HeightEnableScript3)
 		srdsr = state.NewStakeRewardDistributionRuleSet(view)
 	}
+	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] srdsr %v",srdsr)
+	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] blockHeight %v common.HeightSampleStakingReward",blockHeight,common.HeightSampleStakingReward)
 
 	if blockHeight > common.Height_hf1 {
-
+    	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] issueFixedReward after HF")
 		issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block") // Fix job_309; issueRandomizedReward is not dealing rewards to lighning
 	} else {
 		if blockHeight < common.HeightSampleStakingReward {
 			// the source of the stake divides the block reward proportional to their stake
+        	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] issueFixedReward")
 			issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
 		} else {
 			// randomly select (proportional to the stake) a constant-sized set of stakers and grand the block reward
+        	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] issueRandomizedReward")
 			issueRandomizedReward(ledger, lightningVotes, view, effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
 		}
 	}
@@ -526,6 +538,7 @@ func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, acco
 	if totalStake.Cmp(big.NewInt(0)) == 0 {
 		return
 	}
+	logger.Debugf("TR-job309_REWARDS 02304 77777 issueFixedReward totalStake %v", totalStake)
 
 	if srdsr != nil {
 		for _, stakes := range effectiveStakes {
@@ -534,7 +547,7 @@ func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, acco
 				rewardAmount.Mul(totalReward, stake.Amount)
 				rewardAmount.Div(rewardAmount, totalStake)
 
-				logger.Infof("%v reward for staker %v : %v  (before split)", rewardType, hex.EncodeToString(stake.Source[:]), rewardAmount)
+				logger.Infof("TR-job309_REWARDS 02305 77777 %v reward for staker %v : %v  (before split)", rewardType, hex.EncodeToString(stake.Source[:]), rewardAmount)
 
 				// Calculate split
 				handleSplit(stake, srdsr, rewardAmount, accountReward)
@@ -555,13 +568,13 @@ func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, acco
 			rewardAmount.Div(rewardAmount, totalStake)
 			addRewardToMap(stakes[0].Source, rewardAmount, accountReward)
 
-			logger.Infof("%v reward for staker %v : %v  (before split)", rewardType, hex.EncodeToString(stakes[0].Source[:]), rewardAmount)
+			logger.Infof("TR-job309_REWARDS 02306 77777 %v reward for staker %v : %v  (before split)", rewardType, hex.EncodeToString(stakes[0].Source[:]), rewardAmount)
 		}
 	}
 }
 
-func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVotes, view *st.StoreView, effectiveStakes [][]*core.Stake,
-	totalStake *big.Int, accountReward *map[string]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
+func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVotes, view *st.StoreView, effectiveStakes [][]*core.Stake, totalStake *big.Int, accountReward *map[string]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
+	logger.Debugf("TR-job309_REWARDS 01004 77777 issueRandomizedReward")
 
 	if lightningVotes == nil {
 		// Should never reach here

@@ -87,6 +87,8 @@ func (g *LightningEngine) StartNewBlock(block common.Hash) {
 }
 
 func (g *LightningEngine) StartNewRound() {
+    g.logger.Debug("TR-02020 06666 Lightning StartNewRound.")
+
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
