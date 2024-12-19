@@ -388,6 +388,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 	}
 	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] srdsr %v",srdsr)
 	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] blockHeight %v common.HeightSampleStakingReward",blockHeight,common.HeightSampleStakingReward)
+	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] effectiveStakes %v",effectiveStakes)
 
 	if blockHeight > common.Height_hf1 {
     	logger.Debugf("TR-job309_REWARDS 01004  06666 lightningPool.SortedLightningg[] issueFixedReward after HF")
@@ -483,6 +484,7 @@ func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningV
 }
 
 func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map[string]types.Coins) {
+	logger.Debugf("TR-job309_REWARDS 01004 77777 addRewardToMap receiver %v, amount %v", receiver, amount)
 	rewardCoins := types.Coins{
 		SCPTWei: big.NewInt(0),
 		SPAYWei: amount,
@@ -497,7 +499,7 @@ func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map
 }
 
 func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, reward *big.Int, accountRewardMap *map[string]types.Coins) {
-	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit ")
+	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit %v", reward)
 	if srdsr == nil {
     	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 1 ")
 		// Should not happen
@@ -512,7 +514,7 @@ func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, re
 	rewardDistribution := srdsr.Get(stake.Holder)
 	if rewardDistribution == nil {
 		addRewardToMap(stake.Source, reward, accountRewardMap)
-    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 3")
+    	logger.Infof("TR-job309_REWARDS 01004 77777 handleSplit 3 stake.Source %v, reward %v",stake.Source, reward)
 		return
 	}
 
@@ -620,7 +622,9 @@ func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVo
 		currSum := big.NewInt(0)
 
 		for _, stakes := range effectiveStakes {
+        	logger.Infof("TR-job309_REWARDS 01004 77777 stakes %v",stakes)
 			for _, stake := range stakes {
+            	logger.Infof("TR-job309_REWARDS 01004 77777 stake %v",stake)
 				stakeSourceAddr := stake.Source
 				stakeAmountSum := stake.Amount
 
