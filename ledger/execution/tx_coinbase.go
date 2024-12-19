@@ -356,6 +356,8 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 		srdsr = state.NewStakeRewardDistributionRuleSet(view)
 	}
 
+	issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block") // Fix job_309; issueRandomizedReward is not dealing rewards to lighning
+/*
 	if blockHeight < common.HeightSampleStakingReward {
 		// the source of the stake divides the block reward proportional to their stake
 		issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
@@ -364,6 +366,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 		issueRandomizedReward(ledger, lightningVotes, view, effectiveStakes,
 			totalStake, accountReward, totalReward, srdsr, "Block")
 	}
+*/
 }
 
 // grant uptime mining rewards to active elite edge nodes (they are the spay stakers)
