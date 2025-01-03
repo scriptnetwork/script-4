@@ -17,9 +17,9 @@ type RewardDistribution struct {
 }
 
 func NewRewardDistribution(stakeHolder common.Address, beneficiary common.Address, splitBasisPoint uint) (*RewardDistribution, error) {
-	/*if splitBasisPoint > 10000 {
+	if splitBasisPoint > 10000 {
 		return nil, fmt.Errorf("split basis point cannot exceed 10000")
-	}*/
+	}
 
 	return &RewardDistribution{
 		StakeHolder:     stakeHolder,

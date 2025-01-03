@@ -130,9 +130,9 @@ func (exec *StakeRewardDistributionTxExecutor) process(chainID string, view *st.
 	srdsr := state.NewStakeRewardDistributionRuleSet(view)
 
 	splitBasisPoint := tx.SplitBasisPoint
-	/*if splitBasisPoint > 10000 {
+	if splitBasisPoint > 10000 {
 		splitBasisPoint = 10000
-	} else*/ if splitBasisPoint < 0 { // should not happen, but doesn't hurt to have the check
+	} else if splitBasisPoint < 0 { // should not happen, but doesn't hurt to have the check
 		splitBasisPoint = 0
 	}
 
