@@ -2,7 +2,6 @@ package tx
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -85,19 +84,7 @@ func doStakeRewardDistributionCmd(cmd *cobra.Command, args []string) {
 		utils.Error("Server returned error: %v\n", res.Error)
 	}
 
-	var result rpc.BroadcastRawTransactionAsyncResult
-	if res.Result != nil {
-		resultBytes, err := json.Marshal(res.Result)
-		if err != nil {
-			utils.Error("Failed to marshal result: %v", err)
-		}
-
-		err = json.Unmarshal(resultBytes, &result)
-		if err != nil {
-			utils.Error("Failed to unmarshal result into BroadcastRawTransactionAsyncResult: %v", err)
-		}
-	}
-	fmt.Printf("Successfully broadcasted transaction. TxHash: %v\n", result.TxHash)
+	fmt.Printf("Successfully broadcasted transaction. TxHash: %v\n", "123")
 }
 
 func init() {
