@@ -2,22 +2,24 @@ package tx
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
 // stakeRewardDistributionCmd represents the stake reward distribution command
 // Example:
-//		scriptcli tx distribute_staking_reward --chain="testnet" --holder=0x36A8d78C0EaD519Bd155962358A3d57A404bC20d --beneficiary=0x88884a84d980bbfb7588888126fb903486bb8888 --split_basis_point=100 --seq=8
+//
+//	scriptcli tx distribute_staking_reward --chain="testnet" --holder=0x36A8d78C0EaD519Bd155962358A3d57A404bC20d --beneficiary=0x88884a84d980bbfb7588888126fb903486bb8888 --split_basis_point=100 --seq=8
 var stakeRewardDistributionCmd = &cobra.Command{
 	Use:     "distribute_staking_reward",
 	Short:   "Configure the distribution of the lightning/elite edge node staking reward",
@@ -82,7 +84,20 @@ func doStakeRewardDistributionCmd(cmd *cobra.Command, args []string) {
 	if res.Error != nil {
 		utils.Error("Server returned error: %v\n", res.Error)
 	}
-	fmt.Printf("Successfully broadcasted transaction.\n")
+
+	var result rpc.BroadcastRawTransactionAsyncResult
+	if res.Result != nil {
+		resultBytes, err := json.Marshal(res.Result)
+		if err != nil {
+			utils.Error("Failed to marshal result: %v", err)
+		}
+
+		err = json.Unmarshal(resultBytes, &result)
+		if err != nil {
+			utils.Error("Failed to unmarshal result into BroadcastRawTransactionAsyncResult: %v", err)
+		}
+	}
+	fmt.Printf("Successfully broadcasted transaction. TxHash: %v\n", result.TxHash)
 }
 
 func init() {
