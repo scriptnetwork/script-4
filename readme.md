@@ -1,5 +1,7 @@
 # Script-4 - The script.tv blockchain
 
+## version 250122 frozen before producing a new master from ThetaLabs and rep script-4__theta_sync
+
 	For installing a pre-compiled node (testnet or mainnet) go to https://downloads.script.tv
 
 The Script Blockchain Ledger is a Proof-of-Stake decentralized ledger designed for the video streaming industry.

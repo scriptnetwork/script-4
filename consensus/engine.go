@@ -177,9 +177,12 @@ func (e *ConsensusEngine) Start(ctx context.Context) {
 	//e.ledger.ResetState(lastCC.Height, lastCC.StateHash)
 	e.ledger.ResetState(lastCC.Block)
 
-	e.resetLightningTimer()
-	e.lightning.Start(e.ctx)
-	e.eliteEdgeNode.Start(e.ctx)
+
+		log.Debug("DISABLED LIGHTNING")
+
+//e.resetLightningTimer()
+//	e.lightning.Start(e.ctx)
+//	e.eliteEdgeNode.Start(e.ctx)
 
 	e.checkSyncStatus()
 
@@ -968,6 +971,12 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 				currentEpochVotes.AddVote(v)
 			}
 		}
+
+
+			e.logger.Debug("=======================================================")
+			e.logger.Debug(nextValidators)
+			e.logger.Debug("=======================================================")
+
 
 		if nextValidators.HasMajority(currentEpochVotes) {
 			nextEpoch := vote.Epoch + 1

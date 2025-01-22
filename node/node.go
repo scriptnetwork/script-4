@@ -122,6 +122,9 @@ func NewNode(params *Params) *Node {
 	if viper.GetBool(common.CfgRPCEnabled) {
 		node.RPC = rpc.NewScriptRPCServer(mempool, ledger, dispatcher, chain, consensus)
 	}
+
+	log.Debug("Current height: %v params root height: %v", currentHeight, params.Root.Height)
+
 	return node
 }
 
@@ -131,7 +134,13 @@ func (n *Node) Start(ctx context.Context) {
 	n.ctx = c
 	n.cancel = cancel
 
-	n.Consensus.Start(n.ctx)
+	log.Debug("********* DISABLED CONSENSUS")
+	log.Debug("********* ENABLED  SYNCMANAGER")
+	log.Debug("********* ENABLED  MEMPOOL")
+	log.Debug("********* ENABLED  DISPATCHER")
+	log.Debug("********* ENABLED  REPORTER")
+
+//	n.Consensus.Start(n.ctx)
 	n.SyncManager.Start(n.ctx)
 	n.Dispatcher.Start(n.ctx)
 	n.Mempool.Start(n.ctx)
