@@ -120,13 +120,13 @@ func CalculateRootHash(items []common.Bytes) common.Hash {
 }
 
 // BlockHeader contains the essential information of a block.
-//    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
 type BlockHeader struct {
 	ChainID            string
 	Epoch              uint64
 	Height             uint64
 	Parent             common.Hash
 	HCC                CommitCertificate
+    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
 	LightningVotes      *AggregatedVotes    `rlp:"nil"` // Added in Script2.0 fork.
 	EliteEdgeNodeVotes *AggregatedEENVotes `rlp:"nil"` // Added in Script3.0 fork.
 	TxHash             common.Hash
@@ -150,7 +150,7 @@ func (h *BlockHeader) EncodeRLP(w io.Writer) error {
 
 	logger.Debugf("RLP: h.Height = %v, common.Height_hf2 = %v", h.Height, common.Height_hf2)
 
-//	if h.Height < common.Height_hf2 {
+	if h.Height < common.Height_hf2 {
 
         return rlp.Encode(w, []interface{}{
             h.ChainID,
@@ -169,9 +169,9 @@ func (h *BlockHeader) EncodeRLP(w io.Writer) error {
             h.EliteEdgeNodeVotes,
         })
 
-//	}
+    }
 
-/*
+
     return rlp.Encode(w, []interface{}{
         h.ChainID,
         h.Epoch,
@@ -190,7 +190,6 @@ func (h *BlockHeader) EncodeRLP(w io.Writer) error {
         h.Licenses,
     })
 
-*/
 }
 
 var _ rlp.Decoder = (*BlockHeader)(nil)
@@ -268,7 +267,7 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
             return err
         }
         if common.Bytes2Hex(raw) == "c0" {
-		h.LightningVotes = nil
+            h.LightningVotes = nil
         } else {
             gvotes := &AggregatedVotes{}
             // err = stream.Decode(gvotes)
@@ -298,7 +297,7 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
     }
 
     logger.Debugf("RLP: Decoder. h.Height = %v, common.Height_hf2 = %v", h.Height, common.Height_hf2)
-/*
+
     if h.Height >= common.Height_hf2 {
         raw, err := stream.Raw()
         if err != nil {
@@ -315,7 +314,7 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
             h.Licenses = licenses
         }
     }
-*/
+
     return stream.ListEnd()
 }
 
