@@ -30,14 +30,12 @@ func Initialize_hf_values(file_path string) error {
 	        // Check if the line contains the parameter hf1
 			value, err := strconv.ParseUint(strings.TrimSpace(parts[1]), 10, 64)
 			if err != nil {
-				return fmt.Errorf("error parsing hf1 value: %w", err)
+				return fmt.Errorf("error parsing value: %w", err)
 			}
 	        if parts[0] == "hf1" {
 				Height_hf1 = value
-				break
 			} else if parts[0] == "hf2" {
 				Height_hf2 = value
-				break
 			}
 		}
 	}
