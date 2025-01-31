@@ -43,6 +43,12 @@ type StakeDeposit struct {
 func main() {
 	chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, genesisSnapshotFilePath := parseArguments()
 
+	hfPath := path.Join(dbPath, "hf.cfg")
+    err = common.Initialize_hf_values(hfPath)
+	if err != nil {
+		log.Fatalf("Failed to initialize HF values: %v", err)
+	}
+
 	sv, metadata, err := generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate genesis snapshot: %v", err))
@@ -68,6 +74,7 @@ func main() {
 	fmt.Printf("Genesis block hash: %v\n", genesisBlockHash.Hex())
 	fmt.Printf("--------------------------------------------------------------------------\n")
 	fmt.Println("")
+	fmt.Printf("hf2=%v", common.Height_hf2)
 }
 
 func parseArguments() (chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, genesisSnapshotFilePath string) {
