@@ -982,12 +982,14 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 			tip := e.GetTipToExtend()
 			expectedProposer := e.validatorManager.GetNextProposer(tip.Hash(), nextEpoch)
 
+			e.logger.Debugf("========================================================================== New Epoch %v", nextEpoch)
 			e.logger.WithFields(log.Fields{
 				"e.epoch":          e.GetEpoch,
 				"nextEpoch":        nextEpoch,
 				"epochVoteSet":     currentEpochVotes,
 				"expectedProposer": expectedProposer.ID().Hex(),
 			}).Debug("Majority votes for current epoch. Moving to new epoch")
+
 			e.state.SetEpoch(nextEpoch)
 
 			e.checkSyncStatus()
