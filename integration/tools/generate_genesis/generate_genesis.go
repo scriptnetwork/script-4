@@ -41,13 +41,17 @@ type StakeDeposit struct {
 // generate_genesis -chainID=scriptnet -erc20snapshot=./data/genesis_script_erc20_snapshot.json -stake_deposit=./data/genesis_stake_deposit.json -genesis=./genesis
 //
 func main() {
-	chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, genesisSnapshotFilePath := parseArguments()
+	chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, hf_file, genesisSnapshotFilePath := parseArguments()
 
-	hfPath := path.Join(dbPath, "hf.cfg")
-    err = common.Initialize_hf_values(hfPath)
-	if err != nil {
-		log.Fatalf("Failed to initialize HF values: %v", err)
-	}
+    {
+        if hf_file == "" {
+            panic("Empty HF file")
+        }
+        err := common.Initialize_hf_values(hf_file)
+        if err != nil {
+            panic(fmt.Sprintf("Failed to initialize HF values: %v", err))
+        }
+    }
 
 	sv, metadata, err := generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath)
 	if err != nil {
@@ -77,16 +81,18 @@ func main() {
 	fmt.Printf("hf2=%v", common.Height_hf2)
 }
 
-func parseArguments() (chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, genesisSnapshotFilePath string) {
+func parseArguments() (chainID string, erc20SnapshotJSONFilePath string, stakeDepositFilePath string, hf_file string, genesisSnapshotFilePath string) {
 	chainIDPtr := flag.String("chainID", "local_chain", "the ID of the chain")
 	erc20SnapshotJSONFilePathPtr := flag.String("erc20snapshot", "./script_erc20_snapshot.json", "the json file contain the ERC20 balance snapshot")
 	stakeDepositFilePathPtr := flag.String("stake_deposit", "./stake_deposit.json", "the initial stake deposits")
+    hf_filePtr := flag.String("hf_file", "", "Hard fork heights file")
 	genesisSnapshotFilePathPtr := flag.String("genesis", "./genesis", "the genesis snapshot")
 	flag.Parse()
 
 	chainID = *chainIDPtr
 	erc20SnapshotJSONFilePath = *erc20SnapshotJSONFilePathPtr
 	stakeDepositFilePath = *stakeDepositFilePathPtr
+    hf_file = *hf_filePtr
 	genesisSnapshotFilePath = *genesisSnapshotFilePathPtr
 
 	return
