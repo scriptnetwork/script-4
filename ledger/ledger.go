@@ -782,7 +782,7 @@ func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator
 		Address: proposerAddress,
 	}
 
-	var accountRewardMap map[string]types.Coins
+	var accountRewardMap map[common.Address]types.Coins
 	ch := ledger.GetCurrentBlock().Height
     currentBlock := ledger.GetCurrentBlock()
     if ch < common.Height_hf2 {
@@ -798,14 +798,14 @@ func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator
     } else {
 //        currentBlock := ledger.GetCurrentBlock()
 //        licenseSet := currentBlock.Licenses
-		licenseSet := &core.LicenseSet{}
-		accountRewardMap = exec.CalculateReward2(ledger, view, licenseSet)
+//        licenseSet := &core.LicenseSet{}
+        accountRewardMap = exec.CalculateReward2(ledger, view)
     }
 
 	coinbaseTxOutputs := []types.TxOutput{}
-	for accountAddressStr, accountReward := range accountRewardMap {
-		var accountAddress common.Address
-		copy(accountAddress[:], accountAddressStr)
+	for accountAddress, accountReward := range accountRewardMap {
+//		var accountAddress common.Address
+//		copy(accountAddress[:], accountAddressStr)
 		coinbaseTxOutputs = append(coinbaseTxOutputs, types.TxOutput{
 			Address: accountAddress,
 			Coins:   accountReward,

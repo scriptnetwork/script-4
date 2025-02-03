@@ -23,7 +23,7 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) {
-fmt.Println("Init cfgPath=", cfgPath)
+    fmt.Println("Init cfgPath=", cfgPath)
 
 	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
 		log.WithFields(log.Fields{"err": err, "path": cfgPath}).Fatal("Directory already exists!")

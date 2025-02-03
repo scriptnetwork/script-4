@@ -83,7 +83,7 @@ func (exec *ReleaseFundTxExecutor) process(chainID string, view *st.StoreView, v
 		return common.Hash{}, result.Error("Failed to get the source account")
 	}
 	sourceAddress := tx.Source.Address
-	sourceAccount := accounts[string(sourceAddress[:])]
+	sourceAccount := accounts[sourceAddress]
 
 	reserveSequence := tx.ReserveSequence
 

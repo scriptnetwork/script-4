@@ -81,7 +81,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 		return result.Error("SignBytes: %X", signBytes)
 	}
 
-	outputAccounts := map[string]*types.Account{}
+	outputAccounts := map[common.Address]*types.Account{}
 	outputAccounts, res = getOrMakeOutputs(view, outputAccounts, tx.Outputs)
 	if res.IsError() {
 		return res
@@ -93,21 +93,22 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 	}
 
 	// check the reward amount
-	var expectedRewards map[string]types.Coins
+	var expectedRewards map[common.Address]types.Coins
 //	currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
 //	licenseSet := currentBlock.Licenses
-	licenseSet := &core.LicenseSet{}
+//	licenseSet := &core.LicenseSet{}
 //	lightningVotes := currentBlock.LightningVotes
 //	eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
 //	lightningPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, lightningVotes, eliteEdgeNodeVotes)
-	expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view, licenseSet)
+	expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view)
 //	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, lightningVotes, lightningPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
 
 	if len(expectedRewards) != len(tx.Outputs) {
 		return result.Error("Number of rewarded account is incorrect")
 	}
 	for _, output := range tx.Outputs {
-		exp, ok := expectedRewards[string(output.Address[:])]
+//		exp, ok := expectedRewards[string(output.Address[:])]
+		exp, ok := expectedRewards[output.Address]
 		if !ok || !exp.IsEqual(output.Coins) {
 			return result.Error("Invalid rewards, address %v expecting %v, but is %v",
 				output.Address, exp, output.Coins)
@@ -123,15 +124,15 @@ func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, view
 		return common.Hash{}, result.Error("Another coinbase transaction has been processed for the current block")
 	}
 
-	accounts := map[string]*types.Account{}
+	accounts := map[common.Address]*types.Account{}
 	accounts, res := getOrMakeOutputs(view, accounts, tx.Outputs)
 	if res.IsError() {
 		return common.Hash{}, res
 	}
 
 	for _, output := range tx.Outputs {
-		addr := string(output.Address[:])
-		if account, exists := accounts[addr]; exists {
+//		addr := string(output.Address[:])
+		if account, exists := accounts[output.Address]; exists {
 			account.Balance = account.Balance.Plus(output.Coins)
 			view.SetAccount(output.Address, account)
 		}
@@ -189,42 +190,42 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 	return lightningPool, eliteEdgeNodePool
 }
 
-func CalculateReward2(ledger core.Ledger, view *st.StoreView, licenseSet *core.LicenseSet,) map[string]types.Coins {
-
-	rewardMap := make(map[string]types.Coins)
-
-	if licenseSet == nil || licenseSet.Len() == 0 {
-		logger.Warnf("License set is empty")
-		return rewardMap
-	}
-
-	currentHeight := view.Height()
-	logger.Debugf("Calculating rewards for block height: %d", currentHeight)
-
+func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address]types.Coins {
+    rewardMap := make(map[common.Address]types.Coins)
+    currentHeight := view.Height()
+    logger.Debugf("Calculating rewards for block height: %d", currentHeight)
     // reward_per_node_per_hour=$(echo "17.8125 / 2" | bc -l)
     // reward_per_node_per_block 0.01484375
     // https://github.com/scriptnetwork/system/issues/311#issuecomment-2586731985
     // https://github.com/scriptnetwork/system/blob/5820fc96aa6e426c84d41009e7b4b95876022879/be/L1/tv2/bin/s01_compute#L203C9-L203C63
-
-	for _, license := range licenseSet.Licenses {
-		address := license.Holder.String()
+    core.For_each_lightning(func(address common.Address) {
+        // Create a dummy coins value for each address.
+        // For example, we create coins with one coin of 100 "atom" units.
         reward := big.NewInt(14843750000000000)
-		rewardMap[address] = types.Coins{
-
-		    SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
-		    SPAYWei: reward,
-		}
-		logger.Debugf("Assigned reward to license holder: %s, Reward: %v", address, reward)
-	}
-
-	return rewardMap
+        rewardMap[address] = types.Coins{
+            SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
+            SPAYWei: reward,
+        }
+        logger.Debugf("Assigned reward to lightning holder: %s, Reward: %v", address, reward)
+    })
+    core.For_each_validator(func(address common.Address) {
+        // Create a dummy coins value for each address.
+        // For example, we create coins with one coin of 100 "atom" units.
+        reward := big.NewInt(104843750000000000)  //TODO: Review this number temporarily set to ~10xlightning
+        rewardMap[address] = types.Coins{
+            SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
+            SPAYWei: reward,
+        }
+        logger.Debugf("Assigned reward to validator holder: %s, Reward: %v", address, reward)
+    })
+    return rewardMap
 }
 
 // CalculateReward calculates the block reward for each account
 func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
 	lightningVotes *core.AggregatedVotes, lightningPool *core.LightningCandidatePool,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[string]types.Coins {
-	accountReward := map[string]types.Coins{}
+	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[common.Address]types.Coins {
+	accountReward := map[common.Address]types.Coins{}
 	blockHeight := view.Height() + 1 // view points to the parent block
 	if blockHeight < common.HeightEnableValidatorReward {
 		grantValidatorsWithZeroReward(validatorSet, &accountReward)
@@ -237,6 +238,7 @@ func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.
 		grantEliteEdgeNodeReward(ledger, view, lightningVotes, eliteEdgeNodeVotes, eliteEdgeNodePool, &accountReward, blockHeight)
 	}
 
+/*
 	addrs := []string{}
 	for addr := range accountReward {
 		addrs = append(addrs, addr)
@@ -246,19 +248,20 @@ func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.
 		reward := accountReward[addr]
 		logger.Infof("Total reward for account %v : %v", hex.EncodeToString([]byte(addr)), reward)
 	}
-
+*/
 	return accountReward
 }
 
-func grantValidatorsWithZeroReward(validatorSet *core.ValidatorSet, accountReward *map[string]types.Coins) {
+func grantValidatorsWithZeroReward(validatorSet *core.ValidatorSet, accountReward *map[common.Address]types.Coins) {
 	// Initial Mainnet release should not reward the validators until the lightnings ready to deploy
 	zeroReward := types.Coins{}.NoNil()
 	for _, v := range validatorSet.Validators() {
-		(*accountReward)[string(v.Address[:])] = zeroReward
+//		(*accountReward)[string(v.Address[:])] = zeroReward
+		(*accountReward)[v.Address] = zeroReward
 	}
 }
 
-func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, accountReward *map[string]types.Coins, blockHeight uint64) {
+func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
 		return
 	}
@@ -310,7 +313,8 @@ func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *
 			SCPTWei: big.NewInt(0),
 			SPAYWei: rewardAmount,
 		}.NoNil()
-		(*accountReward)[string(stakeSourceAddr[:])] = reward
+//		(*accountReward)[string(stakeSourceAddr[:])] = reward
+		(*accountReward)[stakeSourceAddr] = reward
 
 		logger.Infof("Block reward for staker %v : %v", hex.EncodeToString(stakeSourceAddr[:]), reward)
 	}
@@ -318,7 +322,7 @@ func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *
 
 // grant block rewards to both the validators and active lightnings (they are both script stakers)
 func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes,
-	lightningPool *core.LightningCandidatePool, accountReward *map[string]types.Coins, blockHeight uint64) {
+	lightningPool *core.LightningCandidatePool, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
 		return
 	}
@@ -410,7 +414,7 @@ func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, va
 
 // grant uptime mining rewards to active elite edge nodes (they are the spay stakers)
 func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningVotes *core.AggregatedVotes, eliteEdgeNodeVotes *core.AggregatedEENVotes,
-	eliteEdgeNodePool core.EliteEdgeNodePool, accountReward *map[string]types.Coins, blockHeight uint64) {
+	eliteEdgeNodePool core.EliteEdgeNodePool, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
 		return
 	}
@@ -485,21 +489,24 @@ func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningV
 
 }
 
-func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map[string]types.Coins) {
+func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map[common.Address]types.Coins) {
 	rewardCoins := types.Coins{
 		SCPTWei: big.NewInt(0),
 		SPAYWei: amount,
 	}.NoNil()
-	receiverAddr := string(receiver[:])
-	if existingReward, exists := (*accountReward)[receiverAddr]; exists {
+//	receiverAddr := string(receiver[:])
+//	if existingReward, exists := (*accountReward)[receiverAddr]; exists {
+	if existingReward, exists := (*accountReward)[receiver]; exists {
 		totalReward := existingReward.NoNil().Plus(rewardCoins)
-		(*accountReward)[receiverAddr] = totalReward
+//		(*accountReward)[receiverAddr] = totalReward
+		(*accountReward)[receiver] = totalReward
 	} else {
-		(*accountReward)[receiverAddr] = rewardCoins
+//		(*accountReward)[receiverAddr] = rewardCoins
+		(*accountReward)[receiver] = rewardCoins
 	}
 }
 
-func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, reward *big.Int, accountRewardMap *map[string]types.Coins) {
+func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, reward *big.Int, accountRewardMap *map[common.Address]types.Coins) {
 	if srdsr == nil {
 		// Should not happen
 		logger.Panic("srdsr is nil")
@@ -537,7 +544,7 @@ func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, re
 	addRewardToMap(rewardDistribution.Beneficiary, splitReward, accountRewardMap)
 }
 
-func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, accountReward *map[string]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
+func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, accountReward *map[common.Address]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
 	if totalStake.Cmp(big.NewInt(0)) == 0 {
 		return
 	}
@@ -576,7 +583,7 @@ func issueFixedReward(effectiveStakes [][]*core.Stake, totalStake *big.Int, acco
 }
 
 func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVotes, view *st.StoreView, effectiveStakes [][]*core.Stake,
-	totalStake *big.Int, accountReward *map[string]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
+	totalStake *big.Int, accountReward *map[common.Address]types.Coins, totalReward *big.Int, srdsr *st.StakeRewardDistributionRuleSet, rewardType string) {
 
 	if lightningVotes == nil {
 		// Should never reach here

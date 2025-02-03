@@ -15,6 +15,7 @@ var (
 	gasLimitFlag uint64
 	dataFlag     string
 	verboseFlag  bool
+	licenseFlag  string
 )
 
 // CallCmd represents the call command

@@ -73,11 +73,11 @@ func isAValidator(address common.Address, validatorAddresses []common.Address) r
 // The accounts from the TxInputs must either already have
 // crypto.PubKey.(type) != nil, (it must be known),
 // or it must be specified in the TxInput.
-func getInputs(view *state.StoreView, ins []types.TxInput) (map[string]*types.Account, result.Result) {
-	accounts := map[string]*types.Account{}
+func getInputs(view *state.StoreView, ins []types.TxInput) (map[common.Address]*types.Account, result.Result) {
+	accounts := map[common.Address]*types.Account{}
 	for _, in := range ins {
 		// Account shouldn't be duplicated
-		if _, ok := accounts[string(in.Address[:])]; ok {
+		if _, ok := accounts[in.Address]; ok {
 			return nil, result.Error("getInputs - Duplicated address: %v", in.Address)
 		}
 
@@ -86,7 +86,7 @@ func getInputs(view *state.StoreView, ins []types.TxInput) (map[string]*types.Ac
 			return nil, result.Error("getInputs - Unknown address: %v", in.Address)
 		}
 
-		accounts[string(in.Address[:])] = acc
+		accounts[in.Address] = acc
 	}
 	return accounts, result.OK
 }
@@ -133,19 +133,19 @@ func getOrMakeAccountImpl(view *state.StoreView, address common.Address, makeNew
 	return acc, result.OK
 }
 
-func getOrMakeOutputs(view *state.StoreView, accounts map[string]*types.Account, outs []types.TxOutput) (map[string]*types.Account, result.Result) {
+func getOrMakeOutputs(view *state.StoreView, accounts map[common.Address]*types.Account, outs []types.TxOutput) (map[common.Address]*types.Account, result.Result) {
 	if accounts == nil {
-		accounts = make(map[string]*types.Account)
+		accounts = make(map[common.Address]*types.Account)
 	}
 
 	for _, out := range outs {
 		// Account shouldn't be duplicated
-		if _, ok := accounts[string(out.Address[:])]; ok {
+		if _, ok := accounts[out.Address]; ok {
 			return nil, result.Error("getOrMakeOutputs - Duplicated address: %v", out.Address)
 		}
 
 		acc := getOrMakeAccount(view, out.Address)
-		accounts[string(out.Address[:])] = acc
+		accounts[out.Address] = acc
 	}
 	return accounts, result.OK
 }
@@ -162,10 +162,10 @@ func validateInputsBasic(ins []types.TxInput) result.Result {
 }
 
 // Validate inputs and compute total amount of coins
-func validateInputsAdvanced(accounts map[string]*types.Account, signBytes []byte, ins []types.TxInput, blockHeight uint64) (total types.Coins, res result.Result) {
+func validateInputsAdvanced(accounts map[common.Address]*types.Account, signBytes []byte, ins []types.TxInput, blockHeight uint64) (total types.Coins, res result.Result) {
 	total = types.NewCoins(0, 0)
 	for _, in := range ins {
-		acc := accounts[string(in.Address[:])]
+		acc := accounts[in.Address]
 		if acc == nil {
 			panic("validateInputsAdvanced() expects account in accounts")
 		}
@@ -228,9 +228,9 @@ func sumOutputs(outs []types.TxOutput) types.Coins {
 
 // Note: Since totalInput == totalOutput + fee, the transaction fee is charged implicitly
 //       by the following adjustByInputs() function. No special handling needed
-func adjustByInputs(view *state.StoreView, accounts map[string]*types.Account, ins []types.TxInput) {
+func adjustByInputs(view *state.StoreView, accounts map[common.Address]*types.Account, ins []types.TxInput) {
 	for _, in := range ins {
-		acc := accounts[string(in.Address[:])]
+		acc := accounts[in.Address]
 		if acc == nil {
 			panic("adjustByInputs() expects account in accounts")
 		}
@@ -243,9 +243,9 @@ func adjustByInputs(view *state.StoreView, accounts map[string]*types.Account, i
 	}
 }
 
-func adjustByOutputs(view *state.StoreView, accounts map[string]*types.Account, outs []types.TxOutput) {
+func adjustByOutputs(view *state.StoreView, accounts map[common.Address]*types.Account, outs []types.TxOutput) {
 	for _, out := range outs {
-		acc := accounts[string(out.Address[:])]
+		acc := accounts[out.Address]
 		if acc == nil {
 			panic("adjustByOutputs() expects account in accounts")
 		}

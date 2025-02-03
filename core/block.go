@@ -126,7 +126,7 @@ type BlockHeader struct {
 	Height             uint64
 	Parent             common.Hash
 	HCC                CommitCertificate
-    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
+//    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
 	LightningVotes      *AggregatedVotes    `rlp:"nil"` // Added in Script2.0 fork.
 	EliteEdgeNodeVotes *AggregatedEENVotes `rlp:"nil"` // Added in Script3.0 fork.
 	TxHash             common.Hash
@@ -187,7 +187,7 @@ func (h *BlockHeader) EncodeRLP(w io.Writer) error {
         h.Signature,
         h.LightningVotes,
         h.EliteEdgeNodeVotes,
-        h.Licenses,
+//        h.Licenses,
     })
 
 }
@@ -298,6 +298,7 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
 
     logger.Debugf("RLP: Decoder. h.Height = %v, common.Height_hf2 = %v", h.Height, common.Height_hf2)
 
+/*
     if h.Height >= common.Height_hf2 {
         raw, err := stream.Raw()
         if err != nil {
@@ -314,6 +315,7 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
             h.Licenses = licenses
         }
     }
+*/
 
     return stream.ListEnd()
 }

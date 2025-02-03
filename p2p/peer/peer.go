@@ -19,6 +19,7 @@ import (
 	nu "github.com/scripttoken/script/p2p/netutil"
 	p2ptypes "github.com/scripttoken/script/p2p/types"
 	"github.com/scripttoken/script/rlp"
+	"github.com/scripttoken/script/core"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "p2p"})
@@ -35,6 +36,7 @@ type Peer struct {
 	isOutbound   bool
 	isSeed       bool
 	netAddress   *nu.NetAddress
+	isLicenseValid bool
 
 	nodeInfo p2ptypes.NodeInfo // information of the blockchain node of the peer
 	nodeType cmn.NodeType
@@ -218,6 +220,18 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 	}
 
 	peer.nodeType = common.NodeType(peerType)
+
+	if (peer.nodeType == common.NodeTypeBlockchainNode) { //	NodeTypeBlockchainNode
+        if core.Has_license_peer(targetPeerNodeInfo.PubKey.Address()) {
+			logger.Infof("License validation succeeded")
+			peer.isLicenseValid = true
+        } else {
+	  		peer.isLicenseValid = false
+			logger.Warnf("License validation failed: %v\n", err)
+			return errors.New("KO 33092 Peer is not licensed.")
+	  }
+	}
+	//set licenseValid in node above^
 
 	remotePub, err := peer.connection.DoEncHandshake(
 		crypto.PrivKeyToECDSA(sourceNodeInfo.PrivKey), crypto.PubKeyToECDSA(targetNodePubKey))

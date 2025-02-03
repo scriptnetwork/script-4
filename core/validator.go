@@ -122,6 +122,10 @@ func (s *ValidatorSet) GetValidator(id common.Address) (Validator, error) {
 
 // AddValidator adds a validator to the validator set.
 func (s *ValidatorSet) AddValidator(validator Validator) {
+//	err := ValidateLicense(validator.Address)
+//	if err != nil {
+//		logger.Errorf("failed to add validator: %v", err)
+//	}
 	s.validators = append(s.validators, validator)
 	sort.Sort(ByID(s.validators))
 }

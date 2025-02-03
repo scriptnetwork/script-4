@@ -149,7 +149,7 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 			continue
 		}
 	        if valStake.Cmp(minValidatorTotalStake) < 0 {
-	                continue
+	                break
                 }
 		validator := core.NewValidator(valAddr, valStake)
 		valSet.AddValidator(validator)
