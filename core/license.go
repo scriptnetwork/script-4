@@ -142,6 +142,7 @@ func read_licenses0() error {
             logger.Infof("Added VN %v", license.Licensee) 
             continue
         }
+        logger.Infof("Ignored entry %v", license) 
     }
     logger.Infof("Number of Validators: %v", len(validators)) 
     logger.Infof("Number of Lightnings: %v", len(lightnings)) 
