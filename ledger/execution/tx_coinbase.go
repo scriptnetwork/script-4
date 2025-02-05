@@ -94,27 +94,29 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 
 	// check the reward amount
 	var expectedRewards map[common.Address]types.Coins
-//	currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
-//	licenseSet := currentBlock.Licenses
-//	licenseSet := &core.LicenseSet{}
-//	lightningVotes := currentBlock.LightningVotes
-//	eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
-//	lightningPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, lightningVotes, eliteEdgeNodeVotes)
-	expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view)
-//	expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, lightningVotes, lightningPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
 
-	if len(expectedRewards) != len(tx.Outputs) {
-		return result.Error("Number of rewarded account is incorrect")
-	}
-	for _, output := range tx.Outputs {
-//		exp, ok := expectedRewards[string(output.Address[:])]
-		exp, ok := expectedRewards[output.Address]
-		if !ok || !exp.IsEqual(output.Coins) {
-			return result.Error("Invalid rewards, address %v expecting %v, but is %v",
-				output.Address, exp, output.Coins)
-		}
-	}
-	return result.OK
+    ch := exec.state.Height()
+    if ch < common.Height_hf2 {
+        currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
+        guardianVotes := currentBlock.LightningVotes
+        eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
+        guardianPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes, eliteEdgeNodeVotes)
+        expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
+    } else {
+        expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view)
+    }
+
+    if len(expectedRewards) != len(tx.Outputs) {
+        return result.Error("Number of rewarded account is incorrect")
+    }
+    for _, output := range tx.Outputs {
+        exp, ok := expectedRewards[output.Address]
+        if !ok || !exp.IsEqual(output.Coins) {
+            return result.Error("Invalid rewards, address %v expecting %v, but is %v",
+                output.Address, exp, output.Coins)
+        }
+    }
+    return result.OK
 }
 
 func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) (common.Hash, result.Result) {
@@ -200,8 +202,8 @@ func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address
     // https://github.com/scriptnetwork/system/blob/5820fc96aa6e426c84d41009e7b4b95876022879/be/L1/tv2/bin/s01_compute#L203C9-L203C63
     core.For_each_lightning(func(address common.Address) {
         // Create a dummy coins value for each address.
-        // For example, we create coins with one coin of 100 "atom" units.
-        reward := big.NewInt(14843750000000000)
+        // For example, we create coins with one coin of 100 "atom" units. 
+        reward := big.NewInt(14843750000000000)  // 0.01484 
         rewardMap[address] = types.Coins{
             SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
             SPAYWei: reward,
@@ -209,9 +211,7 @@ func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address
         logger.Debugf("Assigned reward to lightning holder: %s, Reward: %v", address, reward)
     })
     core.For_each_validator(func(address common.Address) {
-        // Create a dummy coins value for each address.
-        // For example, we create coins with one coin of 100 "atom" units.
-        reward := big.NewInt(104843750000000000)  //TODO: Review this number temporarily set to ~10xlightning
+        reward := big.NewInt(520000000000000000)  //0.52 per node every 6 seconds
         rewardMap[address] = types.Coins{
             SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
             SPAYWei: reward,

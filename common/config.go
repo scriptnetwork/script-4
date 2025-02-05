@@ -174,7 +174,7 @@ genesis:
   chainID: "noname"
   ethChainID: 0
   license_dir: /home/stv/script4/gov
-  license_issuer: 0x156cba5BCCe8069E25EaEDD5FeDecFd2cE869eDf
+  license_issuer: "0x156cba5BCCe8069E25EaEDD5FeDecFd2cE869eDf"
 
 p2p:
   port: 5000

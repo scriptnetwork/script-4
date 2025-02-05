@@ -41,6 +41,14 @@ func ValidatorCandidatePoolKey() common.Bytes {
 	return common.Bytes("ls/vcp")
 }
 
+func ValidatorsKey() common.Bytes {
+	return common.Bytes("ls/validators")
+}
+
+func LightningsKey() common.Bytes {
+	return common.Bytes("ls/lightnings")
+}
+
 // LightningCandidatePoolKey returns the state key for the guadian stake holder set
 func LightningCandidatePoolKey() common.Bytes {
 	return common.Bytes("ls/gcp")
@@ -84,12 +92,12 @@ func StakeRewardDistributionRuleSetKey(addr common.Address) common.Bytes {
 	return append(prefix, addr[:]...)
 }
 
-//EliteEdgeNodeStakeReturnsKeyPrefix returns the prefix of the elite edge node stake return key
+// EliteEdgeNodeStakeReturnsKeyPrefix returns the prefix of the elite edge node stake return key
 func EliteEdgeNodeStakeReturnsKeyPrefix() common.Bytes {
 	return common.Bytes("ls/eensrk/")
 }
 
-//EliteEdgeNodeStakeReturnsKey returns the EEN stake return key for the given height
+// EliteEdgeNodeStakeReturnsKey returns the EEN stake return key for the given height
 func EliteEdgeNodeStakeReturnsKey(height uint64) common.Bytes {
 	heightStr := strconv.FormatUint(height, 10)
 	return common.Bytes(string(EliteEdgeNodeStakeReturnsKeyPrefix()) + heightStr)

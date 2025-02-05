@@ -57,7 +57,11 @@ func runStart(cmd *cobra.Command, args []string) {
 		dbPath = cfgPath
 	}
 
+	fmt.Println("Read_licenses")
+    log.Debug("XXXXXXXX1")
+
     core.Read_licenses()
+    log.Debug("XXXXXXXX2")
 
 	hfPath := path.Join(dbPath, "hf.cfg")
     err = common.Initialize_hf_values(hfPath)

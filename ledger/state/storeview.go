@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
@@ -13,6 +12,7 @@ import (
 	"github.com/scripttoken/script/rlp"
 	"github.com/scripttoken/script/store/database"
 	"github.com/scripttoken/script/store/treestore"
+	log "github.com/sirupsen/logrus"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "ledger"})
@@ -293,6 +293,32 @@ func (sv *StoreView) DeleteExpiredSplitRules(currentBlockHeight uint64) bool {
 	}
 
 	return true
+}
+
+func (sv *StoreView) GetValidators() *core.AddressSet {
+	data := sv.Get(ValidatorsKey())
+	if data == nil || len(data) == 0 {
+		return nil
+	}
+	validators := &core.AddressSet{}
+	err := types.FromBytes(data, validators)
+	if err != nil {
+		log.Panicf("Error reading validators %X, error: %v", data, err.Error())
+	}
+	return validators
+}
+
+func (sv *StoreView) GetLightnings() *core.AddressSet {
+	data := sv.Get(LightningsKey())
+	if data == nil || len(data) == 0 {
+		return nil
+	}
+	lightnings := &core.AddressSet{}
+	err := types.FromBytes(data, lightnings)
+	if err != nil {
+		log.Panicf("Error reading lightnings %X, error: %v", data, err.Error())
+	}
+	return lightnings
 }
 
 // GetValidatorCandidatePool gets the validator candidate pool.
@@ -801,7 +827,7 @@ func (sv *StoreView) Prune() error {
 		return true
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to prune store view, %v", err)
+		return fmt.Errorf("failed to prune store view, %v", err)
 	}
 	return nil
 }

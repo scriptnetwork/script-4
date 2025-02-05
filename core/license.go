@@ -1,27 +1,30 @@
 package core
 
 import (
-    "math/big"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "os"
-//    "time"
-    "strings"
-    "github.com/scripttoken/script/crypto"
-    "github.com/scripttoken/script/common"
-    "sync"
-//    log "github.com/sirupsen/logrus"
-    "github.com/spf13/viper"
+	"encoding/json"
+	"fmt"
+	"io"
+	"math/big"
+	"os"
+
+	//    "time"
+	"strings"
+	"sync"
+
+	"github.com/scripttoken/script/common"
+	"github.com/scripttoken/script/crypto"
+
+	//    log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type License struct {
-    Issuer    common.Address   // Issuer's address
-    Licensee  common.Address   // Licensee's address
-    From      *big.Int        // Start time (unix timestamp)
-    To        *big.Int        // End time (unix timestamp)
-    Items     []string        // Items covered by the license
-    Signature *crypto.Signature   // Signature of the license
+	Issuer    common.Address    // Issuer's address
+	Licensee  common.Address    // Licensee's address
+	From      *big.Int          // Start time (unix timestamp)
+	To        *big.Int          // End time (unix timestamp)
+	Items     []string          // Items covered by the license
+	Signature *crypto.Signature // Signature of the license
 }
 
 //var logger = log.WithFields(log.Fields{"prefix": "license"})
@@ -30,156 +33,150 @@ type License struct {
 //var licenseMap = make(map[common.Address]License)
 
 var licenses__mx sync.RWMutex
-//var licenses map[common.Address]License
 
-var lightnings = make(map[common.Address]struct{})
-var validators = make(map[common.Address]struct{})
+type AddressSet map[common.Address]struct{}
 
-
-// cache for pre-verified licenses
-//var verifiedLicenseCache = make(map[common.Address]bool)
+var lightnings AddressSet = make(AddressSet)
+var validators AddressSet = make(AddressSet)
 
 func clear() {
-    lightnings = make(map[common.Address]struct{})
-    validators = make(map[common.Address]struct{})
+	lightnings = make(AddressSet)
+	validators = make(AddressSet)
 }
 
 func For_each_lightning(visitor func(common.Address)) {
-    licenses__mx.RLock()
-    defer licenses__mx.RUnlock()
-    for addr := range lightnings {
-        visitor(addr)
-    }
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	for addr := range lightnings {
+		visitor(addr)
+	}
 }
 
 func For_each_validator(visitor func(common.Address)) {
-    licenses__mx.RLock()
-    defer licenses__mx.RUnlock()
-    for addr := range validators {
-        visitor(addr)
-    }
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	for addr := range validators {
+		visitor(addr)
+	}
 }
 
 func Has_license_peer(address common.Address) bool {
-    licenses__mx.RLock()
-    defer licenses__mx.RUnlock()
-    if _, exists := lightnings[address]; exists {
-        return true
-    }
-    if _, exists := validators[address]; exists {
-        return true
-    }
-    return false
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	if _, exists := lightnings[address]; exists {
+		return true
+	}
+	if _, exists := validators[address]; exists {
+		return true
+	}
+	return false
 }
 
-
 func verify_license(license *License, expected_issuer common.Address) string {
-    if license.Issuer != expected_issuer {
-        logger.Infof("Invalid License from issuer %v, expected %v", license.Issuer, expected_issuer)
-        return ""
-    }
-    dataToValidate := concatenateLicenseData(*license)
-    if !license.Signature.Verify(dataToValidate, expected_issuer) {
-        return ""
-    }
-    x := ""
-    for _, item := range license.Items {
-        x += item + " "
-    }
-    return x
+	if license.Issuer != expected_issuer {
+		logger.Infof("Invalid License from issuer %v, expected %v", license.Issuer, expected_issuer)
+		return ""
+	}
+	dataToValidate := concatenateLicenseData(*license)
+	if !license.Signature.Verify(dataToValidate, expected_issuer) {
+		return ""
+	}
+	x := ""
+	for _, item := range license.Items {
+		x += item + " "
+	}
+	return x
 }
 
 // read license file
 //func ReadLicenses(filename string) (map[common.Address]License, error) {
 
 func read_licenses0() error {
-    licenses__mx.Lock()
-    defer licenses__mx.Unlock()
-    license_dir := viper.GetString(common.CfgLicenseDir)
-    if license_dir == "" {
-        return fmt.Errorf("failed license_dir: %v", license_dir)
-    }
-    license_issuer := viper.GetString(common.CfgLicenseIssuer) //issuer public key
-    if license_dir == "" {
-        return fmt.Errorf("failed license_issuer: %v", license_issuer)
-    }
+	license_dir := viper.GetString(common.CfgLicenseDir)
+	if license_dir == "" {
+		return fmt.Errorf("failed license_dir: %v", license_dir)
+	}
+	license_issuer := viper.GetString(common.CfgLicenseIssuer) //issuer public key
+	if license_dir == "" {
+		return fmt.Errorf("failed license_issuer: %v", license_issuer)
+	}
 
-    licenseFile := viper.GetString(common.CfgLicenseDir + "/license.json")
-    file, err := os.Open(licenseFile)
-    if err != nil {
-        return fmt.Errorf("failed to open file: %v", err)
-    }
-    defer file.Close()
+	licenseFile := viper.GetString(common.CfgLicenseDir + "/license.json")
+	file, err := os.Open(licenseFile)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %v", err)
+	}
+	defer file.Close()
 
-    bytes, err := ioutil.ReadAll(file)
-    if err != nil {
-        return fmt.Errorf("Failed to read file: %v", err)
-    }
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("Failed to read file: %v", err)
+	}
 
-    var licenses []License
-    err = json.Unmarshal(bytes, &licenses)
-    if err != nil {
-        return fmt.Errorf("Failed to unmarshal JSON: %v", err)
-    }
+	var licenses []License
+	err = json.Unmarshal(bytes, &licenses)
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshal JSON: %v", err)
+	}
 
-//    licenseMap = make(map[common.Address]License) // clear previous map
-//    verifiedLicenseCache = make(map[common.Address]bool) // clear previous cache
+	//    licenseMap = make(map[common.Address]License) // clear previous map
+	//    verifiedLicenseCache = make(map[common.Address]bool) // clear previous cache
 
-    clear()
+	clear()
 
-    expected_issuer := common.HexToAddress(viper.GetString(common.CfgLicenseIssuer))
-    logger.Infof("Validating licenses. expected issuer %v", expected_issuer) 
-    for _, license := range licenses {
-        x := verify_license(&license, expected_issuer)
-        // Use strings.Contains to check if x contains the unwanted substrings.
-        if strings.Contains(x, "LN ") || strings.Contains(x, "LN-L ") {
-            lightnings[license.Licensee] = struct{}{}
-            logger.Infof("Added LN %v", license.Licensee) 
-            continue
-        }
-        if strings.Contains(x, "VN ") {
-            validators[license.Licensee] = struct{}{}
-            logger.Infof("Added VN %v", license.Licensee) 
-            continue
-        }
-        logger.Infof("Ignored entry %v", license) 
-    }
-    logger.Infof("Number of Validators: %v", len(validators)) 
-    logger.Infof("Number of Lightnings: %v", len(lightnings)) 
-    return nil //OK=nullptr KO=char*
+	expected_issuer := common.HexToAddress(viper.GetString(common.CfgLicenseIssuer))
+	logger.Infof("Validating licenses. expected issuer %v", expected_issuer)
+	for _, license := range licenses {
+		x := verify_license(&license, expected_issuer)
+		// Use strings.Contains to check if x contains the unwanted substrings.
+		if strings.Contains(x, "LN ") || strings.Contains(x, "LN-L ") {
+			lightnings[license.Licensee] = struct{}{}
+			logger.Infof("Added LN %v", license.Licensee)
+			continue
+		}
+		if strings.Contains(x, "VN ") {
+			validators[license.Licensee] = struct{}{}
+			logger.Infof("Added VN %v", license.Licensee)
+			continue
+		}
+		logger.Infof("Ignored entry %v", license)
+	}
+	logger.Infof("Number of Validators: %v", len(validators))
+	logger.Infof("Number of Lightnings: %v", len(lightnings))
+	return nil //OK=nullptr KO=char*
 }
 
 func Read_licenses() error {
-    licenses__mx.Lock()
-    defer licenses__mx.Unlock()
-    return read_licenses0()
+	licenses__mx.Lock()
+	defer licenses__mx.Unlock()
+	return read_licenses0()
 }
 
 func Set_licenses(licenses []License) error {
-    licenses__mx.Lock()
-    defer licenses__mx.Unlock()
-    licenseFile := viper.GetString(common.CfgLicenseDir + "/license.json")
-    file, err := os.OpenFile(licenseFile, os.O_WRONLY|os.O_CREATE, 0644)
-    if err != nil {
-        return fmt.Errorf("failed to open license file: %v", err)
-    }
-    defer file.Close()
-    for _, license := range licenses {
-        licenseJSON, err := json.Marshal(license)
-        if err != nil {
-            return fmt.Errorf("failed to marshal license to JSON: %v", err)
-        }
-        _, err = file.Write(licenseJSON)
-        if err != nil {
-            return fmt.Errorf("failed to write license to file: %v", err)
-        }
-        _, err = file.WriteString("\n")
-        if err != nil {
-            return fmt.Errorf("failed to write newline to file: %v", err)
-        }
-    }
-    read_licenses0()
-    return nil
+	licenses__mx.Lock()
+	defer licenses__mx.Unlock()
+	licenseFile := viper.GetString(common.CfgLicenseDir + "/license.json")
+	file, err := os.OpenFile(licenseFile, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open license file: %v", err)
+	}
+	defer file.Close()
+	for _, license := range licenses {
+		licenseJSON, err := json.Marshal(license)
+		if err != nil {
+			return fmt.Errorf("failed to marshal license to JSON: %v", err)
+		}
+		_, err = file.Write(licenseJSON)
+		if err != nil {
+			return fmt.Errorf("failed to write license to file: %v", err)
+		}
+		_, err = file.WriteString("\n")
+		if err != nil {
+			return fmt.Errorf("failed to write newline to file: %v", err)
+		}
+	}
+	read_licenses0()
+	return nil
 }
 
 /*
@@ -234,7 +231,7 @@ func ValidateIncomingLicense(license License) error {
 		return fmt.Errorf("invalid license signature")
 	}
 
-    if license.Issuer 
+    if license.Issuer
 
 	return nil
 }
@@ -289,10 +286,10 @@ func isLicenseForValidatorNode(items []string) bool {
 
 func concatenateLicenseData(license License) []byte {
 	// Convert fields to byte slices or strings
-	issuerBytes := []byte(license.Issuer.Hex())               
-	licenseeBytes := []byte(license.Licensee.Hex())           
-	fromBytes := license.From.Bytes()                        
-	toBytes := license.To.Bytes()                             
+	issuerBytes := []byte(license.Issuer.Hex())
+	licenseeBytes := []byte(license.Licensee.Hex())
+	fromBytes := license.From.Bytes()
+	toBytes := license.To.Bytes()
 
 	// Concatenate the items list (assuming it's strings)
 	itemsBytes := []byte{}
