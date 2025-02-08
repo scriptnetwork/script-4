@@ -2,13 +2,12 @@ package core
 
 import (
 	"bytes"
-	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/rlp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVoteEncoding(t *testing.T) {
@@ -157,11 +156,11 @@ func TestDedup(t *testing.T) {
 		Epoch: 1,
 	})
 
-	vs := NewValidatorSet()
-	vs.AddValidator(NewValidator(common.HexToAddress("A1").Hex(), big.NewInt(1e10)))
-	vs.AddValidator(NewValidator(common.HexToAddress("A3").Hex(), big.NewInt(1e10)))
-	vs.AddValidator(NewValidator(common.HexToAddress("A4").Hex(), big.NewInt(1e10)))
-	res = votes3.FilterByValidators(vs)
+	vs := NewAddressSet()
+	vs.Add(common.HexToAddress("A1"))
+	vs.Add(common.HexToAddress("A3"))
+	vs.Add(common.HexToAddress("A4"))
+	res = votes3.FilterByValidators(&vs)
 	assert.Equal(2, len(res.Votes()))
 	assert.Equal(res.Votes()[0].ID, common.HexToAddress("A1"))
 	assert.Equal(res.Votes()[1].ID, common.HexToAddress("A3"))
@@ -169,49 +168,42 @@ func TestDedup(t *testing.T) {
 
 func TestCommitCertificate(t *testing.T) {
 	assert := assert.New(t)
+	/*
+		// Beginning of setup.
+		ten18 := new(big.Int).SetUint64(1e18) // 10^18
 
-	// Beginning of setup.
-	ten18 := new(big.Int).SetUint64(1e18) // 10^18
-
-	va1Stake := new(big.Int).Mul(new(big.Int).SetUint64(100000001), ten18) // 100 million + 1
-	va2Stake := new(big.Int).Mul(new(big.Int).SetUint64(100000000), ten18) // 100 million
-	va3Stake := new(big.Int).Mul(new(big.Int).SetUint64(50000000), ten18)  // 50 million
-	va4Stake := new(big.Int).Mul(new(big.Int).SetUint64(50000000), ten18)  // 50 million
+		va1Stake := new(big.Int).Mul(new(big.Int).SetUint64(100000001), ten18) // 100 million + 1
+		va2Stake := new(big.Int).Mul(new(big.Int).SetUint64(100000000), ten18) // 100 million
+		va3Stake := new(big.Int).Mul(new(big.Int).SetUint64(50000000), ten18)  // 50 million
+		va4Stake := new(big.Int).Mul(new(big.Int).SetUint64(50000000), ten18)  // 50 million
+	*/
 
 	priv1, _, _ := crypto.GenerateKeyPair()
-	va1Addr := priv1.PublicKey().Address()
-	va1AddrStr := va1Addr.Hex()
-	va1 := NewValidator(va1AddrStr, va1Stake)
+	va1 := priv1.PublicKey().Address()
 
 	priv2, _, _ := crypto.GenerateKeyPair()
-	va2Addr := priv2.PublicKey().Address()
-	va2AddrStr := va2Addr.Hex()
-	va2 := NewValidator(va2AddrStr, va2Stake)
+	va2 := priv2.PublicKey().Address()
 
 	priv3, _, _ := crypto.GenerateKeyPair()
-	va3Addr := priv3.PublicKey().Address()
-	va3AddrStr := va3Addr.Hex()
-	va3 := NewValidator(va3AddrStr, va3Stake)
+	va3 := priv3.PublicKey().Address()
 
 	priv4, _, _ := crypto.GenerateKeyPair()
-	va4Addr := priv4.PublicKey().Address()
-	va4AddrStr := va4Addr.Hex()
-	va4 := NewValidator(va4AddrStr, va4Stake)
+	va4 := priv4.PublicKey().Address()
 
-	vs := NewValidatorSet()
-	vs.AddValidator(va1)
-	vs.AddValidator(va2)
-	vs.AddValidator(va3)
-	vs.AddValidator(va4)
+	vs := NewAddressSet()
+	vs.Add(va1)
+	vs.Add(va2)
+	vs.Add(va3)
+	vs.Add(va4)
 
 	blockHash := common.HexToHash("a1")
-	vote1 := Vote{ID: va1Addr, Block: blockHash, Height: 1}
+	vote1 := Vote{ID: va1, Block: blockHash, Height: 1}
 	vote1.Sign(priv1)
-	vote2 := Vote{ID: va2Addr, Block: blockHash, Height: 1}
+	vote2 := Vote{ID: va2, Block: blockHash, Height: 1}
 	vote2.Sign(priv2)
-	vote3 := Vote{ID: va3Addr, Block: blockHash, Height: 1}
+	vote3 := Vote{ID: va3, Block: blockHash, Height: 1}
 	vote3.Sign(priv3)
-	vote4 := Vote{ID: va4Addr, Block: blockHash, Height: 1}
+	vote4 := Vote{ID: va4, Block: blockHash, Height: 1}
 	vote4.Sign(priv4)
 
 	invalidVoteSet := NewVoteSet()
@@ -229,33 +221,33 @@ func TestCommitCertificate(t *testing.T) {
 
 	// Reject nil voteset.
 	cc := CommitCertificate{}
-	assert.False(cc.IsValid(vs))
+	assert.False(cc.IsValid(&vs))
 
 	// Reject invalid voteset.
 	cc = CommitCertificate{Votes: invalidVoteSet, BlockHash: blockHash}
-	assert.False(cc.IsValid(vs))
+	assert.False(cc.IsValid(&vs))
 
 	// Reject empty block hash.
 	cc = CommitCertificate{Votes: validVoteSet}
-	assert.False(cc.IsValid(vs))
+	assert.False(cc.IsValid(&vs))
 
 	// Accept valid voteset.
 	cc = CommitCertificate{Votes: validVoteSet, BlockHash: blockHash}
-	assert.True(cc.IsValid(vs))
+	assert.True(cc.IsValid(&vs))
 
 	// Reject voteset with duplicate votes from same voter
 	voteSet := NewVoteSet()
-	voteSet.AddVote(Vote{ID: va1Addr})
-	voteSet.AddVote(Vote{ID: va2Addr})
-	voteSet.AddVote(Vote{ID: va1Addr})
+	voteSet.AddVote(Vote{ID: va1})
+	voteSet.AddVote(Vote{ID: va2})
+	voteSet.AddVote(Vote{ID: va1})
 	cc = CommitCertificate{Votes: invalidVoteSet, BlockHash: blockHash}
-	assert.False(cc.IsValid(vs))
+	assert.False(cc.IsValid(&vs))
 
 	// Reject voteset with votes for other blocks
 	voteSet = NewVoteSet()
-	voteSet.AddVote(Vote{ID: va1Addr})
-	voteSet.AddVote(Vote{ID: va2Addr})
-	voteSet.AddVote(Vote{ID: va3Addr, Block: common.HexToHash("0x11")})
+	voteSet.AddVote(Vote{ID: va1})
+	voteSet.AddVote(Vote{ID: va2})
+	voteSet.AddVote(Vote{ID: va3, Block: common.HexToHash("0x11")})
 	cc = CommitCertificate{Votes: invalidVoteSet, BlockHash: blockHash}
-	assert.False(cc.IsValid(vs))
+	assert.False(cc.IsValid(&vs))
 }

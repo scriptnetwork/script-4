@@ -12,13 +12,14 @@ import (
 
 var _ types.Wallet = (*SoftWallet)(nil)
 
+/*
 type KeystoreType int
 
 const (
 	KeystoreTypeEncrypted KeystoreType = iota
 	KeystoreTypePlain
 )
-
+*/
 //
 // SoftWallet implements the Wallet interface
 //
@@ -34,14 +35,10 @@ type UnlockedKey struct {
 	abort chan struct{}
 }
 
-func NewSoftWallet(keysDirPath string, kstype KeystoreType) (*SoftWallet, error) {
+func NewSoftWallet(keysDirPath string) (*SoftWallet, error) {
 	var keystore ks.Keystore
 	var err error
-	if kstype == KeystoreTypeEncrypted {
-		keystore, err = ks.NewKeystoreEncrypted(keysDirPath, ks.StandardScryptN, ks.StandardScryptP)
-	} else {
-		keystore, err = ks.NewKeystorePlain(keysDirPath)
-	}
+	keystore, err = ks.NewKeystorePlain(keysDirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +72,7 @@ func (w *SoftWallet) List() ([]common.Address, error) {
 }
 
 // NewKey creates a new key
-func (w *SoftWallet) NewKey(password string) (common.Address, error) {
+func (w *SoftWallet) NewKey() (common.Address, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -87,7 +84,7 @@ func (w *SoftWallet) NewKey(password string) (common.Address, error) {
 	key := ks.NewKey(privKey)
 	address := key.Address
 
-	w.keystore.StoreKey(key, password)
+	w.keystore.StoreKey(key)
 
 	// newly created key is considerred unlocked
 	unlockedKey := &UnlockedKey{
@@ -113,7 +110,7 @@ func (w *SoftWallet) ImportKey(hexPriv string) (common.Address, error) {
 	key := ks.NewKey(cryptoPrivKey)
 	address := key.Address
 
-	w.keystore.StoreKey(key, "")
+	w.keystore.StoreKey(key)
 
 	// newly created key is considerred unlocked
 	unlockedKey := &UnlockedKey{
@@ -125,11 +122,11 @@ func (w *SoftWallet) ImportKey(hexPriv string) (common.Address, error) {
 }
 
 // Unlock unlocks a key if the password is correct
-func (w *SoftWallet) Unlock(address common.Address, password string, derivationPath types.DerivationPath) error {
+func (w *SoftWallet) Unlock(address common.Address, derivationPath types.DerivationPath) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	key, err := w.keystore.GetKey(address, password)
+	key, err := w.keystore.GetKey(address)
 	if err != nil {
 		return err
 	}
@@ -170,7 +167,7 @@ func (w *SoftWallet) IsUnlocked(address common.Address) bool {
 }
 
 // Delete deletes a key from disk permanently
-func (w *SoftWallet) Delete(address common.Address, password string) error {
+func (w *SoftWallet) Delete(address common.Address) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -182,21 +179,7 @@ func (w *SoftWallet) Delete(address common.Address, password string) error {
 		}
 	}
 
-	err := w.keystore.DeleteKey(address, password)
-	return err
-}
-
-// UpdatePassword updates the password for a key
-func (w *SoftWallet) UpdatePassword(address common.Address, oldPassword, newPassword string) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	key, err := w.keystore.GetKey(address, oldPassword)
-	if err != nil {
-		return err
-	}
-
-	err = w.keystore.StoreKey(key, newPassword)
+	err := w.keystore.DeleteKey(address)
 	return err
 }
 

@@ -99,22 +99,6 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		data := &SmartContractTx{}
 		err = s.Decode(data)
 		return data, err
-	} else if txType == TxDepositStake {
-		data := &DepositStakeTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxWithdrawStake {
-		data := &WithdrawStakeTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxDepositStakeV2 {
-		data := &DepositStakeTxV2{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxStakeRewardDistribution {
-		data := &StakeRewardDistributionTx{}
-		err = s.Decode(data)
-		return data, err
 	} else if txType == TxLicense {
 		data := &LicenseTx{}
 		err = s.Decode(data)
@@ -144,14 +128,6 @@ func TxToBytes(t Tx) ([]byte, error) {
 		txType = TxSplitRule
 	case *SmartContractTx:
 		txType = TxSmartContract
-	case *DepositStakeTx:
-		txType = TxDepositStake
-	case *WithdrawStakeTx:
-		txType = TxWithdrawStake
-	case *DepositStakeTxV2:
-		txType = TxDepositStakeV2
-	case *StakeRewardDistributionTx:
-		txType = TxStakeRewardDistribution
 	case *LicenseTx:
 		txType = TxLicense
 	default:

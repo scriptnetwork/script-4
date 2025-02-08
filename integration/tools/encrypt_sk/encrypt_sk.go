@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"encoding/hex"
 	"flag"
@@ -53,3 +54,4 @@ func main() {
 	encryptedKeyFilePath := filepath.Join(keysDirPath, "encrypted", address.Hex()[2:])
 	fmt.Printf("Private key successfully encrypted: %v\n", encryptedKeyFilePath)
 }
+*/

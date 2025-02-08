@@ -1,15 +1,11 @@
 package core
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"math/big"
-	"sort"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
-	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/crypto/bls"
 	"github.com/scripttoken/script/rlp"
 )
@@ -21,7 +17,7 @@ import (
 // AggregatedVotes represents votes on a block.
 type AggregatedVotes struct {
 	Block      common.Hash    // Hash of the block.
-	Gcp        common.Hash    // Hash of lightning candidate pool.
+	Lightnings common.Hash    // Hash of lightning candidate pool.
 	Multiplies []uint32       // Multiplies of each signer.
 	Signature  *bls.Signature // Aggregated signiature.
 }
@@ -150,6 +146,7 @@ func (a *AggregatedVotes) Copy() *AggregatedVotes {
 	return clone
 }
 
+/*
 //
 // ------- LightningCandidatePool ------- //
 //
@@ -384,3 +381,4 @@ type Lightning struct {
 func (g *Lightning) String() string {
 	return fmt.Sprintf("{holder: %v, pubkey: %v, stakes :%v}", g.Holder, g.Pubkey.String(), g.Stakes)
 }
+*/

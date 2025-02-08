@@ -74,7 +74,7 @@ func (w *trezorDriver) Status() (string, error) {
 
 // Open implements keystore.Driver, attempting to initialize the connection to
 // the Trezor hardware wallet. Initializing the Trezor is a two or three phase operation:
-func (w *trezorDriver) Open(device io.ReadWriter, passphrase string) error {
+func (w *trezorDriver) Open(device io.ReadWriter) error {
 	err := w.bridge.BeginSession()
 	if err != nil {
 		return err

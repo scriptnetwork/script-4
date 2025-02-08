@@ -1,5 +1,7 @@
 package execution
 
+/*
+
 import (
 	"fmt"
 	"math/big"
@@ -290,3 +292,5 @@ func (exec *DepositStakeExecutor) castTx(transaction types.Tx) *types.DepositSta
 	}
 	panic("Unreachable code")
 }
+
+*/

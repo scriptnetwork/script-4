@@ -108,10 +108,10 @@ func fmtValue(value []byte) string {
 		return fmt.Sprintf("%v", splitRule)
 	}
 
-	vcp := core.ValidatorCandidatePool{}
-	err = rlp.DecodeBytes(value, &vcp)
+	validators := core.AddressSet{}
+	err = rlp.DecodeBytes(value, &validators)
 	if err == nil {
-		return fmt.Sprintf("%v", vcp)
+		return fmt.Sprintf("%v", validators)
 	}
 
 	hl := types.HeightList{}

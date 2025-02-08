@@ -3,7 +3,6 @@ package ledger
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"strconv"
 	"sync"
 
@@ -27,8 +26,8 @@ import (
 )
 
 type mockSnapshot struct {
-	block *core.Block
-	vcp   *core.ValidatorCandidatePool
+	block      *core.Block
+	validators *core.AddressSet
 }
 
 type execSim struct {
@@ -43,7 +42,7 @@ func newExecSim(chainID string, db database.Database, snapshot mockSnapshot, val
 	initHeight := snapshot.block.Height
 
 	sv := state.NewStoreView(initHeight, common.Hash{}, db)
-	sv.UpdateValidatorCandidatePool(snapshot.vcp)
+	sv.UpdateValidators(snapshot.validators)
 
 	store := kvstore.NewKVStore(db)
 	chain := blockchain.NewChain(chainID, store, snapshot.block)
@@ -111,51 +110,41 @@ func genSimSnapshot(chainID string, db database.Database) (snapshot mockSnapshot
 	src4Acc := types.MakeAcc("src4")
 	src5Acc := types.MakeAcc("src5")
 	src6Acc := types.MakeAcc("src6")
-	src1Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-	src2Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-	src3Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-	src4Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-	src5Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-	src6Acc.Balance = types.Coins{
-		SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
-		SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
-	}
-
+	/*
+		src1Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+		src2Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+		src3Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+		src4Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+		src5Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+		src6Acc.Balance = types.Coins{
+			SCPTWei: new(big.Int).Mul(new(big.Int).SetUint64(20), core.MinValidatorStakeDeposit),
+			SPAYWei: new(big.Int).Mul(new(big.Int).SetUint64(100), core.MinValidatorStakeDeposit),
+		}
+	*/
 	val1Acc := types.MakeAcc("va1")
 	val2Acc := types.MakeAcc("va2")
 	val3Acc := types.MakeAcc("va3")
 	val4Acc := types.MakeAcc("va4")
 	val5Acc := types.MakeAcc("va5")
 	val6Acc := types.MakeAcc("va6")
-
-	stakeAmount1 := new(big.Int).Mul(new(big.Int).SetUint64(5), core.MinValidatorStakeDeposit)
-	stakeAmount2 := new(big.Int).Mul(new(big.Int).SetUint64(6), core.MinValidatorStakeDeposit)
-	stakeAmount3 := new(big.Int).Mul(new(big.Int).SetUint64(7), core.MinValidatorStakeDeposit)
-	stakeAmount4 := new(big.Int).Mul(new(big.Int).SetUint64(4), core.MinValidatorStakeDeposit)
-
-	vcp := &core.ValidatorCandidatePool{}
-	vcp.DepositStake(src1Acc.Address, val1Acc.Address, stakeAmount1, 0)
-	vcp.DepositStake(src2Acc.Address, val2Acc.Address, stakeAmount2, 0)
-	vcp.DepositStake(src3Acc.Address, val3Acc.Address, stakeAmount3, 0)
-	vcp.DepositStake(src4Acc.Address, val4Acc.Address, stakeAmount4, 0)
-
+	validators := &core.AddressSet{}
 	sv := state.NewStoreView(initHeight, common.Hash{}, db)
-	sv.UpdateValidatorCandidatePool(vcp)
+	sv.UpdateValidators(validators)
 
 	sv.SetAccount(src1Acc.Address, &src1Acc.Account)
 	sv.SetAccount(src2Acc.Address, &src2Acc.Account)
@@ -178,8 +167,8 @@ func genSimSnapshot(chainID string, db database.Database) (snapshot mockSnapshot
 	initBlock.BlockHeader.StateHash = initStateHash
 
 	snapshot = mockSnapshot{
-		block: initBlock,
-		vcp:   vcp,
+		block:      initBlock,
+		validators: validators,
 	}
 	srcPrivAccs = []*types.PrivAccount{&src1Acc, &src2Acc, &src3Acc, &src4Acc, &src5Acc, &src6Acc}
 	valPrivAccs = []*types.PrivAccount{&val1Acc, &val2Acc, &val3Acc, &val4Acc, &val5Acc, &val6Acc}
@@ -223,19 +212,19 @@ func newTestLedger() (chainID string, ledger *Ledger, mempool *mp.Mempool) {
 }
 
 func newTesetValidatorManager(consensus core.ConsensusEngine) core.ValidatorManager {
-	proposerAddressStr := consensus.PrivateKey().PublicKey().Address().String()
-	propser := core.NewValidator(proposerAddressStr, new(big.Int).SetUint64(999))
+	//	proposerAddressStr := consensus.PrivateKey().PublicKey().Address().String()
+	//	propser := core.NewValidator(proposerAddressStr, new(big.Int).SetUint64(999))
+	propser := consensus.PrivateKey().PublicKey().Address()
 
 	_, val2PubKey, err := crypto.TEST_GenerateKeyPairWithSeed("val2")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate key pair with seed: %v", err))
 	}
-	val2 := core.NewValidator(val2PubKey.Address().String(), new(big.Int).SetUint64(100))
-
-	valSet := core.NewValidatorSet()
-	valSet.AddValidator(propser)
-	valSet.AddValidator(val2)
-	valMgr := exec.NewTestValidatorManager(propser, valSet)
+	val2 := val2PubKey.Address()
+	valSet := core.NewAddressSet()
+	valSet.Add(propser)
+	valSet.Add(val2)
+	valMgr := exec.NewTestValidatorManager(propser, &valSet)
 
 	return valMgr
 }
@@ -250,14 +239,14 @@ func newTestMempool(peerID string, messenger p2p.Network, messengerL p2pl.Networ
 
 func prepareInitLedgerState(ledger *Ledger, numInAccs int) (accOut types.PrivAccount, accIns []types.PrivAccount) {
 	txFee := getMinimumTxFee()
-	validators := ledger.valMgr.GetValidatorSet(common.Hash{}).Validators()
-	for _, val := range validators {
+	validators := ledger.valMgr.GetValidators(common.Hash{})
+	for addr := range *validators {
 		valAccount := &types.Account{
-			Address:                val.Address,
+			Address:                addr,
 			LastUpdatedBlockHeight: 1,
 			Balance:                types.NewCoins(100000000000, 1000),
 		}
-		ledger.state.Delivered().SetAccount(val.Address, valAccount)
+		ledger.state.Delivered().SetAccount(addr, valAccount)
 	}
 
 	accOut = types.MakeAccWithInitBalance("accOut", types.NewCoins(700000, 3))
@@ -276,13 +265,13 @@ func prepareInitLedgerState(ledger *Ledger, numInAccs int) (accOut types.PrivAcc
 }
 
 func newRawCoinbaseTx(chainID string, ledger *Ledger, sequence int) common.Bytes {
-	vaList := ledger.valMgr.GetValidatorSet(common.Hash{}).Validators()
+	vaList := *ledger.valMgr.GetValidators(common.Hash{})
 	if len(vaList) < 2 {
 		panic("Insufficient number of validators")
 	}
 	outputs := []types.TxOutput{}
-	for _, val := range vaList {
-		output := types.TxOutput{val.Address, types.NewCoins(0, 0)}
+	for addr := range vaList {
+		output := types.TxOutput{addr, types.NewCoins(0, 0)}
 		outputs = append(outputs, output)
 	}
 
@@ -320,7 +309,7 @@ func newRawSendTx(chainID string, sequence int, addPubKey bool, accOut, accIn ty
 		if randint < 0 {
 			randint = -randint
 		}
-		delta = randint * int64(types.GasRegularTxJune2021)
+		delta = randint * int64(types.GasRegularTx)
 		if err != nil {
 			panic(err)
 		}

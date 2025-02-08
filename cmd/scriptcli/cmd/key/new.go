@@ -3,10 +3,10 @@ package key
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/wallet"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 // newCmd generates a new key
@@ -17,16 +17,16 @@ var newCmd = &cobra.Command{
 	Example: "scriptcli key new",
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 		if err != nil {
 			utils.Error("Failed to open wallet: %v\n", err)
 		}
 
-//		prompt := fmt.Sprintf("Please enter password: ")
-//		password, err := utils.GetPassword(prompt)
-//		if err != nil {
-//			utils.Error("Failed to get password: %v\n", err)
-//		}
+		//		prompt := fmt.Sprintf("Please enter password: ")
+		//		password, err := utils.GetPassword(prompt)
+		//		if err != nil {
+		//			utils.Error("Failed to get password: %v\n", err)
+		//		}
 
 		address, err := wallet.NewKey("")
 		if err != nil {

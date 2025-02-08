@@ -6,12 +6,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store/database/backend"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStoreViewBasics(t *testing.T) {
@@ -254,87 +254,31 @@ func TestRevertAndPruneStoreView(t *testing.T) {
 	assert.Equal(value2, sv.GetState(acc1Addr, key1))
 }
 
-func TestGetAndUpdateValidatorCandidatePool(t *testing.T) {
+func TestGetAndUpdateValidators(t *testing.T) {
 	assert := assert.New(t)
 
-	sourceAddr1 := common.HexToAddress("0x111")
-	stake1Amount1 := new(big.Int).Mul(new(big.Int).SetUint64(1000), core.MinValidatorStakeDeposit)
-	stake1Amount2 := new(big.Int).Mul(new(big.Int).SetUint64(4000), core.MinValidatorStakeDeposit)
+	addr1 := common.HexToAddress("0x111")
+	addr2 := common.HexToAddress("0x222")
+	addr3 := common.HexToAddress("0x333")
+	addr4 := common.HexToAddress("0x444")
 
-	sourceAddr2 := common.HexToAddress("0x222")
-	stake2Amount1 := new(big.Int).Mul(new(big.Int).SetUint64(8000), core.MinValidatorStakeDeposit)
-	stake2Amount2 := new(big.Int).Mul(new(big.Int).SetUint64(9000), core.MinValidatorStakeDeposit)
-
-	sourceAddr3 := common.HexToAddress("0x333")
-	stake3Amount1 := new(big.Int).Mul(new(big.Int).SetUint64(500), core.MinValidatorStakeDeposit)
-	stake3Amount2 := new(big.Int).Mul(new(big.Int).SetUint64(200), core.MinValidatorStakeDeposit)
-	stake3Amount3 := new(big.Int).Mul(new(big.Int).SetUint64(900), core.MinValidatorStakeDeposit)
-
-	sourceAddr4 := common.HexToAddress("0x444")
-	stake4Amount1 := new(big.Int).Mul(new(big.Int).SetUint64(5000), core.MinValidatorStakeDeposit)
-
-	holderAddr1 := common.HexToAddress("0xf01")
-	holderAddr2 := common.HexToAddress("0xf02")
-	holderAddr3 := common.HexToAddress("0xf03")
-	holderAddr4 := common.HexToAddress("0xf04")
-
-	vcp := &core.ValidatorCandidatePool{}
-
-	assert.Nil(vcp.DepositStake(sourceAddr1, holderAddr1, stake1Amount1))
-	assert.Nil(vcp.DepositStake(sourceAddr2, holderAddr1, stake2Amount1))
-	assert.Nil(vcp.DepositStake(sourceAddr3, holderAddr1, stake3Amount2))
-
-	assert.Nil(vcp.DepositStake(sourceAddr1, holderAddr2, stake1Amount2))
-	assert.Nil(vcp.DepositStake(sourceAddr2, holderAddr2, stake2Amount2))
-	assert.Nil(vcp.DepositStake(sourceAddr3, holderAddr2, stake3Amount2))
-
-	assert.Nil(vcp.DepositStake(sourceAddr3, holderAddr3, stake3Amount1))
-
-	assert.Nil(vcp.DepositStake(sourceAddr3, holderAddr4, stake3Amount3))
-	assert.Nil(vcp.DepositStake(sourceAddr4, holderAddr4, stake4Amount1))
+	validators := core.NewAddressSet()
+	validators.Add(addr1)
+	validators.Add(addr2)
+	validators.Add(addr3)
+	validators.Add(addr4)
 
 	db := backend.NewMemDatabase()
 	sv := NewStoreView(uint64(1), common.Hash{}, db)
 
-	sv.UpdateValidatorCandidatePool(vcp)
-	vcp1 := sv.GetValidatorCandidatePool()
-	assert.True(compareValidatorCandidatePools(vcp, vcp1))
+	sv.UpdateValidators(&validators)
+	validators1 := sv.GetValidators()
+	assert.True(compareValidators(&validators, validators1))
 
 	log.Infof("")
 	log.Infof("-------------------------------------------------")
-	log.Infof("vcp:  %v", vcp)
-	log.Infof("vcp1: %v", vcp1)
-	log.Infof("-------------------------------------------------")
-	log.Infof("")
-
-	height := uint64(99999)
-	assert.Nil(vcp.WithdrawStake(sourceAddr1, holderAddr2, height))
-	assert.Nil(vcp.WithdrawStake(sourceAddr2, holderAddr1, height))
-	assert.Nil(vcp.WithdrawStake(sourceAddr3, holderAddr4, height))
-	assert.Nil(vcp.WithdrawStake(sourceAddr4, holderAddr4, height))
-
-	sv.UpdateValidatorCandidatePool(vcp)
-	vcp2 := sv.GetValidatorCandidatePool()
-	assert.True(compareValidatorCandidatePools(vcp, vcp2))
-
-	log.Infof("")
-	log.Infof("-------------------------------------------------")
-	log.Infof("vcp:  %v", vcp)
-	log.Infof("vcp2: %v", vcp2)
-	log.Infof("-------------------------------------------------")
-	log.Infof("")
-
-	height1 := height + core.ReturnLockingPeriod
-	vcp.ReturnStakes(height1)
-
-	sv.UpdateValidatorCandidatePool(vcp)
-	vcp3 := sv.GetValidatorCandidatePool()
-	assert.True(compareValidatorCandidatePools(vcp, vcp3))
-
-	log.Infof("")
-	log.Infof("-------------------------------------------------")
-	log.Infof("vcp:  %v", vcp)
-	log.Infof("vcp2: %v", vcp3)
+	log.Infof("validators:  %v", validators)
+	log.Infof("validators1: %v", validators1)
 	log.Infof("-------------------------------------------------")
 	log.Infof("")
 }
@@ -346,8 +290,8 @@ func TestGetAndUpdateHeightList(t *testing.T) {
 	sv := NewStoreView(uint64(1), common.Hash{}, db)
 
 	hl := &types.HeightList{}
-	sv.UpdateStakeTransactionHeightList(hl)
-	hl1 := sv.GetStakeTransactionHeightList()
+	sv.UpdateValidatorTransactionHeightList(hl)
+	hl1 := sv.GetValidatorTransactionHeightList()
 	assert.True(compareHeightList(hl, hl1))
 
 	log.Infof("")
@@ -358,8 +302,8 @@ func TestGetAndUpdateHeightList(t *testing.T) {
 	log.Infof("")
 
 	hl.Append(997)
-	sv.UpdateStakeTransactionHeightList(hl)
-	hl2 := sv.GetStakeTransactionHeightList()
+	sv.UpdateValidatorTransactionHeightList(hl)
+	hl2 := sv.GetValidatorTransactionHeightList()
 	assert.True(compareHeightList(hl, hl2))
 
 	log.Infof("")
@@ -374,8 +318,8 @@ func TestGetAndUpdateHeightList(t *testing.T) {
 	hl.Append(827372)
 	hl.Append(9828376)
 	hl.Append(10091192)
-	sv.UpdateStakeTransactionHeightList(hl)
-	hl3 := sv.GetStakeTransactionHeightList()
+	sv.UpdateValidatorTransactionHeightList(hl)
+	hl3 := sv.GetValidatorTransactionHeightList()
 	assert.True(compareHeightList(hl, hl3))
 
 	log.Infof("")
@@ -388,45 +332,8 @@ func TestGetAndUpdateHeightList(t *testing.T) {
 
 // ------------------------ Utilities ------------------------ //
 
-func compareValidatorCandidatePools(vcp1, vcp2 *core.ValidatorCandidatePool) bool {
-	if len(vcp1.SortedCandidates) != len(vcp2.SortedCandidates) {
-		return false
-	}
-
-	numCands := len(vcp1.SortedCandidates)
-	for i := 0; i < numCands; i++ {
-		cand1 := vcp1.SortedCandidates[i]
-		cand2 := vcp2.SortedCandidates[i]
-
-		if cand1.Holder != cand2.Holder {
-			return false
-		}
-
-		if len(cand1.Stakes) != len(cand2.Stakes) {
-			return false
-		}
-
-		numStakes := len(cand1.Stakes)
-		for j := 0; j < numStakes; j++ {
-			s1 := cand1.Stakes[j]
-			s2 := cand2.Stakes[j]
-
-			if s1.Amount.Cmp(s2.Amount) != 0 {
-				return false
-			}
-			if s1.ReturnHeight != s2.ReturnHeight {
-				return false
-			}
-			if s1.Source != s2.Source {
-				return false
-			}
-			if s1.Withdrawn != s2.Withdrawn {
-				return false
-			}
-		}
-	}
-
-	return true
+func compareValidators(validators1, validators2 *core.AddressSet) bool {
+	return validators2.Equals(validators1)
 }
 
 func compareHeightList(hl1, hl2 *types.HeightList) bool {

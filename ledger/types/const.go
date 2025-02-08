@@ -2,8 +2,6 @@ package types
 
 import (
 	"math/big"
-
-	"github.com/scripttoken/script/common"
 )
 
 const (
@@ -24,17 +22,6 @@ const (
 
 	// MinimumTransactionFeeSPAYWei specifies the minimum fee for a regular transaction
 	MinimumTransactionFeeSPAYWei uint64 = 1e12
-
-	// June 2021 gas burn adjustment
-
-	// MinimumGasPrice is the minimum gas price for a smart contract transaction
-	MinimumGasPriceJune2021 uint64 = 1e8
-
-	// MaximumTxGasLimit is the maximum gas limit for a smart contract transaction
-	MaximumTxGasLimitJune2021 uint64 = 10e6
-
-	// MinimumTransactionFeeSPAYWei specifies the minimum fee for a regular transaction
-	MinimumTransactionFeeSPAYWeiJune2021 uint64 = 1e12
 
 	// MaxAccountsAffectedPerTx specifies the max number of accounts one transaction is allowed to modify to avoid spamming
 	MaxAccountsAffectedPerTx = 512
@@ -93,41 +80,25 @@ const (
 )
 
 func GetMinimumGasPrice(blockHeight uint64) *big.Int {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return new(big.Int).SetUint64(MinimumGasPrice)
-	}
-
-	return new(big.Int).SetUint64(MinimumGasPriceJune2021)
+	return new(big.Int).SetUint64(MinimumGasPrice)
 }
 
 func GetMaxGasLimit(blockHeight uint64) *big.Int {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return new(big.Int).SetUint64(MaximumTxGasLimit)
-	}
-
-	return new(big.Int).SetUint64(MaximumTxGasLimitJune2021)
+	return new(big.Int).SetUint64(MaximumTxGasLimit)
 }
 
 func GetMinimumTransactionFeeSPAYWei(blockHeight uint64) *big.Int {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return new(big.Int).SetUint64(MinimumTransactionFeeSPAYWei)
-	}
-
-	return new(big.Int).SetUint64(MinimumTransactionFeeSPAYWeiJune2021)
+	return new(big.Int).SetUint64(MinimumTransactionFeeSPAYWei)
 }
 
 // Special handling for many-to-many SendTx
 func GetSendTxMinimumTransactionFeeSPAYWei(numAccountsAffected uint64, blockHeight uint64) *big.Int {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return new(big.Int).SetUint64(MinimumTransactionFeeSPAYWei) // backward compatiblity
-	}
-
 	if numAccountsAffected < 2 {
 		numAccountsAffected = 2
 	}
 
 	// minSendTxFee = numAccountsAffected * MinimumTransactionFeeSPAYWeiJune2021 / 2
-	minSendTxFee := big.NewInt(1).Mul(new(big.Int).SetUint64(numAccountsAffected), new(big.Int).SetUint64(MinimumTransactionFeeSPAYWeiJune2021))
+	minSendTxFee := big.NewInt(1).Mul(new(big.Int).SetUint64(numAccountsAffected), new(big.Int).SetUint64(MinimumTransactionFeeSPAYWei))
 	minSendTxFee = big.NewInt(1).Div(minSendTxFee, new(big.Int).SetUint64(2))
 
 	return minSendTxFee

@@ -86,7 +86,7 @@ func (w *ColdWallet) List() ([]common.Address, error) {
 	return addresses, nil
 }
 
-func (w *ColdWallet) NewKey(password string) (common.Address, error) {
+func (w *ColdWallet) NewKey() (common.Address, error) {
 	return common.Address{}, fmt.Errorf("Not supported for cold wallet")
 }
 
@@ -95,7 +95,7 @@ func (w *ColdWallet) ImportKey(hexPriv string) (common.Address, error) {
 }
 
 // Neither address nor password is used by the function, silently ignored
-func (w *ColdWallet) Unlock(address common.Address, password string, derivationPath types.DerivationPath) error {
+func (w *ColdWallet) Unlock(address common.Address, derivationPath types.DerivationPath) error {
 	w.stateLock.Lock() // State lock is enough since there's no connection yet at this point
 	defer w.stateLock.Unlock()
 
@@ -110,7 +110,7 @@ func (w *ColdWallet) Unlock(address common.Address, password string, derivationP
 		w.device = device
 	}
 
-	if err := w.driver.Open(w.device, password); err != nil {
+	if err := w.driver.Open(w.device); err != nil {
 		return err
 	}
 	w.addressPathMap = make(map[common.Address]types.DerivationPath)
@@ -132,11 +132,7 @@ func (w *ColdWallet) IsUnlocked(address common.Address) bool {
 	return false // not supported
 }
 
-func (w *ColdWallet) Delete(address common.Address, password string) error {
-	return fmt.Errorf("Not supported for cold wallet")
-}
-
-func (w *ColdWallet) UpdatePassword(address common.Address, oldPassword, newPassword string) error {
+func (w *ColdWallet) Delete(address common.Address) error {
 	return fmt.Errorf("Not supported for cold wallet")
 }
 

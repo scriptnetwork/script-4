@@ -11,7 +11,7 @@ import (
 // Driver abstracts the functionality of the hardware wallet
 type Driver interface {
 	Status() (string, error)
-	Open(device io.ReadWriter, password string) error
+	Open(device io.ReadWriter) error
 	Close() error
 	Heartbeat() error
 	Derive(path types.DerivationPath) (common.Address, error)

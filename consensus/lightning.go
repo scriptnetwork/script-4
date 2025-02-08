@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto/bls"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -24,13 +24,13 @@ type LightningEngine struct {
 	privKey *bls.SecretKey
 
 	// State for current voting
-	block       common.Hash
-	round       uint32
-	currVote    *core.AggregatedVotes
-	nextVote    *core.AggregatedVotes
-	gcp         *core.LightningCandidatePool
-	gcpHash     common.Hash
-	signerIndex int // Signer's index in current gcp
+	block          common.Hash
+	round          uint32
+	currVote       *core.AggregatedVotes
+	nextVote       *core.AggregatedVotes
+	lightnings     *core.AddressSet
+	lightningsHash common.Hash
+	signerIndex    int // Signer's index in current lightnings
 
 	incoming chan *core.AggregatedVotes
 	mu       *sync.Mutex
@@ -217,7 +217,7 @@ func (g *LightningEngine) HandleVote(vote *core.AggregatedVotes) {
 	case g.incoming <- vote:
 		return
 	default:
-		g.logger.Debug("LightningEngine queue is full, discarding vote: %v", vote)
+		g.logger.Debugf("LightningEngine queue is full, discarding vote: %v", vote)
 	}
 }
 

@@ -357,7 +357,7 @@ type GetBlockResultInner struct {
 	Timestamp          *common.JSONBig          `json:"timestamp"`
 	Proposer           common.Address           `json:"proposer"`
 	HCC                core.CommitCertificate   `json:"hcc"`
-	LightningVotes      *core.AggregatedVotes    `json:"lightning_votes"`
+	LightningVotes     *core.AggregatedVotes    `json:"lightning_votes"`
 	EliteEdgeNodeVotes *core.AggregatedEENVotes `json:"elite_edge_node_votes"`
 
 	Children []common.Hash    `json:"children"`
@@ -448,7 +448,7 @@ func (t *ScriptRPCService) GetBlockByHeight(args *GetBlockByHeightArgs, result *
 		//if t.consensus.Chain().ChainID == core.MainnetChainID {
 		//	genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
 		//} else {
-			genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
+		genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
 		//}
 
 		result.GetBlockResultInner = &GetBlockResultInner{}
@@ -731,21 +731,21 @@ func (t *ScriptRPCService) GetPeers(args *GetPeersArgs, result *GetPeersResult) 
 
 // ------------------------------ GetVcp -----------------------------------
 
-type GetVcpByHeightArgs struct {
+type GetValidatorsByHeightArgs struct {
 	Height common.JSONUint64 `json:"height"`
 }
 
-type GetVcpResult struct {
-	BlockHashVcpPairs []BlockHashVcpPair
+type GetValidatorsResult struct {
+	BlockHashValidatorPairs []BlockHashValidatorPair
 }
 
-type BlockHashVcpPair struct {
+type BlockHashValidatorPair struct {
 	BlockHash  common.Hash
-	Vcp        *core.ValidatorCandidatePool
+	Validators *core.AddressSet
 	HeightList *types.HeightList
 }
 
-func (t *ScriptRPCService) GetVcpByHeight(args *GetVcpByHeightArgs, result *GetVcpResult) (err error) {
+func (t *ScriptRPCService) GetValidatorsByHeight(args *GetValidatorsByHeightArgs, result *GetValidatorsResult) (err error) {
 	deliveredView, err := t.ledger.GetDeliveredSnapshot()
 	if err != nil {
 		return err
@@ -754,7 +754,7 @@ func (t *ScriptRPCService) GetVcpByHeight(args *GetVcpByHeightArgs, result *GetV
 	db := deliveredView.GetDB()
 	height := uint64(args.Height)
 
-	blockHashVcpPairs := []BlockHashVcpPair{}
+	blockHashValidatorPairs := []BlockHashValidatorPair{}
 	blocks := t.chain.FindBlocksByHeight(height)
 	for _, b := range blocks {
 		blockHash := b.Hash()
@@ -763,17 +763,16 @@ func (t *ScriptRPCService) GetVcpByHeight(args *GetVcpByHeightArgs, result *GetV
 		if blockStoreView == nil { // might have been pruned
 			return fmt.Errorf("the VCP for height %v does not exists, it might have been pruned", height)
 		}
-		vcp := blockStoreView.GetValidatorCandidatePool()
-		hl := blockStoreView.GetStakeTransactionHeightList()
-		blockHashVcpPairs = append(blockHashVcpPairs, BlockHashVcpPair{
+		validators := blockStoreView.GetValidators()
+		hl := blockStoreView.GetValidatorTransactionHeightList()
+		blockHashValidatorPairs = append(blockHashValidatorPairs, BlockHashValidatorPair{
 			BlockHash:  blockHash,
-			Vcp:        vcp,
+			Validators: validators,
 			HeightList: hl,
 		})
 	}
 
-	result.BlockHashVcpPairs = blockHashVcpPairs
-
+	result.BlockHashValidatorPairs = blockHashValidatorPairs
 	return nil
 }
 
@@ -835,8 +834,8 @@ type GetLightningInfoResult struct {
 
 func (t *ScriptRPCService) GetLightningInfo(args *GetLightningInfoArgs, result *GetLightningInfoResult) (err error) {
 	privKey := t.consensus.PrivateKey()
-//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PublicKey().ToBytes())))   //Script version
-	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.ToBytes())))  //Using unpredictable seed, keeping random oracle properties
+	//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PublicKey().ToBytes())))   //Script version
+	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.ToBytes()))) //Using unpredictable seed, keeping random oracle properties
 	if err != nil {
 		return fmt.Errorf("Failed to get BLS key: %v", err.Error())
 	}
@@ -1258,14 +1257,6 @@ func getTxType(tx types.Tx) byte {
 		t = TxTypeSplitRule
 	case *types.SmartContractTx:
 		t = TxTypeSmartContract
-	case *types.DepositStakeTx:
-		t = TxTypeDepositStake
-	case *types.WithdrawStakeTx:
-		t = TxTypeWithdrawStake
-	case *types.DepositStakeTxV2:
-		t = TxTypeDepositStakeTxV2
-	case *types.StakeRewardDistributionTx:
-		t = TxTypeStakeRewardDistributionTx
 	}
 
 	return t

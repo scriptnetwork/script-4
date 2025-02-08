@@ -1,5 +1,6 @@
-package core 
+package core
 
+/*
 import (
 	"encoding/json"
 	"math/big"
@@ -34,11 +35,11 @@ func TestReadFile(t *testing.T) {
 
 	licenses := []License{
 		{
-			Issuer:    /* Your issuer public key */,
-			Licensee:  /* Your licensee public key */,
+			Issuer:    ,
+			Licensee:  ,
 			From:      big.NewInt(1696128000),
 			To:        big.NewInt(1698720000),
-			Signature: /* Your BLS signature */,
+			Signature: ,
 			Items:     []string{"VN"},
 		},
 	}
@@ -83,11 +84,11 @@ func TestValidateLicense_Invalid(t *testing.T) {
 
 func TestValidateLicense_Expired(t *testing.T) {
 	license := License{
-		Issuer:    /* Your issuer public key */,
-		Licensee:  /* Your licensee public key */,
+		Issuer:    ,
+		Licensee:  ,
 		From:      big.NewInt(1696128000), // Set From to a past timestamp
 		To:        big.NewInt(1696128001), // Set To to just after From
-		Signature: /* Your BLS signature */,
+		Signature: ,
 		Items:     []string{"VN"},
 	}
 
@@ -104,3 +105,4 @@ func TestValidateLicense_Expired(t *testing.T) {
 	}
 }
 
+*/

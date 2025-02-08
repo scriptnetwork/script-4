@@ -4,35 +4,35 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
-// vcpCmd represents the vcp command.
 // Example:
-//		scriptcli query vcp --height=10
-var vcpCmd = &cobra.Command{
-	Use:     "vcp",
-	Short:   "Get validator candidate pool",
-	Example: `scriptcli query vcp --height=10`,
-	Run:     doVcpCmd,
+//
+//	scriptcli query validators --height=10
+var validatorsCmd = &cobra.Command{
+	Use:     "validators",
+	Short:   "Get validators",
+	Example: `scriptcli query validators --height=10`,
+	Run:     doValidatorsCmd,
 }
 
-func doVcpCmd(cmd *cobra.Command, args []string) {
+func doValidatorsCmd(cmd *cobra.Command, args []string) {
 	client := rpcc.NewRPCClient(viper.GetString(utils.CfgRemoteRPCEndpoint))
 
 	height := heightFlag
-	res, err := client.Call("script.GetVcpByHeight", rpc.GetVcpByHeightArgs{Height: common.JSONUint64(height)})
+	res, err := client.Call("script.GetValidatorsByHeight", rpc.GetValidatorsByHeightArgs{Height: common.JSONUint64(height)})
 	if err != nil {
-		utils.Error("Failed to get validator candidate pool: %v\n", err)
+		utils.Error("Failed to get validators: %v\n", err)
 	}
 	if res.Error != nil {
-		utils.Error("Failed to get validator candidate pool: %v\n", res.Error)
+		utils.Error("Failed to get validators: %v\n", res.Error)
 	}
 	json, err := json.MarshalIndent(res.Result, "", "    ")
 	if err != nil {
@@ -42,6 +42,6 @@ func doVcpCmd(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	vcpCmd.Flags().Uint64Var(&heightFlag, "height", uint64(0), "height of the block")
-	vcpCmd.MarkFlagRequired("height")
+	validatorsCmd.Flags().Uint64Var(&heightFlag, "height", uint64(0), "height of the block")
+	validatorsCmd.MarkFlagRequired("height")
 }

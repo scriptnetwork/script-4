@@ -27,7 +27,7 @@ type SnapshotTrieRecord struct {
 
 type SnapshotFirstBlock struct {
 	Header *BlockHeader
-	Proof  VCPProof
+	Proof  ValidatorsProof
 }
 
 type SnapshotSecondBlock struct {
@@ -160,25 +160,25 @@ type proofKV struct {
 	Val []byte
 }
 
-type VCPProof struct {
+type ValidatorsProof struct {
 	kvs []*proofKV
 }
 
-func (vp VCPProof) GetKvs() []*proofKV {
+func (vp ValidatorsProof) GetKvs() []*proofKV {
 	return vp.kvs
 }
 
-var _ rlp.Encoder = (*VCPProof)(nil)
+var _ rlp.Encoder = (*ValidatorsProof)(nil)
 
 // EncodeRLP implements RLP Encoder interface.
-func (vp VCPProof) EncodeRLP(w io.Writer) error {
+func (vp ValidatorsProof) EncodeRLP(w io.Writer) error {
 	return rlp.Encode(w, vp.GetKvs())
 }
 
-var _ rlp.Decoder = (*VCPProof)(nil)
+var _ rlp.Decoder = (*ValidatorsProof)(nil)
 
 // DecodeRLP implements RLP Decoder interface.
-func (vp *VCPProof) DecodeRLP(stream *rlp.Stream) error {
+func (vp *ValidatorsProof) DecodeRLP(stream *rlp.Stream) error {
 	proof := []*proofKV{}
 	err := stream.Decode(&proof)
 	if err != nil {
@@ -191,7 +191,7 @@ func (vp *VCPProof) DecodeRLP(stream *rlp.Stream) error {
 	return nil
 }
 
-func (vp *VCPProof) Get(key []byte) (value []byte, err error) {
+func (vp *ValidatorsProof) Get(key []byte) (value []byte, err error) {
 	for _, kv := range vp.kvs {
 		if bytes.Compare(key, kv.Key) == 0 {
 			return kv.Val, nil
@@ -200,7 +200,7 @@ func (vp *VCPProof) Get(key []byte) (value []byte, err error) {
 	return nil, fmt.Errorf("key %v does not exist", hex.EncodeToString(key))
 }
 
-func (vp *VCPProof) Has(key []byte) (bool, error) {
+func (vp *ValidatorsProof) Has(key []byte) (bool, error) {
 	for _, kv := range vp.kvs {
 		if bytes.Compare(key, kv.Key) == 0 {
 			return true, nil
@@ -209,7 +209,7 @@ func (vp *VCPProof) Has(key []byte) (bool, error) {
 	return false, fmt.Errorf("key %v does not exist", hex.EncodeToString(key))
 }
 
-func (vp *VCPProof) Put(key []byte, value []byte) error {
+func (vp *ValidatorsProof) Put(key []byte, value []byte) error {
 	for _, kv := range vp.kvs {
 		if bytes.Compare(key, kv.Key) == 0 {
 			kv.Val = value

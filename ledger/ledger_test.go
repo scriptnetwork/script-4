@@ -10,14 +10,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
 	"github.com/scripttoken/script/core"
 	st "github.com/scripttoken/script/ledger/state"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store/database/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLedgerSetup(t *testing.T) {
@@ -137,9 +137,8 @@ func TestLedgerApplyBlockTxs(t *testing.T) {
 	//
 
 	// Validator balance
-	validators := ledger.valMgr.GetValidatorSet(common.Hash{}).Validators()
-	for _, val := range validators {
-		valAddr := val.Address
+	validators := ledger.valMgr.GetValidators(common.Hash{})
+	for valAddr := range *validators {
 		valAcc := ledger.state.Delivered().GetAccount(valAddr)
 		expectedValBal := types.NewCoins(100000000000, 1000)
 		assert.NotNil(valAcc)
@@ -190,7 +189,7 @@ func TestValidatorStakeUpdate(t *testing.T) {
 	txFee := getMinimumTxFee()
 	depositSourcePrivAcc := srcPrivAccs[4]
 	depoistHolderPrivAcc := valPrivAccs[4]
-	depositStakeTx := &types.DepositStakeTx{
+	tx := &types.LicenseTx{
 		Fee: types.NewCoins(0, txFee),
 		Source: types.TxInput{
 			Address: depositSourcePrivAcc.Address,
@@ -203,7 +202,6 @@ func TestValidatorStakeUpdate(t *testing.T) {
 		Holder: types.TxOutput{
 			Address: depoistHolderPrivAcc.Address,
 		},
-		Purpose: core.StakeForValidator,
 	}
 	signBytes := depositStakeTx.SignBytes(es.chainID)
 	depositStakeTx.Source.Signature = depositSourcePrivAcc.Sign(signBytes)

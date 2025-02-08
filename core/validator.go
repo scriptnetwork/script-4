@@ -1,107 +1,113 @@
 package core
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
-	"math/big"
-	"sort"
-	"strings"
-
 	log "github.com/sirupsen/logrus"
-
-	"github.com/scripttoken/script/common"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "core"})
 
+/*
 var (
+
 	// ErrValidatorNotFound for ID is not found in validator set.
 	ErrValidatorNotFound = errors.New("ValidatorNotFound")
+
 )
 
 // Validator contains the public information of a validator.
-type Validator struct {
-	Address common.Address
-	Stake   *big.Int
-}
+
+	type Validator struct {
+		Address common.Address
+		Stake   *big.Int
+	}
 
 // NewValidator creates a new validator instance.
-func NewValidator(addressStr string, stake *big.Int) Validator {
-	address := common.HexToAddress(addressStr)
-	return Validator{address, stake}
-}
+
+	func NewValidator(addressStr string, stake *big.Int) Validator {
+		address := common.HexToAddress(addressStr)
+		return Validator{address, stake}
+	}
 
 // ID returns the ID of the validator, which is the string representation of its address.
-func (v Validator) ID() common.Address {
-	return v.Address
-}
+
+	func (v Validator) ID() common.Address {
+		return v.Address
+	}
 
 // Equals checks whether the validator is the same as another validator
-func (v Validator) Equals(x Validator) bool {
-	if v.Address != x.Address {
-		return false
-	}
-	if v.Stake.Cmp(x.Stake) != 0 {
-		return false
-	}
-	return true
-}
 
-// String represents the string representation of the validator
-func (v Validator) String() string {
-	return fmt.Sprintf("{ID: %v, Stake: %v}", v.ID(), v.Stake)
-}
-
-// ValidatorSet represents a set of validators.
-type ValidatorSet struct {
-	validators []Validator
-}
-
-// NewValidatorSet returns a new instance of ValidatorSet.
-func NewValidatorSet() *ValidatorSet {
-	return &ValidatorSet{
-		validators: []Validator{},
-	}
-}
-
-// SetValidators sets validators
-func (s *ValidatorSet) SetValidators(validators []Validator) {
-	s.validators = validators
-}
-
-// Copy creates a copy of this validator set.
-func (s *ValidatorSet) Copy() *ValidatorSet {
-	ret := NewValidatorSet()
-	for _, v := range s.Validators() {
-		ret.AddValidator(v)
-	}
-	return ret
-}
-
-// Size returns the number of the validators in the validator set.
-func (s *ValidatorSet) Size() int {
-	return len(s.validators)
-}
-
-// Equals checks whether the validator set is the same as another validator set
-func (s *ValidatorSet) Equals(t *ValidatorSet) bool {
-	numVals := len(s.validators)
-	if numVals != len(t.validators) {
-		return false
-	}
-	for i := 0; i < numVals; i++ {
-		if !s.validators[i].Equals(t.validators[i]) {
+	func (v Validator) Equals(x Validator) bool {
+		if v.Address != x.Address {
 			return false
 		}
+		if v.Stake.Cmp(x.Stake) != 0 {
+			return false
+		}
+		return true
 	}
-	return true
-}
+
+// String represents the string representation of the validator
+
+	func (v Validator) String() string {
+		return fmt.Sprintf("{ID: %v, Stake: %v}", v.ID(), v.Stake)
+	}
+
+// ValidatorSet represents a set of validators.
+
+	type ValidatorSet struct {
+		validators []Validator
+	}
+
+// NewValidatorSet returns a new instance of ValidatorSet.
+
+	func NewValidatorSet() *ValidatorSet {
+		return &ValidatorSet{
+			validators: []Validator{},
+		}
+	}
+
+// SetValidators sets validators
+
+	func (s *ValidatorSet) SetValidators(validators []Validator) {
+		s.validators = validators
+	}
+
+// Copy creates a copy of this validator set.
+
+	func (s *ValidatorSet) Copy() *ValidatorSet {
+		ret := NewValidatorSet()
+		for _, v := range s.Validators() {
+			ret.AddValidator(v)
+		}
+		return ret
+	}
+
+// Size returns the number of the validators in the validator set.
+
+	func (s *ValidatorSet) Size() int {
+		return len(s.validators)
+	}
+
+// Equals checks whether the validator set is the same as another validator set
+
+	func (s *ValidatorSet) Equals(t *ValidatorSet) bool {
+		numVals := len(s.validators)
+		if numVals != len(t.validators) {
+			return false
+		}
+		for i := 0; i < numVals; i++ {
+			if !s.validators[i].Equals(t.validators[i]) {
+				return false
+			}
+		}
+		return true
+	}
 
 // String represents the string representation of the validator set
-func (s *ValidatorSet) String() string {
-	return fmt.Sprintf("{Validators: %v}", s.validators)
-}
+
+	func (s *ValidatorSet) String() string {
+		return fmt.Sprintf("{Validators: %v}", s.validators)
+	}
 
 // ByID implements sort.Interface for ValidatorSet based on ID.
 type ByID []Validator
@@ -111,14 +117,15 @@ func (b ByID) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByID) Less(i, j int) bool { return bytes.Compare(b[i].ID().Bytes(), b[j].ID().Bytes()) < 0 }
 
 // GetValidator returns a validator if a matching ID is found.
-func (s *ValidatorSet) GetValidator(id common.Address) (Validator, error) {
-	for _, v := range s.validators {
-		if v.ID() == id {
-			return v, nil
+
+	func (s *ValidatorSet) GetValidator(id common.Address) (Validator, error) {
+		for _, v := range s.validators {
+			if v.ID() == id {
+				return v, nil
+			}
 		}
+		return Validator{}, ErrValidatorNotFound
 	}
-	return Validator{}, ErrValidatorNotFound
-}
 
 // AddValidator adds a validator to the validator set.
 func (s *ValidatorSet) AddValidator(validator Validator) {
@@ -126,62 +133,70 @@ func (s *ValidatorSet) AddValidator(validator Validator) {
 //	if err != nil {
 //		logger.Errorf("failed to add validator: %v", err)
 //	}
-	s.validators = append(s.validators, validator)
-	sort.Sort(ByID(s.validators))
-}
+
+		s.validators = append(s.validators, validator)
+		sort.Sort(ByID(s.validators))
+	}
 
 // TotalStake returns the total stake of the validators in the set.
-func (s *ValidatorSet) TotalStake() *big.Int {
-	ret := new(big.Int).SetUint64(0)
-	for _, v := range s.validators {
-		ret = new(big.Int).Add(ret, v.Stake)
+
+	func (s *ValidatorSet) TotalStake() *big.Int {
+		ret := new(big.Int).SetUint64(0)
+		for _, v := range s.validators {
+			ret = new(big.Int).Add(ret, v.Stake)
+		}
+		return ret
 	}
-	return ret
-}
 
 // HasMajorityVotes checks whether a vote set has reach majority.
-func (s *ValidatorSet) HasMajorityVotes(votes []Vote) bool {
-	votedStake := new(big.Int).SetUint64(0)
-	for _, vote := range votes {
-		validator, err := s.GetValidator(vote.ID)
-		if err == nil {
-			votedStake = new(big.Int).Add(votedStake, validator.Stake)
+
+	func (s *ValidatorSet) HasMajorityVotes(votes []Vote) bool {
+		votedStake := new(big.Int).SetUint64(0)
+		for _, vote := range votes {
+			validator, err := s.GetValidator(vote.ID)
+			if err == nil {
+				votedStake = new(big.Int).Add(votedStake, validator.Stake)
+			}
 		}
+
+		three := new(big.Int).SetUint64(3)
+		two := new(big.Int).SetUint64(2)
+		lhs := new(big.Int)
+		rhs := new(big.Int)
+
+		//return votedStake*3 > s.TotalStake()*2
+		return lhs.Mul(votedStake, three).Cmp(rhs.Mul(s.TotalStake(), two)) > 0
 	}
 
-	three := new(big.Int).SetUint64(3)
-	two := new(big.Int).SetUint64(2)
-	lhs := new(big.Int)
-	rhs := new(big.Int)
-
-	//return votedStake*3 > s.TotalStake()*2
-	return lhs.Mul(votedStake, three).Cmp(rhs.Mul(s.TotalStake(), two)) > 0
-}
-
 // HasMajority checks whether a vote set has reach majority.
-func (s *ValidatorSet) HasMajority(votes *VoteSet) bool {
-	return s.HasMajorityVotes(votes.Votes())
-}
+
+	func (s *ValidatorSet) HasMajority(votes *VoteSet) bool {
+		return s.HasMajorityVotes(votes.Votes())
+	}
 
 // Validators returns a slice of validators.
-func (s *ValidatorSet) Validators() []Validator {
-	return s.validators
-}
+
+	func (s *ValidatorSet) Validators() []Validator {
+		return s.validators
+	}
 
 //
 // ------- ValidatorCandidatePool ------- //
 //
 
 var (
+
 	MinValidatorStakeDeposit     *big.Int
 	//MinValidatorStakeDeposit200K *big.Int
-)
 
+)
+*/
 func init() {
 	// Each stake deposit needs to be at least 1,000,000 Script
-	MinValidatorStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(1), new(big.Int).SetUint64(1000000000000000000))
+	//MinValidatorStakeDeposit = new(big.Int).Mul(new(big.Int).SetUint64(1), new(big.Int).SetUint64(1000000000000000000))
 }
 
+/*
 type ValidatorCandidatePool struct {
 	SortedCandidates []*StakeHolder
 }
@@ -295,3 +310,4 @@ func (vcp *ValidatorCandidatePool) sortCandidates() {
 		return stakeCmp > 0
 	})
 }
+*/

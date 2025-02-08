@@ -35,16 +35,17 @@ import (
 // }
 
 // getValidatorAddresses returns the validator set
-func getValidatorSet(ledger core.Ledger, valMgr core.ValidatorManager) *core.ValidatorSet {
+func getValidators(ledger core.Ledger, valMgr core.ValidatorManager) *core.AddressSet {
 	currentBlock := ledger.GetCurrentBlock()
 	if currentBlock == nil {
 		panic("ledger.currentBlock is nil")
 	}
 	parentBlkHash := currentBlock.Parent
-	validatorSet := valMgr.GetNextValidatorSet(parentBlkHash)
-	return validatorSet
+	validators := valMgr.GetNextValidators(parentBlkHash)
+	return validators
 }
 
+/*
 // getValidatorAddresses returns validators' addresses
 func getValidatorAddresses(validatorSet *core.ValidatorSet) []common.Address {
 	validators := validatorSet.Validators()
@@ -54,7 +55,8 @@ func getValidatorAddresses(validatorSet *core.ValidatorSet) []common.Address {
 	}
 	return validatorAddresses
 }
-
+*/
+/*
 func isAValidator(address common.Address, validatorAddresses []common.Address) result.Result {
 	proposerIsAValidator := false
 	for _, validatorAddr := range validatorAddresses {
@@ -69,7 +71,7 @@ func isAValidator(address common.Address, validatorAddresses []common.Address) r
 
 	return result.OK
 }
-
+*/
 // The accounts from the TxInputs must either already have
 // crypto.PubKey.(type) != nil, (it must be known),
 // or it must be specified in the TxInput.
@@ -227,7 +229,8 @@ func sumOutputs(outs []types.TxOutput) types.Coins {
 }
 
 // Note: Since totalInput == totalOutput + fee, the transaction fee is charged implicitly
-//       by the following adjustByInputs() function. No special handling needed
+//
+//	by the following adjustByInputs() function. No special handling needed
 func adjustByInputs(view *state.StoreView, accounts map[common.Address]*types.Account, ins []types.TxInput) {
 	for _, in := range ins {
 		acc := accounts[in.Address]
@@ -298,9 +301,5 @@ func getBlockHeight(ledgerState *state.LedgerState) uint64 {
 }
 
 func getRegularTxGas(ledgerState *state.LedgerState) uint64 {
-	blockHeight := getBlockHeight(ledgerState)
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return types.GasRegularTx
-	}
-	return types.GasRegularTxJune2021
+	return types.GasRegularTx
 }

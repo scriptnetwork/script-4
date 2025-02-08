@@ -11,8 +11,6 @@ import (
 
 	"github.com/scripttoken/script/crypto/bls"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
@@ -22,6 +20,8 @@ import (
 	"github.com/scripttoken/script/dispatcher"
 	"github.com/scripttoken/script/rlp"
 	"github.com/scripttoken/script/store"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logger = log.WithFields(log.Fields{"prefix": "consensus"})
@@ -38,7 +38,7 @@ type ConsensusEngine struct {
 	dispatcher       *dispatcher.Dispatcher
 	validatorManager core.ValidatorManager
 	ledger           core.Ledger
-	lightning         *LightningEngine
+	lightning        *LightningEngine
 	eliteEdgeNode    *EliteEdgeNodeEngine
 
 	incoming        chan interface{}
@@ -51,9 +51,9 @@ type ConsensusEngine struct {
 	cancel  context.CancelFunc
 	stopped bool
 
-	mu            *sync.Mutex
-	voteTimer     *time.Timer
-	epochTimer    *time.Timer
+	mu             *sync.Mutex
+	voteTimer      *time.Timer
+	epochTimer     *time.Timer
 	lightningTimer *time.Ticker
 
 	voteTimerReady bool
@@ -111,7 +111,7 @@ func NewConsensusEngine(privateKey *crypto.PrivateKey, db store.Store, chain *bl
 	logger = util.GetLoggerForModule("consensus")
 	e.logger = logger
 
-//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
+	//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.PublicKey().ToBytes())))
 	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privateKey.ToBytes()))) //non-predictable seed, still random oracle for each privateKey
 	if err != nil {
 		e.logger.Panic(err)
@@ -475,7 +475,7 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 		return result.Error("HCC block not found")
 	}
 	if !hccBlock.Status.IsFinalized() {
-		hccValidators := e.validatorManager.GetValidatorSet(block.HCC.BlockHash)
+		hccValidators := e.validatorManager.GetValidators(block.HCC.BlockHash)
 		if !block.HCC.IsValid(hccValidators) {
 			e.logger.WithFields(log.Fields{
 				"parent":    block.Parent.Hex(),
@@ -540,10 +540,10 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 			lastCheckpoint, err := e.chain.FindBlock(block.LightningVotes.Block)
 			if err != nil {
 				e.logger.WithFields(log.Fields{
-					"block.Hash":          block.Hash().Hex(),
-					"block.Height":        block.Height,
+					"block.Hash":           block.Hash().Hex(),
+					"block.Height":         block.Height,
 					"block.LightningVotes": block.LightningVotes.String(),
-					"error":               err.Error(),
+					"error":                err.Error(),
 				}).Warn("Lightning votes refers to non-existing block")
 				return result.Error("Block in lightning votes cannot be found")
 			}
@@ -560,10 +560,10 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 			// Voted block must be ascendant.
 			if !e.chain.IsDescendant(lastCheckpoint.Hash(), block.Hash()) {
 				e.logger.WithFields(log.Fields{
-					"block.Hash":          block.Hash().Hex(),
-					"block.Height":        block.Height,
+					"block.Hash":           block.Hash().Hex(),
+					"block.Height":         block.Height,
 					"block.LightningVotes": block.LightningVotes.String(),
-					"lastCheckpoint":      lastCheckpoint.Hash().Hex(),
+					"lastCheckpoint":       lastCheckpoint.Hash().Hex(),
 				}).Warn("Block is not descendant of checkpoint")
 				return result.Error("Block is not descendant of checkpoint in lightning votes")
 			}
@@ -573,29 +573,29 @@ func (e *ConsensusEngine) validateBlock(block *core.Block, parent *core.Extended
 		gcp, err := e.ledger.GetLightningCandidatePool(block.LightningVotes.Block)
 		if err != nil {
 			e.logger.WithFields(log.Fields{
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
+				"block.Hash":           block.Hash().Hex(),
+				"block.Height":         block.Height,
 				"block.LightningVotes": block.LightningVotes.String(),
-				"error":               err.Error(),
+				"error":                err.Error(),
 			}).Warn("Failed to load lightning pool")
 			return result.Error("Failed to load lightning pool")
 		}
 		if res := block.LightningVotes.Validate(gcp); res.IsError() {
 			e.logger.WithFields(log.Fields{
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
+				"block.Hash":           block.Hash().Hex(),
+				"block.Height":         block.Height,
 				"block.LightningVotes": block.LightningVotes.String(),
-				"error":               res.String(),
+				"error":                res.String(),
 			}).Warn("Failed to load lightning pool")
 			return result.Error("Lightning votes are not valid")
 		}
 	} else {
 		if block.LightningVotes != nil {
 			e.logger.WithFields(log.Fields{
-				"block.Epoch":         block.Epoch,
-				"block.proposer":      block.Proposer.Hex(),
-				"block.Hash":          block.Hash().Hex(),
-				"block.Height":        block.Height,
+				"block.Epoch":          block.Epoch,
+				"block.proposer":       block.Proposer.Hex(),
+				"block.Hash":           block.Hash().Hex(),
+				"block.Height":         block.Height,
 				"block.LightningVotes": block.LightningVotes.String(),
 			}).Warn("Lightning votes in non-checkpoint block")
 			return result.Error("Non-checkpoint block should not have lightning votes")
@@ -849,9 +849,8 @@ func (e *ConsensusEngine) shouldVote(block common.Hash) bool {
 }
 
 func (e *ConsensusEngine) shouldVoteByID(id common.Address, block common.Hash) bool {
-	validators := e.validatorManager.GetValidatorSet(block)
-	_, err := validators.GetValidator(id)
-	return err == nil
+	validators := e.validatorManager.GetValidators(block)
+	return validators.Has(id)
 }
 
 func (e *ConsensusEngine) vote() {
@@ -956,7 +955,7 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 
 	// Update epoch.
 	lfb := e.state.GetLastFinalizedBlock()
-	nextValidators := e.validatorManager.GetNextValidatorSet(lfb.Hash())
+	nextValidators := e.validatorManager.GetNextValidators(lfb.Hash())
 	if vote.Epoch >= e.GetEpoch() {
 		currentEpochVotes := core.NewVoteSet()
 		allEpochVotes, err := e.state.GetEpochVotes()
@@ -987,7 +986,7 @@ func (e *ConsensusEngine) handleVote(vote core.Vote) (endEpoch bool) {
 				"e.epoch":          e.GetEpoch,
 				"nextEpoch":        nextEpoch,
 				"epochVoteSet":     currentEpochVotes,
-				"expectedProposer": expectedProposer.ID().Hex(),
+				"expectedProposer": expectedProposer.Hex(),
 			}).Debug("Majority votes for current epoch. Moving to new epoch")
 
 			e.state.SetEpoch(nextEpoch)
@@ -1031,7 +1030,7 @@ func (e *ConsensusEngine) checkCC(hash common.Hash) {
 	}
 
 	votes := e.chain.FindVotesByHash(hash).UniqueVoter()
-	validators := e.validatorManager.GetValidatorSet(hash)
+	validators := e.validatorManager.GetValidators(hash)
 	if validators.HasMajority(votes) {
 		e.processCCBlock(block)
 	}
@@ -1131,8 +1130,13 @@ func (e *ConsensusEngine) GetEpochVotes() (*core.VoteSet, error) {
 	return e.state.GetEpochVotes()
 }
 
-func (e *ConsensusEngine) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
-	return e.validatorManager.GetValidatorSet(blockHash)
+/*
+	func (e *ConsensusEngine) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
+		return e.validatorManager.GetValidatorSet(blockHash)
+	}
+*/
+func (e *ConsensusEngine) GetValidators(blockHash common.Hash) *core.AddressSet {
+	return e.validatorManager.GetValidators(blockHash)
 }
 
 // FinalizedBlocks returns a channel that will be published with finalized blocks by the engine.
@@ -1237,7 +1241,7 @@ func (e *ConsensusEngine) shouldIncludeValidatorUpdateTxs(tip *core.ExtendedBloc
 		e.logger.WithFields(log.Fields{"error": err}).Warn("Failed to load epoch votes")
 		return true
 	}
-	validators := e.validatorManager.GetNextValidatorSet(tip.Hash())
+	validators := e.validatorManager.GetNextValidators(tip.Hash())
 	votes := core.NewVoteSet()
 	for _, v := range epochVotes.Votes() {
 		if v.Height >= tip.Height+1 {
@@ -1262,9 +1266,9 @@ func (e *ConsensusEngine) shouldProposeByID(previousBlock common.Hash, epoch uin
 		return false
 	}
 	proposer := e.validatorManager.GetNextProposer(previousBlock, epoch)
-	if proposer.ID().Hex() != id {
+	if proposer.Hex() != id {
 		e.logger.WithFields(log.Fields{
-			"expectedProposer": proposer.ID().Hex(),
+			"expectedProposer": proposer.Hex(),
 			"tip":              previousBlock.Hex(),
 			"epoch":            epoch,
 		}).Debug("shouldProposeByID=false")
@@ -1295,7 +1299,7 @@ func (e *ConsensusEngine) createProposal(shouldIncludeValidatorUpdateTxs bool) (
 	block.Proposer = e.privateKey.PublicKey().Address()
 	block.Timestamp = big.NewInt(time.Now().Unix())
 	block.HCC.BlockHash = e.state.GetHighestCCBlock().Hash()
-	hccValidators := e.validatorManager.GetValidatorSet(block.HCC.BlockHash)
+	hccValidators := e.validatorManager.GetValidators(block.HCC.BlockHash)
 	block.HCC.Votes = e.chain.FindVotesByHash(block.HCC.BlockHash).UniqueVoter().FilterByValidators(hccValidators)
 
 	// Add lightning votes.
@@ -1332,7 +1336,7 @@ func (e *ConsensusEngine) createProposal(shouldIncludeValidatorUpdateTxs bool) (
 	// Add votes that might help peers progress, e.g. votes on last CC block and latest epoch
 	// votes.
 	lastCC := e.state.GetHighestCCBlock()
-	lastCCValidators := e.validatorManager.GetValidatorSet(lastCC.Hash())
+	lastCCValidators := e.validatorManager.GetValidators(lastCC.Hash())
 	lastCCVotes := e.chain.FindVotesByHash(lastCC.Hash())
 	epochVotes, err := e.state.GetEpochVotes()
 	if err != nil {

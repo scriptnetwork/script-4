@@ -3,10 +3,10 @@ package key
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/wallet"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 // newCmd generates a new key
@@ -20,7 +20,7 @@ var importCmd = &cobra.Command{
 			utils.Error("Usage: scriptcli import <private key>\n")
 		}
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 		if err != nil {
 			utils.Error("Failed to open wallet: %v\n", err)
 		}

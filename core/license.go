@@ -1,23 +1,20 @@
 package core
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"math/big"
-	"os"
 
 	//    "time"
-	"strings"
+
+	"bytes"
+	"sort"
 	"sync"
 
 	"github.com/scripttoken/script/common"
-	"github.com/scripttoken/script/crypto"
-
 	//    log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
+var LicenseIssuer common.Address = common.HexToAddress("0x0000")
+
+/*
 type License struct {
 	Issuer    common.Address    // Issuer's address
 	Licensee  common.Address    // Licensee's address
@@ -32,9 +29,61 @@ type License struct {
 // package-level variable to store the license map
 //var licenseMap = make(map[common.Address]License)
 
-var licenses__mx sync.RWMutex
+*/
 
 type AddressSet map[common.Address]struct{}
+
+func (e *AddressSet) Has(addr common.Address) bool {
+	if _, exists := (*e)[addr]; exists {
+		return true
+	}
+	return false
+}
+
+func (e AddressSet) Copy() AddressSet {
+	newSet := make(AddressSet)
+	for addr := range e {
+		newSet[addr] = struct{}{}
+	}
+	return newSet
+}
+
+func (e *AddressSet) ToSortedSlice() []common.Address {
+	slice := make([]common.Address, 0, len(*e))
+	for key := range *e {
+		slice = append(slice, key)
+	}
+	sort.Slice(slice, func(i, j int) bool {
+		return bytes.Compare(slice[i].Bytes(), slice[j].Bytes()) < 0
+	})
+	return slice
+}
+
+func NewAddressSet() AddressSet {
+	return make(AddressSet)
+}
+
+func (this *AddressSet) Add(addr common.Address) {
+	(*this)[addr] = struct{}{}
+}
+
+func (this *AddressSet) Remove(addr common.Address) {
+	delete(*this, addr)
+}
+
+func (this *AddressSet) Equals(other *AddressSet) bool {
+	if len(*this) != len(*other) {
+		return false
+	}
+	for addr := range *this {
+		if !other.Has(addr) {
+			return false
+		}
+	}
+	return true
+}
+
+var licenses__mx sync.RWMutex
 
 var lightnings AddressSet = make(AddressSet)
 var validators AddressSet = make(AddressSet)
@@ -42,6 +91,31 @@ var validators AddressSet = make(AddressSet)
 func clear() {
 	lightnings = make(AddressSet)
 	validators = make(AddressSet)
+}
+
+func AddValidator(address common.Address) {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	validators.Add(address)
+}
+
+func AddLightning(address common.Address) {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	lightnings.Add(address)
+}
+
+func RemoveValidator(address common.Address) {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	validators.Remove(address)
+
+}
+
+func RemoveLightning(address common.Address) {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	lightnings.Remove(address)
 }
 
 func For_each_lightning(visitor func(common.Address)) {
@@ -60,6 +134,15 @@ func For_each_validator(visitor func(common.Address)) {
 	}
 }
 
+func IsValidator(address common.Address) bool {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	if _, exists := validators[address]; exists {
+		return true
+	}
+	return false
+}
+
 func Has_license_peer(address common.Address) bool {
 	licenses__mx.RLock()
 	defer licenses__mx.RUnlock()
@@ -71,6 +154,8 @@ func Has_license_peer(address common.Address) bool {
 	}
 	return false
 }
+
+/*
 
 func verify_license(license *License, expected_issuer common.Address) string {
 	if license.Issuer != expected_issuer {
@@ -178,6 +263,7 @@ func Set_licenses(licenses []License) error {
 	read_licenses0()
 	return nil
 }
+*/
 
 /*
 func WriteLicenseFile(license License, filename string) error {
@@ -283,7 +369,7 @@ func isLicenseForValidatorNode(items []string) bool {
 }
 
 */
-
+/*
 func concatenateLicenseData(license License) []byte {
 	// Convert fields to byte slices or strings
 	issuerBytes := []byte(license.Issuer.Hex())
@@ -305,7 +391,7 @@ func concatenateLicenseData(license License) []byte {
 
 	return concatenatedData
 }
-
+*/
 /*
 // periodically check and update the cache
 func startCacheUpdater(interval time.Duration) {

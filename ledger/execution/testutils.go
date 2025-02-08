@@ -9,13 +9,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
 	st "github.com/scripttoken/script/ledger/state"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store/database/backend"
@@ -27,14 +27,14 @@ type TestConsensusEngine struct {
 	privKey *crypto.PrivateKey
 }
 
-func (tce *TestConsensusEngine) ID() string                                               { return tce.privKey.PublicKey().Address().Hex() }
-func (tce *TestConsensusEngine) PrivateKey() *crypto.PrivateKey                           { return tce.privKey }
-func (tce *TestConsensusEngine) GetTip(bool) *core.ExtendedBlock                          { return nil }
-func (tce *TestConsensusEngine) GetEpoch() uint64                                         { return 100 }
-func (tce *TestConsensusEngine) AddMessage(msg interface{})                               {}
-func (tce *TestConsensusEngine) FinalizedBlocks() chan *core.Block                        { return nil }
-func (tce *TestConsensusEngine) GetLedger() core.Ledger                                   { return nil }
-func (tce *TestConsensusEngine) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet { return nil }
+func (tce *TestConsensusEngine) ID() string                                           { return tce.privKey.PublicKey().Address().Hex() }
+func (tce *TestConsensusEngine) PrivateKey() *crypto.PrivateKey                       { return tce.privKey }
+func (tce *TestConsensusEngine) GetTip(bool) *core.ExtendedBlock                      { return nil }
+func (tce *TestConsensusEngine) GetEpoch() uint64                                     { return 100 }
+func (tce *TestConsensusEngine) AddMessage(msg interface{})                           {}
+func (tce *TestConsensusEngine) FinalizedBlocks() chan *core.Block                    { return nil }
+func (tce *TestConsensusEngine) GetLedger() core.Ledger                               { return nil }
+func (tce *TestConsensusEngine) GetValidators(blockHash common.Hash) *core.AddressSet { return nil }
 func (tce *TestConsensusEngine) GetLastFinalizedBlock() *core.ExtendedBlock {
 	return &core.ExtendedBlock{}
 }
@@ -48,29 +48,29 @@ func NewTestConsensusEngine(seed string) *TestConsensusEngine {
 }
 
 type TestValidatorManager struct {
-	proposer core.Validator
-	valSet   *core.ValidatorSet
+	proposer common.Address
+	valSet   *core.AddressSet
 }
 
 func (tvm *TestValidatorManager) SetConsensusEngine(consensus core.ConsensusEngine) {}
 
-func (tvm *TestValidatorManager) GetProposer(blockHash common.Hash, epoch uint64) core.Validator {
+func (tvm *TestValidatorManager) GetProposer(blockHash common.Hash, epoch uint64) common.Address {
 	return tvm.proposer
 }
 
-func (tvm *TestValidatorManager) GetNextProposer(blockHash common.Hash, epoch uint64) core.Validator {
+func (tvm *TestValidatorManager) GetNextProposer(blockHash common.Hash, epoch uint64) common.Address {
 	return tvm.proposer
 }
 
-func (tvm *TestValidatorManager) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
+func (tvm *TestValidatorManager) GetValidators(blockHash common.Hash) *core.AddressSet {
 	return tvm.valSet
 }
 
-func (tvm *TestValidatorManager) GetNextValidatorSet(blockHash common.Hash) *core.ValidatorSet {
+func (tvm *TestValidatorManager) GetNextValidators(blockHash common.Hash) *core.AddressSet {
 	return tvm.valSet
 }
 
-func NewTestValidatorManager(proposer core.Validator, valSet *core.ValidatorSet) core.ValidatorManager {
+func NewTestValidatorManager(proposer common.Address, valSet *core.AddressSet) core.ValidatorManager {
 	return &TestValidatorManager{
 		proposer: proposer,
 		valSet:   valSet,
@@ -95,7 +95,7 @@ func NewExecTest() *execTest {
 	return et
 }
 
-//reset everything. state is empty
+// reset everything. state is empty
 func (et *execTest) reset() {
 	et.accIn = types.MakeAccWithInitBalance("foo", types.NewCoins(700000, 50*getMinimumTxFee()))
 	et.accOut = types.MakeAccWithInitBalance("bar", types.NewCoins(700000, 50*getMinimumTxFee()))
@@ -119,12 +119,12 @@ func (et *execTest) reset() {
 
 	consensus := NewTestConsensusEngine("localseed")
 
-	propser := core.NewValidator(et.accProposer.PrivKey.PublicKey().Address().String(), new(big.Int).SetUint64(999))
-	val2 := core.NewValidator(et.accVal2.PrivKey.PublicKey().Address().String(), new(big.Int).SetUint64(100))
-	valSet := core.NewValidatorSet()
-	valSet.AddValidator(propser)
-	valSet.AddValidator(val2)
-	valMgr := NewTestValidatorManager(propser, valSet)
+	propser := et.accProposer.PrivKey.PublicKey().Address()
+	val2 := et.accVal2.PrivKey.PublicKey().Address()
+	var valSet core.AddressSet = make(core.AddressSet)
+	valSet[propser] = struct{}{}
+	valSet[val2] = struct{}{}
+	valMgr := NewTestValidatorManager(propser, &valSet)
 
 	chain := blockchain.CreateTestChain()
 	executor := NewExecutor(db, chain, ledgerState, consensus, valMgr, nil)
@@ -213,7 +213,7 @@ func (et *execTest) SetAcc(accs ...types.PrivAccount) {
 }
 
 func getMinimumTxFee() int64 {
-	return int64(types.MinimumTransactionFeeSPAYWeiJune2021)
+	return int64(types.MinimumTransactionFeeSPAYWei)
 }
 
 func createServicePaymentTx(chainID string, source, target *types.PrivAccount, amount int64, srcSeq, tgtSeq, paymentSeq, reserveSeq int, resourceID string) *types.ServicePaymentTx {
@@ -335,7 +335,7 @@ func setupForSmartContract(ast *assert.Assertions, numAccounts int) (et *execTes
 		privAccount := types.MakeAccWithInitBalance(secret,
 			types.Coins{
 				big.NewInt(0),
-				big.NewInt(1).Mul(big.NewInt(9000000), big.NewInt(int64(types.MinimumGasPriceJune2021))),
+				big.NewInt(1).Mul(big.NewInt(9000000), big.NewInt(int64(types.MinimumGasPrice))),
 			})
 		privAccounts = append(privAccounts, privAccount)
 		et.acc2State(privAccount)

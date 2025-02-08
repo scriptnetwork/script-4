@@ -1,26 +1,26 @@
-## scriptcli query vcp
+## scriptcli query validators
 
-Get validator candidate pool
+Get validators
 
 ### Synopsis
 
-Get validator candidate pool
+Get validators
 
 ```
-scriptcli query vcp [flags]
+scriptcli query validators [flags]
 ```
 
 ### Examples
 
 ```
-scriptcli query vcp --height=10
+scriptcli query validators --height=10
 ```
 
 ### Options
 
 ```
       --height uint   height of the block
-  -h, --help          help for vcp
+  -h, --help          help for validators
 ```
 
 ### Options inherited from parent commands

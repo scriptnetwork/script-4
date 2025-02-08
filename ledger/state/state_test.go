@@ -6,12 +6,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store/database/backend"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLedgerStateBasics(t *testing.T) {
@@ -19,7 +19,7 @@ func TestLedgerStateBasics(t *testing.T) {
 
 	chainID := "testchain"
 	db := backend.NewMemDatabase()
-	ls := NewLedgerState(chainID, db)
+	ls := NewLedgerState(chainID, db, nil)
 
 	initHeight := uint64(127)
 	initRootHash := common.Hash{}
@@ -66,7 +66,7 @@ func TestLedgerStateAccountCommit(t *testing.T) {
 
 	chainID := "testchain"
 	db := backend.NewMemDatabase()
-	ls := NewLedgerState(chainID, db)
+	ls := NewLedgerState(chainID, db, nil)
 
 	initHeight := uint64(127)
 	initRootHash := common.Hash{}
@@ -130,7 +130,7 @@ func TestLedgerStateSplitRuleCommit(t *testing.T) {
 
 	chainID := "testchain"
 	db := backend.NewMemDatabase()
-	ls := NewLedgerState(chainID, db)
+	ls := NewLedgerState(chainID, db, nil)
 
 	initHeight := uint64(127)
 	initRootHash := common.Hash{}

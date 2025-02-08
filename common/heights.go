@@ -15,9 +15,6 @@ const HeightEnableSmartContract uint64 = 1
 // HeightSampleStakingReward specifies the block heigth to enable sampling of staking reward
 const HeightSampleStakingReward uint64 = 1
 
-// HeightJune2021FeeAdjustment specifies the block heigth to enable transaction fee burning adjustment
-const HeightJune2021FeeAdjustment uint64 = 1
-
 // HeightEnableScript3 specifies the minimal block height to enable the Script3.0 feature.
 const HeightEnableScript3 uint64 = 1
 
@@ -53,5 +50,3 @@ func LastCheckPointHeight(height uint64) uint64 {
 	lastCheckpointHeight := uint64(CheckpointInterval)*multiple + 1
 	return lastCheckpointHeight
 }
-
-

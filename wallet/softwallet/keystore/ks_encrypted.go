@@ -26,6 +26,7 @@ The crypto is documented at https://github.com/ethereum/wiki/wiki/Web3-Secret-St
 
 package keystore
 
+/*
 import (
 	"bytes"
 	"crypto/aes"
@@ -129,7 +130,7 @@ func (ks KeystoreEncrypted) ListKeyAddresses() ([]common.Address, error) {
 	return addresses, nil
 }
 
-func (ks KeystoreEncrypted) GetKey(address common.Address, auth string) (*Key, error) {
+func (ks KeystoreEncrypted) GetKey(address common.Address) (*Key, error) {
 	var keyjson []byte
 	var err error
 	for af := allLowerCase; af <= allUpperCase; af++ { // try all formats
@@ -380,3 +381,5 @@ var (
 	EncryptKey = encryptKey
 	DecryptKey = decryptKey
 )
+
+*/

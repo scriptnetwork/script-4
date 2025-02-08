@@ -7,11 +7,11 @@ import (
 	"io"
 	"sort"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/rlp"
+	log "github.com/sirupsen/logrus"
 )
 
 // Proposal represents a proposal of a new block.
@@ -46,8 +46,12 @@ func (cc CommitCertificate) String() string {
 	return fmt.Sprintf("CC{BlockHash: %v, Votes: %v}", cc.BlockHash.Hex(), cc.Votes)
 }
 
+func (s *AddressSet) HasMajority(v *VoteSet) bool {
+	return len(v.votes)*3 > len(*s)*2
+}
+
 // IsValid checks if a CommitCertificate is valid.
-func (cc CommitCertificate) IsValid(validators *ValidatorSet) bool {
+func (cc CommitCertificate) IsValid(validators *AddressSet) bool {
 	if cc.Votes == nil || cc.Votes.IsEmpty() {
 		return false
 	}
@@ -55,7 +59,7 @@ func (cc CommitCertificate) IsValid(validators *ValidatorSet) bool {
 	if filtered.Size() != cc.Votes.Size() {
 		return false
 	}
-	if filtered.Size() > validators.Size() {
+	if filtered.Size() > len(*validators) {
 		return false
 	}
 	for _, vote := range filtered.Votes() {
@@ -66,6 +70,7 @@ func (cc CommitCertificate) IsValid(validators *ValidatorSet) bool {
 			return false
 		}
 	}
+	//return validators.HasMajority(filtered)
 	return validators.HasMajority(filtered)
 }
 
@@ -287,10 +292,10 @@ func (s *VoteSet) UniqueVoter() *VoteSet {
 }
 
 // FilterByValidators removes votes from non-validators.
-func (s *VoteSet) FilterByValidators(validators *ValidatorSet) *VoteSet {
+func (s *VoteSet) FilterByValidators(validators *AddressSet) *VoteSet {
 	ret := NewVoteSet()
 	for _, vote := range s.votes {
-		if _, err := validators.GetValidator(vote.ID); err == nil {
+		if validators.Has(vote.ID) {
 			ret.AddVote(vote)
 		}
 	}

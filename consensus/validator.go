@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"math/rand"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
+	log "github.com/sirupsen/logrus"
 )
 
 const MaxValidatorCount int = 31
@@ -33,33 +33,47 @@ func (m *FixedValidatorManager) SetConsensusEngine(consensus core.ConsensusEngin
 }
 
 // GetProposer implements ValidatorManager interface.
-func (m *FixedValidatorManager) GetProposer(blockHash common.Hash, _ uint64) core.Validator {
-	return m.getProposerFromValidators(m.GetValidatorSet(blockHash))
+func (m *FixedValidatorManager) GetProposer(blockHash common.Hash, _ uint64) common.Address {
+	return m.getProposerFromValidators(m.GetValidators(blockHash))
 }
 
 // GetNextProposer implements ValidatorManager interface.
-func (m *FixedValidatorManager) GetNextProposer(blockHash common.Hash, _ uint64) core.Validator {
-	return m.getProposerFromValidators(m.GetNextValidatorSet(blockHash))
+func (m *FixedValidatorManager) GetNextProposer(blockHash common.Hash, _ uint64) common.Address {
+	return m.getProposerFromValidators(m.GetNextValidators(blockHash))
 }
 
-func (m *FixedValidatorManager) getProposerFromValidators(valSet *core.ValidatorSet) core.Validator {
-	if valSet.Size() == 0 {
+func (m *FixedValidatorManager) getProposerFromValidators(valSet *core.AddressSet) common.Address {
+	if len(*valSet) == 0 {
 		log.Panic("No validators have been added")
 	}
-
-	return valSet.Validators()[0]
+	for key := range *valSet {
+		return key
+	}
+	return common.Address{} //Unreachable code
 }
 
 // GetValidatorSet returns the validator set for given block hash.
-func (m *FixedValidatorManager) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
-	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, false)
-	return valSet
+func (m *FixedValidatorManager) GetValidators(blockHash common.Hash) *core.AddressSet {
+	validators, err := m.consensus.GetLedger().GetFinalizedValidators(blockHash, false)
+	if err != nil {
+		log.Panicf("Failed to get the validators, blockHash: %v, err: %v", blockHash.Hex(), err)
+	}
+	if validators == nil {
+		log.Panicf("Failed to retrieve the validators, blockHash: %v, isNext: %v", blockHash.Hex(), false)
+	}
+	return validators
 }
 
 // GetNextValidatorSet returns the validator set for given block hash's next block.
-func (m *FixedValidatorManager) GetNextValidatorSet(blockHash common.Hash) *core.ValidatorSet {
-	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, true)
-	return valSet
+func (m *FixedValidatorManager) GetNextValidators(blockHash common.Hash) *core.AddressSet {
+	validators, err := m.consensus.GetLedger().GetFinalizedValidators(blockHash, true)
+	if err != nil {
+		log.Panicf("Failed to get the validators, blockHash: %v, err: %v", blockHash.Hex(), err)
+	}
+	if validators == nil {
+		log.Panicf("Failed to retrieve the validators, blockHash: %v, isNext: %v", blockHash.Hex(), true)
+	}
+	return validators
 }
 
 // -------------------------------- RotatingValidatorManager ----------------------------------
@@ -83,58 +97,57 @@ func (m *RotatingValidatorManager) SetConsensusEngine(consensus core.ConsensusEn
 }
 
 // GetProposer implements ValidatorManager interface.
-func (m *RotatingValidatorManager) GetProposer(blockHash common.Hash, epoch uint64) core.Validator {
-	return m.getProposerFromValidators(m.GetValidatorSet(blockHash), epoch)
+func (m *RotatingValidatorManager) GetProposer(blockHash common.Hash, epoch uint64) common.Address {
+	return m.getProposerFromValidators(m.GetValidators(blockHash), epoch)
 }
 
 // GetNextProposer implements ValidatorManager interface.
-func (m *RotatingValidatorManager) GetNextProposer(blockHash common.Hash, epoch uint64) core.Validator {
-	return m.getProposerFromValidators(m.GetNextValidatorSet(blockHash), epoch)
+func (m *RotatingValidatorManager) GetNextProposer(blockHash common.Hash, epoch uint64) common.Address {
+	return m.getProposerFromValidators(m.GetNextValidators(blockHash), epoch)
 }
 
-func (m *RotatingValidatorManager) getProposerFromValidators(valSet *core.ValidatorSet, epoch uint64) core.Validator {
-	if valSet.Size() == 0 {
+func (m *RotatingValidatorManager) getRandomValidator(valSet *core.AddressSet, epoch uint64) common.Address {
+	if len(*valSet) == 0 {
 		log.Panic("No validators have been added")
 	}
-
-	totalStake := valSet.TotalStake()
-	scalingFactor := new(big.Int).Div(totalStake, common.BigMaxUint32)
-	scalingFactor = new(big.Int).Add(scalingFactor, common.Big1)
-	scaledTotalStake := scaleDown(totalStake, scalingFactor)
-
-	// TODO: replace with more secure randomness.
+	validators := (*valSet).ToSortedSlice()
 	rnd := rand.New(rand.NewSource(int64(epoch)))
-	r := randUint64(rnd, scaledTotalStake)
-	curr := uint64(0)
-	validators := valSet.Validators()
-	for _, v := range validators {
-		curr += scaleDown(v.Stake, scalingFactor)
-		if r < curr {
-			return v
-		}
-	}
+	randomIndex := rnd.Intn(len(validators))
+	return validators[randomIndex]
+}
 
-	// Should not reach here.
-	log.Panic("Failed to randomly select a validator")
-	panic("Should not reach here")
+func (m *RotatingValidatorManager) getProposerFromValidators(valSet *core.AddressSet, epoch uint64) common.Address {
+	return m.getRandomValidator(valSet, epoch)
 }
 
 // GetValidatorSet returns the validator set for given block.
-func (m *RotatingValidatorManager) GetValidatorSet(blockHash common.Hash) *core.ValidatorSet {
-	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, false)
-	return valSet
+func (m *RotatingValidatorManager) GetValidators(blockHash common.Hash) *core.AddressSet {
+	validators, err := m.consensus.GetLedger().GetFinalizedValidators(blockHash, false)
+	if err != nil {
+		log.Panicf("Failed to get the validators, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), true, err)
+	}
+	if validators == nil {
+		log.Panicf("Failed to retrieve the validators, blockHash: %v, isNext: %v", blockHash.Hex(), true)
+	}
+	return validators
 }
 
 // GetNextValidatorSet returns the validator set for given block's next block.
-func (m *RotatingValidatorManager) GetNextValidatorSet(blockHash common.Hash) *core.ValidatorSet {
-	valSet := selectTopStakeHoldersAsValidatorsForBlock(m.consensus, blockHash, true)
-	return valSet
+func (m *RotatingValidatorManager) GetNextValidators(blockHash common.Hash) *core.AddressSet {
+	validators, err := m.consensus.GetLedger().GetFinalizedValidators(blockHash, true)
+	if err != nil {
+		log.Panicf("Failed to get the validators, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), true, err)
+	}
+	if validators == nil {
+		log.Panicf("Failed to retrieve the validators, blockHash: %v, isNext: %v", blockHash.Hex(), true)
+	}
+	return validators
 }
 
 //
 // -------------------------------- Utilities ----------------------------------
 //
-
+/*
 func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.ValidatorSet {
 	maxNumValidators := MaxValidatorCount
 	topStakeHolders := vcp.GetTopStakeHolders(maxNumValidators)
@@ -157,19 +170,20 @@ func SelectTopStakeHoldersAsValidators(vcp *core.ValidatorCandidatePool) *core.V
 
 	return valSet
 }
-
+*/
+/*
 func selectTopStakeHoldersAsValidatorsForBlock(consensus core.ConsensusEngine, blockHash common.Hash, isNext bool) *core.ValidatorSet {
-	vcp, err := consensus.GetLedger().GetFinalizedValidatorCandidatePool(blockHash, isNext)
+	validators, err := consensus.GetLedger().GetFinalizedValidators(blockHash, isNext)
 	if err != nil {
-		log.Panicf("Failed to get the validator candidate pool, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), isNext, err)
+		log.Panicf("Failed to get the validators, blockHash: %v, isNext: %v, err: %v", blockHash.Hex(), isNext, err)
 	}
-	if vcp == nil {
-		log.Panic("Failed to retrieve the validator candidate pool, blockHash: %v, isNext: %v", blockHash.Hex(), isNext)
+	if validators == nil {
+		log.Panic("Failed to retrieve the validators, blockHash: %v, isNext: %v", blockHash.Hex(), isNext)
 	}
 
 	return SelectTopStakeHoldersAsValidators(vcp)
 }
-
+*/
 // Generate a random uint64 in [0, max)
 func randUint64(rnd *rand.Rand, max uint64) uint64 {
 	const maxInt64 uint64 = 1<<63 - 1

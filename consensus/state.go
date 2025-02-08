@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/store"
+	log "github.com/sirupsen/logrus"
 )
 
 type StateStub struct {
@@ -49,7 +49,7 @@ func NewState(db store.Store, chain *blockchain.Chain, forcedLastVote *core.Vote
 		lastFinalizedBlock: chain.Root().Hash(),
 		epoch:              chain.Root().Epoch,
 	}
-	err := s.load(forcedLastVote)
+	err := s.Load(forcedLastVote)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -93,7 +93,7 @@ func (s *State) commit() error {
 	return s.db.Put(key, stub)
 }
 
-func (s *State) load(forcedLastVote *core.Vote) (err error) {
+func (s *State) Load(forcedLastVote *core.Vote) (err error) {
 	key := []byte(DBStateStubKey)
 	stub := &StateStub{}
 	s.db.Get(key, stub)

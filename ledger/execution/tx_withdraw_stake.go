@@ -1,5 +1,6 @@
 package execution
 
+/*
 import (
 	"fmt"
 	"math/big"
@@ -159,3 +160,4 @@ func updateEliteEdgeNodeStakeReturns(view *st.StoreView, eenAddress common.Addre
 	})
 	view.SetEliteEdgeNodeStakeReturns(returnHeight, stakesToBeReturned)
 }
+*/

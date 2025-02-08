@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -29,31 +30,31 @@ const (
 	GenGenesisFileMode
 )
 
+/*
 type StakeDeposit struct {
 	Source string `json:"source"`
 	Holder string `json:"holder"`
 	Amount string `json:"amount"`
 }
+*/
 
-//
 // Example:
 // pushd $SCRIPT_HOME/integration/scriptnet/node
 // generate_genesis -chainID=scriptnet -erc20snapshot=./data/genesis_script_erc20_snapshot.json -stake_deposit=./data/genesis_stake_deposit.json -genesis=./genesis
-//
 func main() {
-	chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath, hf_file, genesisSnapshotFilePath := parseArguments()
+	chainID, erc20SnapshotJSONFilePath, validatorsFilePath, hf_file, genesisSnapshotFilePath := parseArguments()
 
-    {
-        if hf_file == "" {
-            panic("Empty HF file")
-        }
-        err := common.Initialize_hf_values(hf_file)
-        if err != nil {
-            panic(fmt.Sprintf("Failed to initialize HF values: %v", err))
-        }
-    }
+	{
+		if hf_file == "" {
+			panic("Empty HF file")
+		}
+		err := common.Initialize_hf_values(hf_file)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to initialize HF values: %v", err))
+		}
+	}
 
-	sv, metadata, err := generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath)
+	sv, metadata, err := generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, validatorsFilePath)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate genesis snapshot: %v", err))
 	}
@@ -81,30 +82,30 @@ func main() {
 	fmt.Printf("hf2=%v", common.Height_hf2)
 }
 
-func parseArguments() (chainID string, erc20SnapshotJSONFilePath string, stakeDepositFilePath string, hf_file string, genesisSnapshotFilePath string) {
+func parseArguments() (chainID string, erc20SnapshotJSONFilePath string, validatorsFilePath string, hf_file string, genesisSnapshotFilePath string) {
 	chainIDPtr := flag.String("chainID", "local_chain", "the ID of the chain")
 	erc20SnapshotJSONFilePathPtr := flag.String("erc20snapshot", "./script_erc20_snapshot.json", "the json file contain the ERC20 balance snapshot")
-	stakeDepositFilePathPtr := flag.String("stake_deposit", "./stake_deposit.json", "the initial stake deposits")
-    hf_filePtr := flag.String("hf_file", "", "Hard fork heights file")
+	validatorsFilePathPtr := flag.String("validators", "./validators.json", "the initial validators")
+	hf_filePtr := flag.String("hf_file", "", "Hard fork heights file")
 	genesisSnapshotFilePathPtr := flag.String("genesis", "./genesis", "the genesis snapshot")
 	flag.Parse()
 
 	chainID = *chainIDPtr
 	erc20SnapshotJSONFilePath = *erc20SnapshotJSONFilePathPtr
-	stakeDepositFilePath = *stakeDepositFilePathPtr
-    hf_file = *hf_filePtr
+	validatorsFilePath = *validatorsFilePathPtr
+	hf_file = *hf_filePtr
 	genesisSnapshotFilePath = *genesisSnapshotFilePathPtr
 
 	return
 }
 
 // generateGenesisSnapshot generates the genesis snapshot.
-func generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, stakeDepositFilePath string) (*state.StoreView, *core.SnapshotMetadata, error) {
+func generateGenesisSnapshot(chainID, erc20SnapshotJSONFilePath, validatorsFilePath string) (*state.StoreView, *core.SnapshotMetadata, error) {
 	metadata := &core.SnapshotMetadata{}
 	genesisHeight := core.GenesisBlockHeight
 
 	sv := loadInitialBalances(erc20SnapshotJSONFilePath)
-	performInitialStakeDeposit(stakeDepositFilePath, genesisHeight, sv)
+	initialValidators(validatorsFilePath, genesisHeight, sv)
 
 	stateHash := sv.Hash()
 
@@ -169,64 +170,45 @@ func loadInitialBalances(erc20SnapshotJSONFilePath string) *state.StoreView {
 	return sv
 }
 
-func performInitialStakeDeposit(stakeDepositFilePath string, genesisHeight uint64, sv *state.StoreView) *core.ValidatorCandidatePool {
-	var stakeDeposits []StakeDeposit
-	stakeDepositFile, err := os.Open(stakeDepositFilePath)
-	stakeDepositByteValue, err := ioutil.ReadAll(stakeDepositFile)
+func initialValidators(validatorsFilePath string, genesisHeight uint64, sv *state.StoreView) *core.AddressSet {
+	//	var stakeDeposits []StakeDeposit
+	var addresses []string
+
+	validatorsFile, err := os.Open(validatorsFilePath)
+	validatorsByteValue, err := io.ReadAll(validatorsFile)
 	if err != nil {
 		panic(fmt.Sprintf("failed to read initial stake deposit file: %v", err))
 	}
 
-	json.Unmarshal(stakeDepositByteValue, &stakeDeposits)
-	vcp := &core.ValidatorCandidatePool{}
-	for _, stakeDeposit := range stakeDeposits {
-		if !common.IsHexAddress(stakeDeposit.Source) {
-			panic(fmt.Sprintf("Invalid source address: %v", stakeDeposit.Source))
-		}
-		if !common.IsHexAddress(stakeDeposit.Holder) {
-			panic(fmt.Sprintf("Invalid holder address: %v", stakeDeposit.Holder))
-		}
-		sourceAddress := common.HexToAddress(stakeDeposit.Source)
-		holderAddress := common.HexToAddress(stakeDeposit.Holder)
-		stakeAmount, success := new(big.Int).SetString(stakeDeposit.Amount, 10)
-		if !success {
-			panic(fmt.Sprintf("Failed to parse Stake amount: %v", stakeDeposit.Amount))
-		}
+	json.Unmarshal(validatorsByteValue, &addresses)
+	var validators core.AddressSet = make(core.AddressSet)
 
-		sourceAccount := sv.GetAccount(sourceAddress)
-		if sourceAccount == nil {
-			panic(fmt.Sprintf("Failed to retrieve account for source address: %v", sourceAddress))
+	for _, addr := range addresses {
+		if !common.IsHexAddress(addr) {
+			panic(fmt.Sprintf("Invalid address: %v", addr))
 		}
-		if sourceAccount.Balance.SCPTWei.Cmp(stakeAmount) < 0 {
-			panic(fmt.Sprintf("The source account %v does NOT have sufficient balance for stake deposit. SCPTWeiBalance = %v, StakeAmount = %v",
-				sourceAddress, sourceAccount.Balance.SCPTWei, stakeDeposit.Amount))
+		a := common.HexToAddress(addr)
+		account := sv.GetAccount(a)
+		if account == nil {
+			panic(fmt.Sprintf("Failed to retrieve account for source address: %v", a))
 		}
-		err := vcp.DepositStake(sourceAddress, holderAddress, stakeAmount, genesisHeight)
-		if err != nil {
-			panic(fmt.Sprintf("Failed to deposit stake, err: %v", err))
-		}
-
-		stake := types.Coins{
-			SCPTWei: stakeAmount,
-			SPAYWei: new(big.Int).SetUint64(0),
-		}
-		sourceAccount.Balance = sourceAccount.Balance.Minus(stake)
-		sv.SetAccount(sourceAddress, sourceAccount)
+		validators[a] = struct{}{}
+		sv.SetAccount(a, account)
 	}
 
-	sv.UpdateValidatorCandidatePool(vcp)
+	sv.UpdateValidators(&validators)
 
 	hl := &types.HeightList{}
 	hl.Append(genesisHeight)
-	sv.UpdateStakeTransactionHeightList(hl)
+	sv.UpdateValidatorTransactionHeightList(hl)
 
-	return vcp
+	return &validators
 }
 
-func proveVCP(sv *state.StoreView) (*core.VCPProof, error) {
-	vp := &core.VCPProof{}
-	vcpKey := state.ValidatorCandidatePoolKey()
-	err := sv.ProveVCP(vcpKey, vp)
+func proveValidators(sv *state.StoreView) (*core.ValidatorsProof, error) {
+	vp := &core.ValidatorsProof{}
+	validatorsKey := state.ValidatorsKey()
+	err := sv.ProveValidators(validatorsKey, vp)
 	return vp, err
 }
 
@@ -270,25 +252,25 @@ func sanityChecks(sv *state.StoreView) error {
 	scriptWeiTotal := new(big.Int).SetUint64(0)
 	spayWeiTotal := new(big.Int).SetUint64(0)
 
-	vcpAnalyzed := false
+	validatorsAnalyzed := false
 	sv.GetStore().Traverse(nil, func(key, val common.Bytes) bool {
-		if bytes.Compare(key, state.ValidatorCandidatePoolKey()) == 0 {
-			var vcp core.ValidatorCandidatePool
-			err := rlp.DecodeBytes(val, &vcp)
+		if bytes.Compare(key, state.ValidatorsKey()) == 0 {
+			var validators core.AddressSet
+			err := rlp.DecodeBytes(val, &validators)
 			if err != nil {
-				panic(fmt.Sprintf("Failed to decode VCP: %v", err))
+				panic(fmt.Sprintf("Failed to decode validators: %v", err))
 			}
-			for _, sc := range vcp.SortedCandidates {
-				logger.Infof("--------------------------------------------------------")
-				logger.Infof("Validator Candidate: %v, totalStake  = %v", sc.Holder, sc.TotalStake())
-				for _, stake := range sc.Stakes {
-					scriptWeiTotal = new(big.Int).Add(scriptWeiTotal, stake.Amount)
-					logger.Infof("     Stake: source = %v, stakeAmount = %v", stake.Source, stake.Amount)
-				}
-				logger.Infof("--------------------------------------------------------")
+			for _, sc := range validators {
+				//logger.Infof("--------------------------------------------------------")
+				logger.Infof("Validator Candidate: %v", sc)
+				//for _, stake := range sc.Stakes {
+				//	scriptWeiTotal = new(big.Int).Add(scriptWeiTotal, stake.Amount)
+				//	logger.Infof("     Stake: source = %v, stakeAmount = %v", stake.Source, stake.Amount)
+				//}
+				//logger.Infof("--------------------------------------------------------")
 			}
-			vcpAnalyzed = true
-		} else if bytes.Compare(key, state.StakeTransactionHeightListKey()) == 0 {
+			validatorsAnalyzed = true
+		} else if bytes.Compare(key, state.ValidatorTransactionHeightListKey()) == 0 {
 			var hl types.HeightList
 			err := rlp.DecodeBytes(val, &hl)
 			if err != nil {
@@ -318,15 +300,15 @@ func sanityChecks(sv *state.StoreView) error {
 	})
 
 	// Check #1: VCP analyzed
-	vcpProof, err := proveVCP(sv)
+	validatorsProof, err := proveValidators(sv)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to get VCP proof from storeview"))
+		panic(fmt.Sprintf("Failed to get Validators proof from storeview"))
 	}
-	_, _, err = trie.VerifyProof(sv.Hash(), state.ValidatorCandidatePoolKey(), vcpProof)
+	_, _, err = trie.VerifyProof(sv.Hash(), state.ValidatorsKey(), validatorsProof)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to verify VCP proof in storeview"))
 	}
-	if !vcpAnalyzed {
+	if !validatorsAnalyzed {
 		return fmt.Errorf("VCP not detected in the genesis file")
 	}
 

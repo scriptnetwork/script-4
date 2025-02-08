@@ -15,18 +15,14 @@ const (
 	ScreenedView  ViewSelector = 3
 )
 
-//
 // TxInfo encapsulates information used by mempool to sorting.
-//
 type TxInfo struct {
 	EffectiveGasPrice *big.Int
 	Address           common.Address
 	Sequence          uint64
 }
 
-//
 // Ledger defines the interface of the ledger
-//
 type Ledger interface {
 	GetCurrentBlock() *Block
 	ScreenTxUnsafe(rawTx common.Bytes) result.Result
@@ -37,8 +33,9 @@ type Ledger interface {
 	//ResetState(height uint64, rootHash common.Hash) result.Result
 	ResetState(block *Block) result.Result
 	FinalizeState(height uint64, rootHash common.Hash) result.Result
-	GetFinalizedValidatorCandidatePool(blockHash common.Hash, isNext bool) (*ValidatorCandidatePool, error)
-	GetLightningCandidatePool(blockHash common.Hash) (*LightningCandidatePool, error)
-	GetEliteEdgeNodePoolOfLastCheckpoint(blockHash common.Hash) (EliteEdgeNodePool, error)
+	GetFinalizedValidators(blockHash common.Hash, isNext bool) (*AddressSet, error)
+	//GetFinalizedValidatorCandidatePool(blockHash common.Hash, isNext bool) (*ValidatorCandidatePool, error)
+	GetLightnings(blockHash common.Hash) (*AddressSet, error)
+	//GetEliteEdgeNodePoolOfLastCheckpoint(blockHash common.Hash) (EliteEdgeNodePool, error)
 	PruneState(endHeight uint64) error
 }

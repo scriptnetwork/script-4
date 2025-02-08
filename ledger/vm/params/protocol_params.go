@@ -83,17 +83,11 @@ const (
 	IdentityPerWordGas  uint64 = 3    // Per-work price for a data copy operation
 	ModExpQuadCoeffDiv  uint64 = 20   // Divisor for the quadratic particle of the big int modular exponentiation
 
-	// Ethereum Byzantium fork
-	Bn256AddGas             uint64 = 500    // Gas needed for an elliptic curve addition
-	Bn256ScalarMulGas       uint64 = 40000  // Gas needed for an elliptic curve scalar multiplication
-	Bn256PairingBaseGas     uint64 = 100000 // Base price for an elliptic curve pairing check
-	Bn256PairingPerPointGas uint64 = 80000  // Per-point price for an elliptic curve pairing check
-
 	// Ethereum Istanbul fork
-	Bn256AddGasIstanbul             uint64 = 150   // Gas needed for an elliptic curve addition
-	Bn256ScalarMulGasIstanbul       uint64 = 6000  // Gas needed for an elliptic curve scalar multiplication
-	Bn256PairingBaseGasIstanbul     uint64 = 45000 // Base price for an elliptic curve pairing check
-	Bn256PairingPerPointGasIstanbul uint64 = 34000 // Per-point price for an elliptic curve pairing check
+	Bn256AddGas             uint64 = 150   // Gas needed for an elliptic curve addition
+	Bn256ScalarMulGas       uint64 = 6000  // Gas needed for an elliptic curve scalar multiplication
+	Bn256PairingBaseGas     uint64 = 45000 // Base price for an elliptic curve pairing check
+	Bn256PairingPerPointGas uint64 = 34000 // Per-point price for an elliptic curve pairing check
 
 	ScriptBalanceGas  uint64 = 4     // Retrieve the Script balance for an address
 	ScriptStakeGas    uint64 = 200   // Retrieve the total amount of staked Script for an address
@@ -101,8 +95,8 @@ const (
 
 	StakeToLightningGas     uint64 = 21000 // Stake to Lightning
 	UnstakeFromLightningGas uint64 = 21000 // Unstake from Lightning
-	StakeToEENGas          uint64 = 21000 // Stake to EEN
-	UnstakeFromEENGas      uint64 = 21000 // Unstake from EEN
+	StakeToEENGas           uint64 = 21000 // Stake to EEN
+	UnstakeFromEENGas       uint64 = 21000 // Unstake from EEN
 )
 
 var (

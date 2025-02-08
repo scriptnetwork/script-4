@@ -1,5 +1,6 @@
 package execution
 
+/*
 import (
 	"fmt"
 	"math/big"
@@ -55,10 +56,6 @@ func (exec *StakeRewardDistributionTxExecutor) sanityCheck(chainID string, view 
 	if res.IsError() {
 		return res
 	}
-
-	/*if tx.SplitBasisPoint > 1000 { // initially we only allow up to 10.00% reward split
-		return result.Error("Only allow at most 10.00%% reward split for the beneficiary for now (i.e., SplitBasisPoint <= 1000)")
-	}*/
 
 	// stakeHolderAddress := tx.Holder.Address
 	// beneficiaryAddress := tx.Beneficiary.Address
@@ -172,3 +169,4 @@ func (exec *StakeRewardDistributionTxExecutor) calculateEffectiveGasPrice(transa
 	effectiveGasPrice := new(big.Int).Div(fee.SPAYWei, gas)
 	return effectiveGasPrice
 }
+*/

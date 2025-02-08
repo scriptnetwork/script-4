@@ -36,7 +36,7 @@ type StateDB interface {
 	SubScriptBalance(common.Address, *big.Int)
 	AddScriptBalance(common.Address, *big.Int)
 	GetScriptBalance(common.Address) *big.Int // GetScriptBalance returns the SCPTWei balance of the given address
-	GetScriptStake(common.Address) *big.Int   // GetScriptStake returns the total amount of SCPTWei the address staked to validators and/or lightnings
+	//GetScriptStake(common.Address) *big.Int   // GetScriptStake returns the total amount of SCPTWei the address staked to validators and/or lightnings
 
 	GetNonce(common.Address) uint64
 	SetNonce(common.Address, uint64)

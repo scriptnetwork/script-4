@@ -17,13 +17,12 @@ type Wallet interface {
 	ID() string
 	Status() (string, error)
 	List() ([]common.Address, error)
-	NewKey(password string) (common.Address, error)
+	NewKey() (common.Address, error)
 	ImportKey(privHex string) (common.Address, error)
-	Unlock(address common.Address, password string, derivationPath DerivationPath) error
+	Unlock(address common.Address, derivationPath DerivationPath) error
 	Lock(address common.Address) error
 	IsUnlocked(address common.Address) bool
-	Delete(address common.Address, password string) error
-	UpdatePassword(address common.Address, oldPassword, newPassword string) error
+	Delete(address common.Address) error
 	Derive(path DerivationPath, pin bool) (common.Address, error)
 	GetPublicKey(address common.Address) (*crypto.PublicKey, error)
 	Sign(address common.Address, txrlp common.Bytes) (*crypto.Signature, error)

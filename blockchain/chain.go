@@ -137,7 +137,7 @@ func (ch *Chain) FixMissingChildren(block *core.ExtendedBlock) {
 	for _, hash := range block.Children {
 		_, err := ch.findBlock(hash)
 		if err != nil {
-			logger.Warningf("Removing dead link from block $v to block %v", block.Hash().Hex(), hash.Hex())
+			logger.Warningf("Removing dead link from block %v to block %v", block.Hash().Hex(), hash.Hex())
 		} else {
 			newChildren = append(newChildren, hash)
 		}

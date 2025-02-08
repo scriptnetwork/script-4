@@ -1,5 +1,6 @@
 package types
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -67,3 +68,4 @@ func (lw LicenseWrapper) String() string {
 	return fmt.Sprintf("License{Issuer: %v, Licensee: %v, From: %v, To: %v, Items: %v, Signature: %v}",
 		lw.License.Issuer, lw.License.Licensee, lw.License.From, lw.License.To, lw.License.Items, lw.License.Signature)
 }
+*/

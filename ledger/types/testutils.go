@@ -86,14 +86,14 @@ func Accs2TxInputs(seq int, accs ...PrivAccount) []TxInput {
 	for _, acc := range accs {
 		tx := NewTxInput(
 			acc.Account.Address,
-			NewCoins(4, int64(MinimumTransactionFeeSPAYWeiJune2021)),
+			NewCoins(4, int64(MinimumTransactionFeeSPAYWei)),
 			seq)
 		txs = append(txs, tx)
 	}
 	return txs
 }
 
-//turn a list of accounts into basic list of transaction outputs
+// turn a list of accounts into basic list of transaction outputs
 func Accs2TxOutputs(accs ...PrivAccount) []TxOutput {
 	var txs []TxOutput
 	for _, acc := range accs {
@@ -108,7 +108,7 @@ func Accs2TxOutputs(accs ...PrivAccount) []TxOutput {
 
 func MakeSendTx(seq int, accOut PrivAccount, accsIn ...PrivAccount) *SendTx {
 	tx := &SendTx{
-		Fee:     NewCoins(0, int64(MinimumTransactionFeeSPAYWeiJune2021)),
+		Fee:     NewCoins(0, int64(MinimumTransactionFeeSPAYWei)),
 		Inputs:  Accs2TxInputs(seq, accsIn...),
 		Outputs: Accs2TxOutputs(accOut),
 	}

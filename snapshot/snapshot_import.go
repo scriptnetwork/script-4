@@ -14,11 +14,8 @@ import (
 	"github.com/scripttoken/script/ledger"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
-	"github.com/scripttoken/script/consensus"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/ledger/state"
 	"github.com/scripttoken/script/ledger/types"
@@ -28,6 +25,8 @@ import (
 	"github.com/scripttoken/script/store/database/backend"
 	"github.com/scripttoken/script/store/kvstore"
 	"github.com/scripttoken/script/store/trie"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "snapshot"})
@@ -486,7 +485,7 @@ func loadChainSegment(filePath string, start, end uint64, prevBlock *core.Extend
 		}
 
 		// check block itself
-		var provenValSet *core.ValidatorSet
+		var provenValSet *core.AddressSet
 		if block.Height == core.GenesisBlockHeight {
 			provenValSet, err = checkGenesisBlock(block.BlockHeader, db)
 			if err != nil {
@@ -513,7 +512,7 @@ func loadChainSegment(filePath string, start, end uint64, prevBlock *core.Extend
 				if proofTrio.First.Header.Height == core.GenesisBlockHeight {
 					provenValSet, err = checkGenesisBlock(proofTrio.Second.Header, db)
 				} else {
-					provenValSet, err = getValidatorSetFromVCPProof(proofTrio.First.Header.StateHash, &proofTrio.First.Proof)
+					provenValSet, err = getValidatorsFromProof(proofTrio.First.Header.StateHash, &proofTrio.First.Proof)
 				}
 				if err != nil {
 					return nil, fmt.Errorf("Failed to retrieve validator set from VCP proof: %v", err)
@@ -780,7 +779,7 @@ func checkSnapshot(sv *state.StoreView, metadata *core.SnapshotMetadata, db data
 			expectedStateHash.Hex(), secondBlock.StateHash.Hex())
 	}
 
-	var provenValSet *core.ValidatorSet
+	var provenValSet *core.AddressSet
 	var err error
 	if secondBlock.Height != core.GenesisBlockHeight {
 		provenValSet, err = checkProofTrios(metadata.ProofTrios, db)
@@ -806,11 +805,11 @@ func checkSnapshotV4(sv *state.StoreView, metadata *core.SnapshotMetadata, db da
 			expectedStateHash.Hex(), secondBlock.StateHash.Hex())
 	}
 
-	var valSet *core.ValidatorSet
+	var valSet *core.AddressSet
 	var err error
 
 	first := tailTrio.First
-	valSet, err = getValidatorSetFromVCPProof(first.Header.StateHash, &first.Proof)
+	valSet, err = getValidatorsFromProof(first.Header.StateHash, &first.Proof)
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve validator set from VCP proof: %v", err)
 	}
@@ -825,10 +824,10 @@ func checkSnapshotV4(sv *state.StoreView, metadata *core.SnapshotMetadata, db da
 	return nil
 }
 
-func checkProofTrios(proofTrios []core.SnapshotBlockTrio, db database.Database) (*core.ValidatorSet, error) {
+func checkProofTrios(proofTrios []core.SnapshotBlockTrio, db database.Database) (*core.AddressSet, error) {
 	logger.Debugf("Check validator set change proofs...")
 
-	var provenValSet *core.ValidatorSet // the proven validator set so far
+	var provenValSet *core.AddressSet // the proven validator set so far
 	var err error
 	for idx, blockTrio := range proofTrios {
 		first := blockTrio.First
@@ -854,7 +853,7 @@ func checkProofTrios(proofTrios []core.SnapshotBlockTrio, db database.Database) 
 			if err := validateVotes(provenValSet, second.Header, third.Header.HCC.Votes); err != nil {
 				return nil, fmt.Errorf("Failed to validate voteSet, %v", err)
 			}
-			provenValSet, err = getValidatorSetFromVCPProof(first.Header.StateHash, &first.Proof)
+			provenValSet, err = getValidatorsFromProof(first.Header.StateHash, &first.Proof)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to retrieve validator set from VCP proof: %v", err)
 			}
@@ -866,7 +865,7 @@ func checkProofTrios(proofTrios []core.SnapshotBlockTrio, db database.Database) 
 	return provenValSet, nil
 }
 
-func checkTailTrio(sv *state.StoreView, provenValSet *core.ValidatorSet, tailTrio *core.SnapshotBlockTrio) error {
+func checkTailTrio(sv *state.StoreView, provenValSet *core.AddressSet, tailTrio *core.SnapshotBlockTrio) error {
 	second := &tailTrio.Second
 	third := &tailTrio.Third
 
@@ -877,7 +876,7 @@ func checkTailTrio(sv *state.StoreView, provenValSet *core.ValidatorSet, tailTri
 		}
 	} else {
 		validateVotes(provenValSet, third.Header, third.VoteSet)
-		retrievedValSet := getValidatorSetFromSV(sv)
+		retrievedValSet := sv.GetValidators()
 		if !provenValSet.Equals(retrievedValSet) {
 			return fmt.Errorf("The latest proven and retrieved validator set does not match")
 		}
@@ -886,7 +885,7 @@ func checkTailTrio(sv *state.StoreView, provenValSet *core.ValidatorSet, tailTri
 	return nil
 }
 
-func checkGenesisBlock(block *core.BlockHeader, db database.Database) (*core.ValidatorSet, error) {
+func checkGenesisBlock(block *core.BlockHeader, db database.Database) (*core.AddressSet, error) {
 	if block.Height != core.GenesisBlockHeight {
 		return nil, fmt.Errorf("Invalid genesis block height: %v", block.Height)
 	}
@@ -911,32 +910,33 @@ func checkGenesisBlock(block *core.BlockHeader, db database.Database) (*core.Val
 	// genesis validator set from its state trie
 	gsv := state.NewStoreView(block.Height, block.StateHash, db)
 
-	genesisValidatorSet := getValidatorSetFromSV(gsv)
+	genesisValidatorSet := gsv.GetValidators()
 
 	return genesisValidatorSet, nil
 }
 
-func getValidatorSetFromVCPProof(stateHash common.Hash, recoverredVp *core.VCPProof) (*core.ValidatorSet, error) {
-	serializedVCP, _, err := trie.VerifyProof(stateHash, state.ValidatorCandidatePoolKey(), recoverredVp)
+func getValidatorsFromProof(stateHash common.Hash, recoverredVp *core.ValidatorsProof) (*core.AddressSet, error) {
+	serializedValidators, _, err := trie.VerifyProof(stateHash, state.ValidatorsKey(), recoverredVp)
 	if err != nil {
 		return nil, err
 	}
 
-	vcp := &core.ValidatorCandidatePool{}
-	err = rlp.DecodeBytes(serializedVCP, vcp)
+	validators := core.NewAddressSet()
+	err = rlp.DecodeBytes(serializedValidators, validators)
 	if err != nil {
 		return nil, err
 	}
-	return consensus.SelectTopStakeHoldersAsValidators(vcp), nil
+	return &validators, nil
 }
 
+/*
 func getValidatorSetFromSV(sv *state.StoreView) *core.ValidatorSet {
-	vcp := sv.GetValidatorCandidatePool()
-	return consensus.SelectTopStakeHoldersAsValidators(vcp)
+	return sv.GetValidators()
 }
+*/
 
-func validateVotes(validatorSet *core.ValidatorSet, block *core.BlockHeader, voteSet *core.VoteSet) error {
-	if !validatorSet.HasMajority(voteSet) {
+func validateVotes(validators *core.AddressSet, block *core.BlockHeader, voteSet *core.VoteSet) error {
+	if !(*validators).HasMajority(voteSet) {
 		return fmt.Errorf("block doesn't have majority votes")
 	}
 	for _, vote := range voteSet.Votes() {
@@ -947,8 +947,7 @@ func validateVotes(validatorSet *core.ValidatorSet, block *core.BlockHeader, vot
 		if vote.Block != block.Hash() {
 			return fmt.Errorf("vote is not for corresponding block")
 		}
-		_, err := validatorSet.GetValidator(vote.ID)
-		if err != nil {
+		if !(*validators).Has(vote.ID) {
 			return fmt.Errorf("can't find validator for vote")
 		}
 	}
@@ -959,7 +958,7 @@ func saveTailBlocks(metadata *core.SnapshotMetadata, sv *state.StoreView, kvstor
 	tailBlockTrio := &metadata.TailTrio
 	firstBlock := core.Block{BlockHeader: tailBlockTrio.First.Header}
 	secondBlock := core.Block{BlockHeader: tailBlockTrio.Second.Header}
-	hl := sv.GetStakeTransactionHeightList()
+	hl := sv.GetValidatorTransactionHeightList()
 
 	if secondBlock.Height != core.GenesisBlockHeight {
 		firstExt := &core.ExtendedBlock{

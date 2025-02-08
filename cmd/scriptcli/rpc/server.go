@@ -11,13 +11,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/rpc/lib/rpc-codec/jsonrpc2"
 	wl "github.com/scripttoken/script/wallet"
 	wt "github.com/scripttoken/script/wallet/types"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"golang.org/x/net/netutil"
 	"golang.org/x/net/websocket"
 )
@@ -47,7 +47,7 @@ type ScriptCliRPCServer struct {
 
 // NewScriptCliRPCServer creates a new instance of ScriptRPCServer.
 func NewScriptCliRPCServer(cfgPath, port string) (*ScriptCliRPCServer, error) {
-	wallet, err := wl.OpenWallet(cfgPath, wt.WalletTypeSoft, true)
+	wallet, err := wl.OpenWallet(cfgPath, wt.WalletTypeSoft)
 	if err != nil {
 		fmt.Printf("Failed to open wallet: %v\n", err)
 		return nil, err

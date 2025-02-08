@@ -1,5 +1,6 @@
 package tx
 
+/*
 import (
 	"encoding/hex"
 	"fmt"
@@ -101,3 +102,4 @@ func init() {
 	withdrawStakeCmd.MarkFlagRequired("holder")
 	withdrawStakeCmd.MarkFlagRequired("seq")
 }
+*/

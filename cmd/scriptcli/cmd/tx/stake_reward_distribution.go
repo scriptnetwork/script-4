@@ -1,5 +1,6 @@
 package tx
 
+/*
 import (
 	"encoding/hex"
 	"encoding/json"
@@ -117,3 +118,4 @@ func init() {
 	stakeRewardDistributionCmd.MarkFlagRequired("holder")
 	stakeRewardDistributionCmd.MarkFlagRequired("seq")
 }
+*/

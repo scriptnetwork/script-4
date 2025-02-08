@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/wallet"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 // deleteCmd deletes the key corresponding to the given address
@@ -24,15 +24,9 @@ var deleteCmd = &cobra.Command{
 		address := common.HexToAddress(args[0])
 
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 		if err != nil {
 			utils.Error("Failed to open wallet: %v\n", err)
-		}
-
-		prompt := fmt.Sprintf("Please enter the password: ")
-		password, err := utils.GetPassword(prompt)
-		if err != nil {
-			utils.Error("Failed to get password: %v\n", err)
 		}
 
 		fmt.Println("Are you sure to delete the key? Please enter 'no' to stop or 'yes' to proceed: ")
@@ -43,22 +37,10 @@ var deleteCmd = &cobra.Command{
 		if strings.ToLower(confirmation) != "yes" {
 			return
 		}
-
-		prompt = fmt.Sprintf("Please enter the password again to proceed: ")
-		password2, err := utils.GetPassword(prompt)
-		if err != nil {
-			utils.Error("Failed to get password: %v\n", err)
-		}
-
-		if password != password2 {
-			utils.Error("Passwords do not match, abort\n")
-		}
-
-		err = wallet.Delete(address, password)
+		err = wallet.Delete(address)
 		if err != nil {
 			utils.Error("Failed to delete key for address %v: %v\n", address.Hex(), err)
 		}
-
 		fmt.Printf("Key for address %v has been deleted\n", address.Hex())
 	},
 }

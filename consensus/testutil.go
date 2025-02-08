@@ -1,10 +1,8 @@
 package consensus
 
 import (
-	"math/big"
-
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/core"
+	"github.com/stretchr/testify/assert"
 )
 
 // GetFinalizedBlocks drains the FinalizedBlocks channel and return a slice of block hashes.
@@ -40,6 +38,7 @@ func AssertFinalizedBlocksNotConflicting(assert *assert.Assertions, c1 []string,
 	}
 }
 
+/*
 func NewTestValidatorSet(addressStrs []string) *core.ValidatorSet {
 	s := core.NewValidatorSet()
 	for _, addressStr := range addressStrs {
@@ -49,3 +48,4 @@ func NewTestValidatorSet(addressStrs []string) *core.ValidatorSet {
 	}
 	return s
 }
+*/

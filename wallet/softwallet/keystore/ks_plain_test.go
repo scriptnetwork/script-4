@@ -9,15 +9,14 @@ import (
 )
 
 func TestKeyStorePlain(t *testing.T) {
-	dir, ks := tmpKeyStoreIface(t, false)
+	dir, ks := tmpKeyStoreIface(t)
 	defer os.RemoveAll(dir)
 
-	pass := "" // not used but required by API
-	k1, err := storeNewKeyTest(ks, rand.Reader, pass)
+	k1, err := storeNewKeyTest(ks, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	k2, err := ks.GetKey(k1.Address, pass)
+	k2, err := ks.GetKey(k1.Address)
 	if err != nil {
 		t.Fatal(err)
 	}

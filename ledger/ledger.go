@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/store"
 	"github.com/scripttoken/script/store/kvstore"
+	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 
@@ -30,9 +30,7 @@ var logger *log.Entry = log.WithFields(log.Fields{"prefix": "ledger"})
 
 var _ core.Ledger = (*Ledger)(nil)
 
-//
 // Ledger implements the core.Ledger interface
-//
 type Ledger struct {
 	db           database.Database
 	chain        *blockchain.Chain
@@ -103,7 +101,7 @@ func (ledger *Ledger) GetFinalizedSnapshot() (*st.StoreView, error) {
 }
 
 // GetFinalizedValidatorCandidatePool returns the validator candidate pool of the latest DIRECTLY finalized block
-func (ledger *Ledger) GetFinalizedValidatorCandidatePool(blockHash common.Hash, isNext bool) (*core.ValidatorCandidatePool, error) {
+func (ledger *Ledger) GetFinalizedValidators(blockHash common.Hash, isNext bool) (*core.AddressSet, error) {
 	db := ledger.state.DB()
 	store := kvstore.NewKVStore(db)
 
@@ -116,7 +114,7 @@ func (ledger *Ledger) GetFinalizedValidatorCandidatePool(blockHash common.Hash, 
 	for ; ; i-- {
 		block, err := findBlock(store, blockHash)
 		if err != nil {
-			logger.Errorf("Failed to find block for VCP: %v, err: %v", blockHash.Hex(), err)
+			logger.Errorf("Failed to find block for validators: %v, err: %v", blockHash.Hex(), err)
 			return nil, err
 		}
 		if block == nil {
@@ -136,8 +134,8 @@ func (ledger *Ledger) GetFinalizedValidatorCandidatePool(blockHash common.Hash, 
 					"block.Status.IsTrusted()":    block.Status.IsTrusted(),
 				}).Panic("Failed to load state for validator pool")
 			}
-			vcp := storeView.GetValidatorCandidatePool()
-			return vcp, nil
+			validators := storeView.GetValidators()
+			return validators, nil
 		}
 		blockHash = block.HCC.BlockHash
 	}
@@ -297,10 +295,7 @@ func (ledger *Ledger) ProposeBlockTxs(block *core.Block, shouldIncludeValidatorU
 
 		if !shouldIncludeValidatorUpdateTxs {
 			// Skip validator updating txs
-			if _, ok := tx.(*types.DepositStakeTx); ok {
-				continue
-			}
-			if _, ok := tx.(*types.WithdrawStakeTx); ok {
+			if _, ok := tx.(*types.LicenseTx); ok {
 				continue
 			}
 		}
@@ -368,9 +363,7 @@ func (ledger *Ledger) ApplyBlockTxs(block *core.Block) result.Result {
 			ledger.resetState(parentBlock)
 			return result.Error("Failed to parse transaction: %v", hex.EncodeToString(rawTx))
 		}
-		if dtx, ok := tx.(*types.DepositStakeTx); ok && dtx.Purpose == core.StakeForValidator {
-			hasValidatorUpdate = true
-		} else if wtx, ok := tx.(*types.WithdrawStakeTx); ok && wtx.Purpose == core.StakeForValidator {
+		if _, ok := tx.(*types.LicenseTx); ok {
 			hasValidatorUpdate = true
 		}
 		_, res := ledger.executor.ExecuteTx(tx)
@@ -449,9 +442,7 @@ func (ledger *Ledger) ApplyBlockTxsForChainCorrection(block *core.Block) (common
 			ledger.resetState(parentBlock)
 			return common.Hash{}, result.Error("Failed to parse transaction: %v", hex.EncodeToString(rawTx))
 		}
-		if dtx, ok := tx.(*types.DepositStakeTx); ok && dtx.Purpose == core.StakeForValidator {
-			hasValidatorUpdate = true
-		} else if wtx, ok := tx.(*types.WithdrawStakeTx); ok && wtx.Purpose == core.StakeForValidator {
+		if _, ok := tx.(*types.LicenseTx); ok {
 			hasValidatorUpdate = true
 		}
 		_, res := ledger.executor.ExecuteTx(tx)
@@ -529,7 +520,7 @@ func (ledger *Ledger) pruneStateForRange(startHeight, endHeight uint64) error {
 
 	stateHashMap := make(map[string]bool)
 	kvStore := kvstore.NewKVStore(db)
-	hl := sv.GetStakeTransactionHeightList().Heights
+	hl := sv.GetValidatorTransactionHeightList().Heights
 	for _, height := range hl {
 		// check kvstore first
 		blockTrio := &core.SnapshotBlockTrio{}
@@ -595,7 +586,7 @@ func (ledger *Ledger) pruneStateForRange(startHeight, endHeight uint64) error {
 }
 
 // ResetState sets the ledger state with the designated root
-//func (ledger *Ledger) ResetState(height uint64, rootHash common.Hash) result.Result {
+// func (ledger *Ledger) ResetState(height uint64, rootHash common.Hash) result.Result {
 func (ledger *Ledger) ResetState(block *core.Block) result.Result {
 	ledger.mu.Lock()
 	defer ledger.mu.Unlock()
@@ -617,7 +608,7 @@ func (ledger *Ledger) FinalizeState(height uint64, rootHash common.Hash) result.
 }
 
 // resetState sets the ledger state with the designated root
-//func (ledger *Ledger) resetState(height uint64, rootHash common.Hash) result.Result
+// func (ledger *Ledger) resetState(height uint64, rootHash common.Hash) result.Result
 func (ledger *Ledger) resetState(block *core.Block) result.Result {
 	height := block.Height
 	rootHash := block.StateHash
@@ -648,43 +639,16 @@ func (ledger *Ledger) shouldSkipCheckTx(tx types.Tx) bool {
 // handleDelayedStateUpdates handles delayed state updates, e.g. stake return, where the stake
 // is returned only after X blocks of its corresponding StakeWithdraw transaction
 func (ledger *Ledger) handleDelayedStateUpdates(view *st.StoreView) {
-	ledger.handleValidatorStakeReturn(view)
-	ledger.handleLightningStakeReturn(view)
+	//ledger.handleValidatorStakeReturn(view)
+	//ledger.handleLightningStakeReturn(view)
 
-	blockHeight := view.Height() + 1
-	if blockHeight >= common.HeightEnableScript3 {
-		ledger.handleEliteEdgeNodeStakeReturns(view)
-	}
+	//blockHeight := view.Height() + 1
+	//if blockHeight >= common.HeightEnableScript3 {
+	//	ledger.handleEliteEdgeNodeStakeReturns(view)
+	//}
 }
 
-func (ledger *Ledger) handleValidatorStakeReturn(view *st.StoreView) {
-	vcp := view.GetValidatorCandidatePool()
-	if vcp == nil {
-		return
-	}
-
-	currentHeight := view.Height()
-	returnedStakes := vcp.ReturnStakes(currentHeight)
-
-	for _, returnedStake := range returnedStakes {
-		if !returnedStake.Withdrawn || currentHeight < returnedStake.ReturnHeight {
-			log.Panicf("Cannot return stake: withdrawn = %v, returnHeight = %v, currentHeight = %v",
-				returnedStake.Withdrawn, returnedStake.ReturnHeight, currentHeight)
-		}
-		sourceAddress := returnedStake.Source
-		sourceAccount := view.GetAccount(sourceAddress)
-		if sourceAccount == nil {
-			log.Panicf("Failed to retrieve source account for stake return: %v", sourceAddress)
-		}
-		returnedCoins := types.Coins{
-			SCPTWei: returnedStake.Amount,
-			SPAYWei: types.Zero,
-		}
-		sourceAccount.Balance = sourceAccount.Balance.Plus(returnedCoins)
-		view.SetAccount(sourceAddress, sourceAccount)
-	}
-	view.UpdateValidatorCandidatePool(vcp)
-}
+/*
 
 func (ledger *Ledger) handleLightningStakeReturn(view *st.StoreView) {
 	gcp := view.GetLightningCandidatePool()
@@ -756,6 +720,8 @@ func (ledger *Ledger) handleEliteEdgeNodeStakeReturns(view *st.StoreView) {
 	view.RemoveEliteEdgeNodeStakeReturns(currentHeight)
 }
 
+*/
+
 // addSpecialTransactions adds special transactions (e.g. coinbase transaction, slash transaction) to the block
 func (ledger *Ledger) addSpecialTransactions(block *core.Block, view *st.StoreView, rawTxs *[]common.Bytes) {
 	if block == nil {
@@ -768,44 +734,27 @@ func (ledger *Ledger) addSpecialTransactions(block *core.Block, view *st.StoreVi
 	// Note 3: Similarly, should call GetNextValidatorSet() on the hash of the parent block
 	parentBlkHash := block.Parent
 	proposer := ledger.valMgr.GetNextProposer(parentBlkHash, block.Epoch)
-	validatorSet := ledger.valMgr.GetNextValidatorSet(parentBlkHash)
+	validators := ledger.valMgr.GetNextValidators(parentBlkHash)
 
-	ledger.addCoinbaseTx(view, &proposer, validatorSet, rawTxs)
+	ledger.addCoinbaseTx(view, &proposer, validators, rawTxs)
 	//ledger.addSlashTxs(view, &proposer, &validators, rawTxs)
 }
 
 // addCoinbaseTx adds a Coinbase transaction
-func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator,
-	validatorSet *core.ValidatorSet, rawTxs *[]common.Bytes) {
-	proposerAddress := proposer.Address
+func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposerAddress *common.Address, validators *core.AddressSet, rawTxs *[]common.Bytes) {
 	proposerTxIn := types.TxInput{
-		Address: proposerAddress,
+		Address: *proposerAddress,
 	}
 
 	var accountRewardMap map[common.Address]types.Coins
-	ch := ledger.GetCurrentBlock().Height
-    currentBlock := ledger.GetCurrentBlock()
-    if ch < common.Height_hf2 {
-        lightningVotes := currentBlock.LightningVotes
-        eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
-
-        if lightningVotes != nil && ch >= common.HeightEnableScript2 && common.IsCheckPointHeight(ch) {
-            lightningPool, eliteEdgeNodePool := exec.RetrievePools(ledger, ledger.chain, ledger.db, ch, lightningVotes, eliteEdgeNodeVotes)
-            accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, lightningVotes, lightningPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
-        } else { // for compatibility with lower versions (e.g. blockHeight < common.HeightEnableValidatorReward)
-            accountRewardMap = exec.CalculateReward(ledger, view, validatorSet, nil, nil, nil, nil)
-        }
-    } else {
-//        currentBlock := ledger.GetCurrentBlock()
-//        licenseSet := currentBlock.Licenses
-//        licenseSet := &core.LicenseSet{}
-        accountRewardMap = exec.CalculateReward2(ledger, view)
-    }
+	//ch := ledger.GetCurrentBlock().Height
+	//currentBlock := ledger.GetCurrentBlock()
+	accountRewardMap = exec.CalculateReward2(ledger, view)
 
 	coinbaseTxOutputs := []types.TxOutput{}
 	for accountAddress, accountReward := range accountRewardMap {
-//		var accountAddress common.Address
-//		copy(accountAddress[:], accountAddressStr)
+		//		var accountAddress common.Address
+		//		copy(accountAddress[:], accountAddressStr)
 		coinbaseTxOutputs = append(coinbaseTxOutputs, types.TxOutput{
 			Address: accountAddress,
 			Coins:   accountReward,
@@ -823,7 +772,7 @@ func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator
 		logger.Errorf("Failed to add coinbase transaction: %v", err)
 		return
 	}
-	coinbaseTx.SetSignature(proposerAddress, signature)
+	coinbaseTx.SetSignature(*proposerAddress, signature)
 	coinbaseTxBytes, err := types.TxToBytes(coinbaseTx)
 	if err != nil {
 		logger.Errorf("Failed to add coinbase transaction: %v", err)
@@ -835,8 +784,8 @@ func (ledger *Ledger) addCoinbaseTx(view *st.StoreView, proposer *core.Validator
 }
 
 // addsSlashTx adds Slash transactions
-func (ledger *Ledger) addSlashTxs(view *st.StoreView, proposer *core.Validator, validatorSet *core.ValidatorSet, rawTxs *[]common.Bytes) {
-	proposerAddress := proposer.Address
+func (ledger *Ledger) addSlashTxs(view *st.StoreView, proposer *common.Address, validators *core.AddressSet, rawTxs *[]common.Bytes) {
+	proposerAddress := *proposer
 	proposerTxIn := types.TxInput{
 		Address: proposerAddress,
 	}

@@ -36,7 +36,7 @@ func init() {
 	QueryCmd.AddCommand(traceBlocksCmd)
 	QueryCmd.AddCommand(txCmd)
 	QueryCmd.AddCommand(splitRuleCmd)
-	QueryCmd.AddCommand(vcpCmd)
+	QueryCmd.AddCommand(validatorsCmd)
 	QueryCmd.AddCommand(gcpCmd)
 	QueryCmd.AddCommand(eenpCmd)
 	QueryCmd.AddCommand(srdrsCmd)

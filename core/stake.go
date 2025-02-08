@@ -1,5 +1,6 @@
 package core
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -9,11 +10,11 @@ import (
 )
 
 const (
-	StakeForValidator     uint8 = 0
-	StakeForLightning      uint8 = 1
+	//	StakeForValidator     uint8 = 0
+	StakeForLightning     uint8 = 1
 	StakeForEliteEdgeNode uint8 = 2
 
-	ReturnLockingPeriod uint64 = 201600      // number of blocks, approximately 14 days with 6 second block time
+	ReturnLockingPeriod uint64 = 201600     // number of blocks, approximately 14 days with 6 second block time
 	InvalidReturnHeight uint64 = ^uint64(0) // max uint64
 )
 
@@ -185,3 +186,4 @@ func (sh *StakeHolder) returnStake(source common.Address, currentHeight uint64) 
 func (sh *StakeHolder) String() string {
 	return fmt.Sprintf("{holder: %v, stakes :%v}", sh.Holder, sh.Stakes)
 }
+*/

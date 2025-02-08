@@ -6,19 +6,20 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
 // splitRuleCmd represents the split rule command
 // Example:
-//		scriptcli tx split_rule --chain="scriptnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --seq=8 --resource_id=die_another_day --addresses=2E833968E5bB786Ae419c4d13189fB081Cc43bab,9F1233798E905E173560071255140b4A8aBd3Ec6 --percentages=30,30 --duration=1000
+//
+//	scriptcli tx split_rule --chain="scriptnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab --seq=8 --resource_id=die_another_day --addresses=2E833968E5bB786Ae419c4d13189fB081Cc43bab,9F1233798E905E173560071255140b4A8aBd3Ec6 --percentages=30,30 --duration=1000
 var splitRuleCmd = &cobra.Command{
 	Use:     "split_rule",
 	Short:   "Initiate or update a split rule",
@@ -27,7 +28,7 @@ var splitRuleCmd = &cobra.Command{
 }
 
 func doSplitRuleCmd(cmd *cobra.Command, args []string) {
-	wallet, fromAddress, err := walletUnlock(cmd, fromFlag, passwordFlag)
+	wallet, fromAddress, err := walletUnlock(cmd, fromFlag)
 	if err != nil {
 		return
 	}
@@ -114,14 +115,13 @@ func init() {
 	splitRuleCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
 	splitRuleCmd.Flags().StringVar(&fromFlag, "from", "", "Initiator's address")
 	splitRuleCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
-	splitRuleCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWeiJune2021), "Fee")
+	splitRuleCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWei), "Fee")
 	splitRuleCmd.Flags().StringVar(&resourceIDFlag, "resource_id", "", "The resourceID of interest")
 	splitRuleCmd.Flags().StringSliceVar(&addressesFlag, "addresses", []string{}, "List of addresses participating in the split")
 	splitRuleCmd.Flags().StringSliceVar(&percentagesFlag, "percentages", []string{}, "List of integers (between 0 and 100) representing of percentage of split")
 	splitRuleCmd.Flags().Uint64Var(&durationFlag, "duration", 1000, "Reserve duration")
 	splitRuleCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano)")
 	splitRuleCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
-	splitRuleCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	splitRuleCmd.MarkFlagRequired("chain")
 	splitRuleCmd.MarkFlagRequired("from")

@@ -1,13 +1,14 @@
 package key
 
+/*
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/wallet"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 // passwordCmd updates the password for the key corresponding to the given address
@@ -23,7 +24,7 @@ var passwordCmd = &cobra.Command{
 		address := common.HexToAddress(args[0])
 
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 		if err != nil {
 			utils.Error("Failed to open wallet: %v\n", err)
 		}
@@ -48,3 +49,4 @@ var passwordCmd = &cobra.Command{
 		fmt.Printf("Password updated successfully\n")
 	},
 }
+*/

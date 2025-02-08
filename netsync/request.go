@@ -11,13 +11,13 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/dispatcher"
 	rp "github.com/scripttoken/script/report"
+	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -336,7 +336,7 @@ func (rm *RequestManager) getHighestVotedBlockHeightAndHash() (bool, uint64, com
 		return false, 0, common.Hash{}
 	}
 	// Assuming that the validator set hasn't change drastically from the last validator set
-	validatorSet := rm.syncMgr.consensus.GetValidatorSet(lastFinalizedBlock.Hash())
+	validatorSet := rm.syncMgr.consensus.GetValidators(lastFinalizedBlock.Hash())
 	if validatorSet == nil {
 		log.Debugf("Recovery mode check: Failed to lookup validator set")
 		return false, 0, common.Hash{}
@@ -346,8 +346,7 @@ func (rm *RequestManager) getHighestVotedBlockHeightAndHash() (bool, uint64, com
 	highestVotedBlockHash := common.Hash{}
 	if epochVotes != nil {
 		for _, v := range epochVotes.Votes() {
-			_, err := validatorSet.GetValidator(v.ID)
-			if err != nil {
+			if !validatorSet.Has(v.ID) {
 				logger.Debugf("Recovery mode check: Skip a vote from a non-validator %v", v.ID)
 				continue
 			}
@@ -552,7 +551,7 @@ func (rm *RequestManager) forceDownloadBranch() {
 // 	}
 // }
 
-//compatible with older version, download block from hash
+// compatible with older version, download block from hash
 func (rm *RequestManager) downloadBlockFromHash() {
 	// logger.Debugf("Download block from hash...")
 	// {
@@ -644,7 +643,7 @@ func (rm *RequestManager) downloadBlockFromHash() {
 	}
 }
 
-//download block from header
+// download block from header
 func (rm *RequestManager) downloadBlockFromHeader() {
 	addBack := HeaderHeap{}
 	elToRemove := []*list.Element{}

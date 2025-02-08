@@ -8,27 +8,27 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/wallet"
 	"github.com/scripttoken/script/wallet/types"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 const HARDENED_FLAG = 1 << 31
 
-func walletUnlock(cmd *cobra.Command, addressStr string, password string) (wtypes.Wallet, common.Address, error) {
-	return walletUnlockWithPath(cmd, addressStr, "", password)
+func walletUnlock(cmd *cobra.Command, addressStr string) (wtypes.Wallet, common.Address, error) {
+	return walletUnlockWithPath(cmd, addressStr, "")
 }
 
-func walletUnlockWithPath(cmd *cobra.Command, addressStr string, path string, password string) (wtypes.Wallet, common.Address, error) {
+func walletUnlockWithPath(cmd *cobra.Command, addressStr string, path string) (wtypes.Wallet, common.Address, error) {
 	var wallet wtypes.Wallet
 	var address common.Address
 	var err error
 	walletType := getWalletType(cmd)
 	if walletType == wtypes.WalletTypeSoft {
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, address, err = SoftWalletUnlock(cfgPath, addressStr, password)
+		wallet, address, err = SoftWalletUnlock(cfgPath, addressStr)
 	} else {
 		derivationPath, err := parseDerivationPath(path, walletType)
 		if err != nil {
@@ -40,7 +40,7 @@ func walletUnlockWithPath(cmd *cobra.Command, addressStr string, path string, pa
 }
 
 func ColdWalletUnlock(walletType wtypes.WalletType, derivationPath types.DerivationPath) (wtypes.Wallet, common.Address, error) {
-	wallet, err := wallet.OpenWallet("", walletType, true)
+	wallet, err := wallet.OpenWallet("", walletType)
 	if err != nil {
 		fmt.Printf("Failed to open wallet: %v\n", err)
 		return nil, common.Address{}, err
@@ -70,24 +70,12 @@ func ColdWalletUnlock(walletType wtypes.WalletType, derivationPath types.Derivat
 	return wallet, address, nil
 }
 
-func SoftWalletUnlock(cfgPath, addressStr string, password string) (wtypes.Wallet, common.Address, error) {
-	wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+func SoftWalletUnlock(cfgPath, addressStr string) (wtypes.Wallet, common.Address, error) {
+	wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 	if err != nil {
 		fmt.Printf("Failed to open wallet: %v\n", err)
 		return nil, common.Address{}, err
 	}
-
-/*
-	if password == "" || len(password) == 0 {
-		prompt := fmt.Sprintf("Please enter password: ")
-		password, err = utils.GetPassword(prompt)
-		if err != nil {
-			fmt.Printf("Failed to get password: %v\n", err)
-			return nil, common.Address{}, err
-		}
-	}
-*/
-
 	address := common.HexToAddress(addressStr)
 	err = wallet.Unlock(address, password, nil)
 	if err != nil {

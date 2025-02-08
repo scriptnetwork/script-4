@@ -3,11 +3,11 @@ package treestore
 import (
 	"bytes"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/store/database"
 	"github.com/scripttoken/script/store/trie"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewTreeStore create a new instance of TreeStore.
@@ -81,8 +81,8 @@ func (store *TreeStore) Get(key common.Bytes) common.Bytes {
 	return store.Trie.Get(key)
 }
 
-func (store *TreeStore) ProveVCP(vcpKey []byte, vp *core.VCPProof) error {
-	return store.Trie.Prove(vcpKey, 0, vp)
+func (store *TreeStore) ProveValidators(validatorsKey []byte, vp *core.ValidatorsProof) error {
+	return store.Trie.Prove(validatorsKey, 0, vp)
 }
 
 // Set sets value of given key.

@@ -99,7 +99,7 @@ func ExportSnapshotV2(db database.Database, consensus *cns.ConsensusEngine, chai
 	metadata := &core.SnapshotMetadata{}
 	var genesisBlockHeader *core.BlockHeader
 	kvStore := kvstore.NewKVStore(db)
-	hl := sv.GetStakeTransactionHeightList().Heights
+	hl := sv.GetValidatorTransactionHeightList().Heights
 	for _, height := range hl {
 		// check kvstore first
 		blockTrio := &core.SnapshotBlockTrio{}
@@ -164,13 +164,13 @@ func ExportSnapshotV2(db database.Database, consensus *cns.ConsensusEngine, chai
 						}
 					}
 
-					vcpProof, err := proveVCP(block, db)
+					validatorsProof, err := proveValidators(block, db)
 					if err != nil {
-						return "", fmt.Errorf("Failed to get VCP Proof")
+						return "", fmt.Errorf("Failed to get Validators Proof")
 					}
 					metadata.ProofTrios = append(metadata.ProofTrios,
 						core.SnapshotBlockTrio{
-							First:  core.SnapshotFirstBlock{Header: block.BlockHeader, Proof: *vcpProof},
+							First:  core.SnapshotFirstBlock{Header: block.BlockHeader, Proof: *validatorsProof},
 							Second: core.SnapshotSecondBlock{Header: &child},
 							Third:  core.SnapshotThirdBlock{Header: &grandChild},
 						})
@@ -203,12 +203,12 @@ func ExportSnapshotV2(db database.Database, consensus *cns.ConsensusEngine, chai
 
 	childVoteSet := chain.FindVotesByHash(childBlock.Hash())
 
-	vcpProof, err := proveVCP(parentBlock, db)
+	validatorsProof, err := proveValidators(parentBlock, db)
 	if err != nil {
-		return "", fmt.Errorf("Failed to get VCP Proof")
+		return "", fmt.Errorf("Failed to get Validators Proof")
 	}
 	metadata.TailTrio = core.SnapshotBlockTrio{
-		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *vcpProof},
+		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *validatorsProof},
 		Second: core.SnapshotSecondBlock{Header: lastFinalizedBlock.BlockHeader},
 		Third:  core.SnapshotThirdBlock{Header: childBlock.BlockHeader, VoteSet: childVoteSet},
 	}
@@ -315,7 +315,7 @@ func ExportSnapshotV3(db database.Database, consensus *cns.ConsensusEngine, chai
 	metadata := &core.SnapshotMetadata{}
 	var genesisBlockHeader *core.BlockHeader
 	kvStore := kvstore.NewKVStore(db)
-	hl := sv.GetStakeTransactionHeightList().Heights
+	hl := sv.GetValidatorTransactionHeightList().Heights
 	for _, height := range hl {
 		// check kvstore first
 		blockTrio := &core.SnapshotBlockTrio{}
@@ -380,13 +380,13 @@ func ExportSnapshotV3(db database.Database, consensus *cns.ConsensusEngine, chai
 						}
 					}
 
-					vcpProof, err := proveVCP(block, db)
+					validatorsProof, err := proveValidators(block, db)
 					if err != nil {
-						return "", fmt.Errorf("Failed to get VCP Proof")
+						return "", fmt.Errorf("Failed to get Validators Proof")
 					}
 					metadata.ProofTrios = append(metadata.ProofTrios,
 						core.SnapshotBlockTrio{
-							First:  core.SnapshotFirstBlock{Header: block.BlockHeader, Proof: *vcpProof},
+							First:  core.SnapshotFirstBlock{Header: block.BlockHeader, Proof: *validatorsProof},
 							Second: core.SnapshotSecondBlock{Header: &child},
 							Third:  core.SnapshotThirdBlock{Header: &grandChild},
 						})
@@ -419,12 +419,12 @@ func ExportSnapshotV3(db database.Database, consensus *cns.ConsensusEngine, chai
 
 	childVoteSet := chain.FindVotesByHash(childBlock.Hash())
 
-	vcpProof, err := proveVCP(parentBlock, db)
+	validatorsProof, err := proveValidators(parentBlock, db)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get VCP Proof")
 	}
 	metadata.TailTrio = core.SnapshotBlockTrio{
-		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *vcpProof},
+		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *validatorsProof},
 		Second: core.SnapshotSecondBlock{Header: lastFinalizedBlock.BlockHeader},
 		Third:  core.SnapshotThirdBlock{Header: childBlock.BlockHeader, VoteSet: childVoteSet},
 	}
@@ -550,12 +550,12 @@ func ExportSnapshotV4(db database.Database, consensus *cns.ConsensusEngine, chai
 
 	childVoteSet := chain.FindVotesByHash(childBlock.Hash())
 
-	vcpProof, err := proveVCP(parentBlock, db)
+	validatorsProof, err := proveValidators(parentBlock, db)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get VCP Proof")
 	}
 	metadata.TailTrio = core.SnapshotBlockTrio{
-		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *vcpProof},
+		First:  core.SnapshotFirstBlock{Header: parentBlock.BlockHeader, Proof: *validatorsProof},
 		Second: core.SnapshotSecondBlock{Header: lastFinalizedBlock.BlockHeader},
 		Third:  core.SnapshotThirdBlock{Header: childBlock.BlockHeader, VoteSet: childVoteSet},
 	}
@@ -581,11 +581,11 @@ func ExportSnapshotV4(db database.Database, consensus *cns.ConsensusEngine, chai
 	return filename, nil
 }
 
-func proveVCP(block *core.ExtendedBlock, db database.Database) (*core.VCPProof, error) {
+func proveValidators(block *core.ExtendedBlock, db database.Database) (*core.ValidatorsProof, error) {
 	sv := state.NewStoreView(block.Height, block.StateHash, db)
-	vcpKey := state.ValidatorCandidatePoolKey()
-	vp := &core.VCPProof{}
-	err := sv.ProveVCP(vcpKey, vp)
+	vcpKey := state.ValidatorsKey()
+	vp := &core.ValidatorsProof{}
+	err := sv.ProveValidators(vcpKey, vp)
 	return vp, err
 }
 

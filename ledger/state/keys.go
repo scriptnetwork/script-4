@@ -36,11 +36,6 @@ func CodeKey(codeHash common.Bytes) common.Bytes {
 	return append(common.Bytes("ls/ch/"), codeHash...)
 }
 
-// ValidatorCandidatePoolKey returns the state key for the validator stake holder set
-func ValidatorCandidatePoolKey() common.Bytes {
-	return common.Bytes("ls/vcp")
-}
-
 func ValidatorsKey() common.Bytes {
 	return common.Bytes("ls/validators")
 }
@@ -70,10 +65,16 @@ func EliteEdgeNodeKey(addr common.Address) common.Bytes {
 	return append(prefix, addr[:]...)
 }
 
+/*
 // StakeTransactionHeightListKey returns the state key the heights of blocks
 // that contain stake related transactions (i.e. StakeDeposit, StakeWithdraw, etc)
-func StakeTransactionHeightListKey() common.Bytes {
-	return common.Bytes("ls/sthl")
+
+	func StakeTransactionHeightListKey() common.Bytes {
+		return common.Bytes("ls/sthl")
+	}
+*/
+func ValidatorTransactionHeightListKey() common.Bytes {
+	return common.Bytes("ls/vthl")
 }
 
 // StatePruningProgressKey returns the key for the state pruning progress

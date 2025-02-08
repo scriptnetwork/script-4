@@ -59,7 +59,7 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
 
 	common.BytesToAddress([]byte{201}): &scriptBalance{},
-	common.BytesToAddress([]byte{202}): &scriptStake{},
+	//common.BytesToAddress([]byte{202}): &scriptStake{},
 }
 
 var PrecompiledContractsScriptSupport = map[common.Address]PrecompiledContract{
@@ -73,7 +73,7 @@ var PrecompiledContractsScriptSupport = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
 
 	common.BytesToAddress([]byte{201}): &scriptBalance{},
-	common.BytesToAddress([]byte{202}): &scriptStake{},
+	//common.BytesToAddress([]byte{202}): &scriptStake{},
 	common.BytesToAddress([]byte{203}): &transferScript{},
 }
 
@@ -88,12 +88,12 @@ var PrecompiledContractsWrappedScriptSupport = map[common.Address]PrecompiledCon
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
 
 	common.BytesToAddress([]byte{201}): &scriptBalance{},
-	common.BytesToAddress([]byte{202}): &scriptStake{},
+	//common.BytesToAddress([]byte{202}): &scriptStake{},
 	common.BytesToAddress([]byte{203}): &transferScript{},
-	common.BytesToAddress([]byte{204}): &stakeToLightning{},
-	common.BytesToAddress([]byte{205}): &unstakeFromLightning{},
-	common.BytesToAddress([]byte{206}): &stakeToEEN{},
-	common.BytesToAddress([]byte{207}): &unstakeFromEEN{},
+	//common.BytesToAddress([]byte{204}): &stakeToLightning{},
+	//common.BytesToAddress([]byte{205}): &unstakeFromLightning{},
+	//common.BytesToAddress([]byte{206}): &stakeToEEN{},
+	//common.BytesToAddress([]byte{207}): &unstakeFromEEN{},
 }
 
 // RunPrecompiledContract runs and evaluates the output of a precompiled contract.
@@ -315,10 +315,7 @@ type bn256Add struct{}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *bn256Add) RequiredGas(input []byte, blockHeight uint64) uint64 {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return params.Bn256AddGas
-	}
-	return params.Bn256AddGasIstanbul
+	return params.Bn256AddGas
 }
 
 func (c *bn256Add) Run(evm *EVM, input []byte, callerAddr common.Address, contract *Contract) ([]byte, error) {
@@ -340,11 +337,7 @@ type bn256ScalarMul struct{}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *bn256ScalarMul) RequiredGas(input []byte, blockHeight uint64) uint64 {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return params.Bn256ScalarMulGas
-	}
-
-	return params.Bn256ScalarMulGasIstanbul
+	return params.Bn256ScalarMulGas
 }
 
 func (c *bn256ScalarMul) Run(evm *EVM, input []byte, callerAddr common.Address, contract *Contract) ([]byte, error) {
@@ -373,11 +366,7 @@ type bn256Pairing struct{}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *bn256Pairing) RequiredGas(input []byte, blockHeight uint64) uint64 {
-	if blockHeight < common.HeightJune2021FeeAdjustment {
-		return params.Bn256PairingBaseGas + uint64(len(input)/192)*params.Bn256PairingPerPointGas
-	}
-
-	return params.Bn256PairingBaseGasIstanbul + uint64(len(input)/192)*params.Bn256PairingPerPointGasIstanbul
+	return params.Bn256PairingBaseGas + uint64(len(input)/192)*params.Bn256PairingPerPointGas
 }
 
 func (c *bn256Pairing) Run(evm *EVM, input []byte, callerAddr common.Address, contract *Contract) ([]byte, error) {
@@ -426,6 +415,7 @@ func (c *scriptBalance) Run(evm *EVM, input []byte, callerAddr common.Address, c
 	return scriptBalanceBytes32, nil
 }
 
+/*
 // scriptStake retrieves the total amount of SCPTWei the address staked to validators and/or lightnings
 type scriptStake struct {
 }
@@ -442,6 +432,7 @@ func (c *scriptStake) Run(evm *EVM, input []byte, callerAddr common.Address, con
 	scriptStakeBytes32 := common.LeftPadBytes(scriptStakeBytes[:], 32) // easier to convert bytes32 into uint256 in smart contracts
 	return scriptStakeBytes32, nil
 }
+*/
 
 // transferScript transfers the Script token
 type transferScript struct {

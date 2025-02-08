@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"sort"
 
@@ -50,8 +49,6 @@ func NewCoinbaseTxExecutor(db database.Database, chain *blockchain.Chain, state 
 
 func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) result.Result {
 	tx := transaction.(*types.CoinbaseTx)
-	validatorSet := getValidatorSet(exec.consensus.GetLedger(), exec.valMgr)
-	validatorAddresses := getValidatorAddresses(validatorSet)
 
 	// Validate proposer, basic
 	res := tx.Proposer.ValidateBasic()
@@ -64,10 +61,11 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 		return result.Error("Another coinbase transaction has been processed for the current block")
 	}
 
+	validators := getValidators(exec.consensus.GetLedger(), exec.valMgr)
+
 	// verify the proposer is one of the validators
-	res = isAValidator(tx.Proposer.Address, validatorAddresses)
-	if res.IsError() {
-		return res
+	if !validators.Has(tx.Proposer.Address) {
+		return result.Error("Proposer is not a validator")
 	}
 
 	proposerAccount, res := getOrMakeInput(view, tx.Proposer)
@@ -95,28 +93,20 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 	// check the reward amount
 	var expectedRewards map[common.Address]types.Coins
 
-    ch := exec.state.Height()
-    if ch < common.Height_hf2 {
-        currentBlock := exec.consensus.GetLedger().GetCurrentBlock()
-        guardianVotes := currentBlock.LightningVotes
-        eliteEdgeNodeVotes := currentBlock.EliteEdgeNodeVotes
-        guardianPool, eliteEdgeNodePool := RetrievePools(exec.consensus.GetLedger(), exec.chain, exec.db, tx.BlockHeight, guardianVotes, eliteEdgeNodeVotes)
-        expectedRewards = CalculateReward(exec.consensus.GetLedger(), view, validatorSet, guardianVotes, guardianPool, eliteEdgeNodeVotes, eliteEdgeNodePool)
-    } else {
-        expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view)
-    }
+	//ch := exec.state.Height()
+	expectedRewards = CalculateReward2(exec.consensus.GetLedger(), view)
 
-    if len(expectedRewards) != len(tx.Outputs) {
-        return result.Error("Number of rewarded account is incorrect")
-    }
-    for _, output := range tx.Outputs {
-        exp, ok := expectedRewards[output.Address]
-        if !ok || !exp.IsEqual(output.Coins) {
-            return result.Error("Invalid rewards, address %v expecting %v, but is %v",
-                output.Address, exp, output.Coins)
-        }
-    }
-    return result.OK
+	if len(expectedRewards) != len(tx.Outputs) {
+		return result.Error("Number of rewarded account is incorrect")
+	}
+	for _, output := range tx.Outputs {
+		exp, ok := expectedRewards[output.Address]
+		if !ok || !exp.IsEqual(output.Coins) {
+			return result.Error("Invalid rewards, address %v expecting %v, but is %v",
+				output.Address, exp, output.Coins)
+		}
+	}
+	return result.OK
 }
 
 func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, viewSel core.ViewSelector, transaction types.Tx) (common.Hash, result.Result) {
@@ -133,7 +123,7 @@ func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, view
 	}
 
 	for _, output := range tx.Outputs {
-//		addr := string(output.Address[:])
+		//		addr := string(output.Address[:])
 		if account, exists := accounts[output.Address]; exists {
 			account.Balance = account.Balance.Plus(output.Coins)
 			view.SetAccount(output.Address, account)
@@ -151,265 +141,74 @@ func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Data
 	lightningPool = nil
 	eliteEdgeNodePool = nil
 
-/*
-	if blockHeight < common.HeightEnableScript2 {
-		lightningPool = nil
-		eliteEdgeNodePool = nil
-	} else if blockHeight < common.HeightEnableScript3 {
-		if lightningVotes != nil {
-			guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
-			if err != nil {
-				logger.Panic(err)
-			}
-			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
-			lightningPool = storeView.GetLightningCandidatePool()
-		}
-	} else { // blockHeight >= common.HeightEnableScript3
-		// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
-		// the edge nodes vote for the correct checkpoint
-*/
-		if lightningVotes != nil {
-			guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
-			if err != nil {
-				logger.Panic(err)
-			}
-			storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
-			lightningPool = storeView.GetLightningCandidatePool()
-
-			if eliteEdgeNodeVotes != nil {
-				if eliteEdgeNodeVotes.Block == lightningVotes.Block {
-					eliteEdgeNodePool = st.NewEliteEdgeNodePool(storeView, true)
-				} else {
-					logger.Warnf("Elite edge nodes vote for block %v, while lightnings vote for block %v, skip rewarding the elite edge nodes",
-						eliteEdgeNodeVotes.Block.Hex(), lightningVotes.Block.Hex())
+	/*
+		if blockHeight < common.HeightEnableScript2 {
+			lightningPool = nil
+			eliteEdgeNodePool = nil
+		} else if blockHeight < common.HeightEnableScript3 {
+			if lightningVotes != nil {
+				guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
+				if err != nil {
+					logger.Panic(err)
 				}
-			} else {
-				logger.Warnf("Elite edge nodes have no vote for block %v", lightningVotes.Block.Hex())
+				storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+				lightningPool = storeView.GetLightningCandidatePool()
 			}
+		} else { // blockHeight >= common.HeightEnableScript3
+			// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
+			// the edge nodes vote for the correct checkpoint
+	*/
+	if lightningVotes != nil {
+		guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
+		if err != nil {
+			logger.Panic(err)
 		}
-//	}
+		storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
+		lightningPool = storeView.GetLightningCandidatePool()
+
+		if eliteEdgeNodeVotes != nil {
+			if eliteEdgeNodeVotes.Block == lightningVotes.Block {
+				eliteEdgeNodePool = st.NewEliteEdgeNodePool(storeView, true)
+			} else {
+				logger.Warnf("Elite edge nodes vote for block %v, while lightnings vote for block %v, skip rewarding the elite edge nodes",
+					eliteEdgeNodeVotes.Block.Hex(), lightningVotes.Block.Hex())
+			}
+		} else {
+			logger.Warnf("Elite edge nodes have no vote for block %v", lightningVotes.Block.Hex())
+		}
+	}
+	//	}
 
 	return lightningPool, eliteEdgeNodePool
 }
 
 func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address]types.Coins {
-    rewardMap := make(map[common.Address]types.Coins)
-    currentHeight := view.Height()
-    logger.Debugf("Calculating rewards for block height: %d", currentHeight)
-    // reward_per_node_per_hour=$(echo "17.8125 / 2" | bc -l)
-    // reward_per_node_per_block 0.01484375
-    // https://github.com/scriptnetwork/system/issues/311#issuecomment-2586731985
-    // https://github.com/scriptnetwork/system/blob/5820fc96aa6e426c84d41009e7b4b95876022879/be/L1/tv2/bin/s01_compute#L203C9-L203C63
-    core.For_each_lightning(func(address common.Address) {
-        // Create a dummy coins value for each address.
-        // For example, we create coins with one coin of 100 "atom" units. 
-        reward := big.NewInt(14843750000000000)  // 0.01484 
-        rewardMap[address] = types.Coins{
-            SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
-            SPAYWei: reward,
-        }
-        logger.Debugf("Assigned reward to lightning holder: %s, Reward: %v", address, reward)
-    })
-    core.For_each_validator(func(address common.Address) {
-        reward := big.NewInt(520000000000000000)  //0.52 per node every 6 seconds
-        rewardMap[address] = types.Coins{
-            SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
-            SPAYWei: reward,
-        }
-        logger.Debugf("Assigned reward to validator holder: %s, Reward: %v", address, reward)
-    })
-    return rewardMap
-}
-
-// CalculateReward calculates the block reward for each account
-func CalculateReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet,
-	lightningVotes *core.AggregatedVotes, lightningPool *core.LightningCandidatePool,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes, eliteEdgeNodePool core.EliteEdgeNodePool) map[common.Address]types.Coins {
-	accountReward := map[common.Address]types.Coins{}
-	blockHeight := view.Height() + 1 // view points to the parent block
-	if blockHeight < common.HeightEnableValidatorReward {
-		grantValidatorsWithZeroReward(validatorSet, &accountReward)
-	} else if blockHeight < common.HeightEnableScript2 || lightningVotes == nil || lightningPool == nil {
-		grantValidatorReward(ledger, view, validatorSet, &accountReward, blockHeight)
-	} else if blockHeight < common.HeightEnableScript3 {
-		grantValidatorAndLightningReward(ledger, view, validatorSet, lightningVotes, lightningPool, &accountReward, blockHeight)
-	} else { // blockHeight >= common.HeightEnableScript3
-		grantValidatorAndLightningReward(ledger, view, validatorSet, lightningVotes, lightningPool, &accountReward, blockHeight)
-		grantEliteEdgeNodeReward(ledger, view, lightningVotes, eliteEdgeNodeVotes, eliteEdgeNodePool, &accountReward, blockHeight)
-	}
-
-/*
-	addrs := []string{}
-	for addr := range accountReward {
-		addrs = append(addrs, addr)
-	}
-	sort.Strings(addrs)
-	for _, addr := range addrs {
-		reward := accountReward[addr]
-		logger.Infof("Total reward for account %v : %v", hex.EncodeToString([]byte(addr)), reward)
-	}
-*/
-	return accountReward
-}
-
-func grantValidatorsWithZeroReward(validatorSet *core.ValidatorSet, accountReward *map[common.Address]types.Coins) {
-	// Initial Mainnet release should not reward the validators until the lightnings ready to deploy
-	zeroReward := types.Coins{}.NoNil()
-	for _, v := range validatorSet.Validators() {
-//		(*accountReward)[string(v.Address[:])] = zeroReward
-		(*accountReward)[v.Address] = zeroReward
-	}
-}
-
-func grantValidatorReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
-	if !common.IsCheckPointHeight(blockHeight) {
-		return
-	}
-
-	totalStake := validatorSet.TotalStake()
-
-	if totalStake.Cmp(big.NewInt(0)) == 0 {
-		// Should never happen
-		return
-	}
-
-	stakeSourceMap := map[common.Address]*big.Int{}
-	stakeSourceList := []common.Address{}
-
-	// TODO - Need to confirm: should we get the VCP from the current view? What if there is a stake deposit/withdraw?
-	vcp := view.GetValidatorCandidatePool()
-	for _, v := range validatorSet.Validators() {
-		validatorAddr := v.Address
-		stakeDelegate := vcp.FindStakeDelegate(validatorAddr)
-		if stakeDelegate == nil { // should not happen
-			panic(fmt.Sprintf("Failed to find stake delegate in the VCP: %v", hex.EncodeToString(validatorAddr[:])))
+	rewardMap := make(map[common.Address]types.Coins)
+	currentHeight := view.Height()
+	logger.Debugf("Calculating rewards for block height: %d", currentHeight)
+	// reward_per_node_per_hour=$(echo "17.8125 / 2" | bc -l)
+	// reward_per_node_per_block 0.01484375
+	// https://github.com/scriptnetwork/system/issues/311#issuecomment-2586731985
+	// https://github.com/scriptnetwork/system/blob/5820fc96aa6e426c84d41009e7b4b95876022879/be/L1/tv2/bin/s01_compute#L203C9-L203C63
+	core.For_each_lightning(func(address common.Address) {
+		// Create a dummy coins value for each address.
+		// For example, we create coins with one coin of 100 "atom" units.
+		reward := big.NewInt(14843750000000000) // 0.01484
+		rewardMap[address] = types.Coins{
+			SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
+			SPAYWei: reward,
 		}
-
-		stakes := stakeDelegate.Stakes
-		for _, stake := range stakes {
-			if stake.Withdrawn {
-				continue
-			}
-			stakeAmount := stake.Amount
-			stakeSource := stake.Source
-			if stakeAmountSum, exists := stakeSourceMap[stakeSource]; exists {
-				stakeAmountSum := big.NewInt(0).Add(stakeAmountSum, stakeAmount)
-				stakeSourceMap[stakeSource] = stakeAmountSum
-			} else {
-				stakeSourceMap[stakeSource] = stakeAmount
-				stakeSourceList = append(stakeSourceList, stakeSource)
-			}
+		logger.Debugf("Assigned reward to lightning holder: %s, Reward: %v", address, reward)
+	})
+	core.For_each_validator(func(address common.Address) {
+		reward := big.NewInt(520000000000000000) //0.52 per node every 6 seconds
+		rewardMap[address] = types.Coins{
+			SCPTWei: big.NewInt(0), // Replace with actual total reward calculation
+			SPAYWei: reward,
 		}
-	}
-
-	totalReward := big.NewInt(1).Mul(spayRewardPerBlock, big.NewInt(common.CheckpointInterval))
-
-	// the source of the stake divides the block reward proportional to their stake
-	for stakeSourceAddr, stakeAmountSum := range stakeSourceMap {
-		tmp := big.NewInt(1).Mul(totalReward, stakeAmountSum)
-		rewardAmount := tmp.Div(tmp, totalStake)
-
-		reward := types.Coins{
-			SCPTWei: big.NewInt(0),
-			SPAYWei: rewardAmount,
-		}.NoNil()
-//		(*accountReward)[string(stakeSourceAddr[:])] = reward
-		(*accountReward)[stakeSourceAddr] = reward
-
-		logger.Infof("Block reward for staker %v : %v", hex.EncodeToString(stakeSourceAddr[:]), reward)
-	}
-}
-
-// grant block rewards to both the validators and active lightnings (they are both script stakers)
-func grantValidatorAndLightningReward(ledger core.Ledger, view *st.StoreView, validatorSet *core.ValidatorSet, lightningVotes *core.AggregatedVotes,
-	lightningPool *core.LightningCandidatePool, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
-	if !common.IsCheckPointHeight(blockHeight) {
-		return
-	}
-
-	totalStake := validatorSet.TotalStake()
-
-	if lightningPool == nil || lightningVotes == nil {
-		// Should never reach here
-		panic("lightningPool == nil || lightningVotes == nil")
-	}
-	lightningPool = lightningPool.WithStake()
-
-	if totalStake.Cmp(big.NewInt(0)) == 0 {
-		// Should never happen
-		return
-	}
-
-	effectiveStakes := [][]*core.Stake{}          // For compatiblity with old sampling algorithm, stakes from the same staker are grouped together
-	stakeGroupMap := make(map[common.Address]int) // stake source address -> index of the group in the effectiveStakes slice
-
-	// TODO - Need to confirm: should we get the VCP from the current view? What if there is a stake deposit/withdraw?
-	vcp := view.GetValidatorCandidatePool()
-	for _, v := range validatorSet.Validators() {
-		validatorAddr := v.Address
-		stakeDelegate := vcp.FindStakeDelegate(validatorAddr)
-		if stakeDelegate == nil { // should not happen
-			panic(fmt.Sprintf("Failed to find stake delegate in the VCP: %v", hex.EncodeToString(validatorAddr[:])))
-		}
-
-		stakes := stakeDelegate.Stakes
-		for _, stake := range stakes {
-			if stake.Withdrawn {
-				continue
-			}
-			if _, exists := stakeGroupMap[stake.Source]; !exists {
-				stakeGroupMap[stake.Source] = len(effectiveStakes)
-				effectiveStakes = append(effectiveStakes, []*core.Stake{})
-			}
-			stake.Holder = stakeDelegate.Holder
-			idx := stakeGroupMap[stake.Source]
-			effectiveStakes[idx] = append(effectiveStakes[idx], stake)
-		}
-	}
-
-	for i, g := range lightningPool.SortedLightnings {
-		if lightningVotes.Multiplies[i] == 0 {
-			continue
-		}
-		stakes := g.Stakes
-		for _, stake := range stakes {
-			if stake.Withdrawn {
-				continue
-			}
-
-			totalStake.Add(totalStake, stake.Amount)
-
-			if _, exists := stakeGroupMap[stake.Source]; !exists {
-				stakeGroupMap[stake.Source] = len(effectiveStakes)
-				effectiveStakes = append(effectiveStakes, []*core.Stake{})
-			}
-			stake.Holder = g.Holder
-			idx := stakeGroupMap[stake.Source]
-			effectiveStakes[idx] = append(effectiveStakes[idx], stake)
-		}
-	}
-
-	totalReward := big.NewInt(1).Mul(spayRewardPerBlock, big.NewInt(common.CheckpointInterval))
-
-	var srdsr *st.StakeRewardDistributionRuleSet
-	if blockHeight >= common.HeightEnableScript3 {
-		srdsr = state.NewStakeRewardDistributionRuleSet(view)
-	}
-
-	if blockHeight > common.Height_hf1 {
-
-	issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block") // Fix job_309; issueRandomizedReward is not dealing rewards to lighning
-
-	} else {
-		if blockHeight < common.HeightSampleStakingReward {
-			// the source of the stake divides the block reward proportional to their stake
-			issueFixedReward(effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
-		} else {
-			// randomly select (proportional to the stake) a constant-sized set of stakers and grand the block reward
-			issueRandomizedReward(ledger, lightningVotes, view, effectiveStakes, totalStake, accountReward, totalReward, srdsr, "Block")
-		}
-	}
-
+		logger.Debugf("Assigned reward to validator holder: %s, Reward: %v", address, reward)
+	})
+	return rewardMap
 }
 
 // grant uptime mining rewards to active elite edge nodes (they are the spay stakers)
@@ -494,14 +293,14 @@ func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map
 		SCPTWei: big.NewInt(0),
 		SPAYWei: amount,
 	}.NoNil()
-//	receiverAddr := string(receiver[:])
-//	if existingReward, exists := (*accountReward)[receiverAddr]; exists {
+	//	receiverAddr := string(receiver[:])
+	//	if existingReward, exists := (*accountReward)[receiverAddr]; exists {
 	if existingReward, exists := (*accountReward)[receiver]; exists {
 		totalReward := existingReward.NoNil().Plus(rewardCoins)
-//		(*accountReward)[receiverAddr] = totalReward
+		//		(*accountReward)[receiverAddr] = totalReward
 		(*accountReward)[receiver] = totalReward
 	} else {
-//		(*accountReward)[receiverAddr] = rewardCoins
+		//		(*accountReward)[receiverAddr] = rewardCoins
 		(*accountReward)[receiver] = rewardCoins
 	}
 }
@@ -707,4 +506,3 @@ type BigIntSort []*big.Int
 func (s BigIntSort) Len() int           { return len(s) }
 func (s BigIntSort) Less(i, j int) bool { return s[i].Cmp(s[j]) < 0 }
 func (s BigIntSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-

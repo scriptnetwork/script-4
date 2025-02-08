@@ -17,6 +17,10 @@ import (
 
 var _ Keystore = (*KeystorePlain)(nil)
 
+const (
+	version = 3
+)
+
 type KeystorePlain struct {
 	keysDirPath string
 }
@@ -60,7 +64,7 @@ func (ks KeystorePlain) ListKeyAddresses() ([]common.Address, error) {
 	return addresses, nil
 }
 
-func (ks KeystorePlain) GetKey(address common.Address, auth string) (*Key, error) {
+func (ks KeystorePlain) GetKey(address common.Address) (*Key, error) {
 	var fd *os.File
 	var err error
 	for af := allLowerCase; af <= allUpperCase; af++ { // try all formats
@@ -102,7 +106,7 @@ func (ks KeystorePlain) GetKey(address common.Address, auth string) (*Key, error
 	return key, nil
 }
 
-func (ks KeystorePlain) StoreKey(key *Key, auth string) error {
+func (ks KeystorePlain) StoreKey(key *Key) error {
 	address := key.Address
 	filePath := ks.getFilePath(address, mixedCase)
 	plainKeyJs := &plainKeyJSON{
@@ -118,7 +122,7 @@ func (ks KeystorePlain) StoreKey(key *Key, auth string) error {
 	return writeKeyFile(filePath, content)
 }
 
-func (ks KeystorePlain) DeleteKey(address common.Address, auth string) error {
+func (ks KeystorePlain) DeleteKey(address common.Address) error {
 	for af := allLowerCase; af <= allUpperCase; af++ { // try all formats
 		filePath := ks.getFilePath(address, af)
 		deleteKeyFile(filePath)

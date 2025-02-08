@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto/bls"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -249,7 +249,7 @@ func (e *EliteEdgeNodeEngine) HandleVote(vote *core.EENVote) {
 	case e.evIncoming <- vote:
 		return
 	default:
-		e.logger.Debug("EliteEdgeNodeEngine queue is full, discarding elite edge node vote: %v", vote)
+		e.logger.Debugf("EliteEdgeNodeEngine queue is full, discarding elite edge node vote: %v", vote)
 	}
 }
 
@@ -258,7 +258,7 @@ func (e *EliteEdgeNodeEngine) HandleAggregatedVote(vote *core.AggregatedEENVotes
 	case e.aevIncoming <- vote:
 		return
 	default:
-		e.logger.Debug("EliteEdgeNodeEngine queue is full, discarding aggregated elite edge node vote: %v", vote)
+		e.logger.Debugf("EliteEdgeNodeEngine queue is full, discarding aggregated elite edge node vote: %v", vote)
 	}
 }
 

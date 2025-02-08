@@ -3,10 +3,10 @@ package key
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/wallet"
 	wtypes "github.com/scripttoken/script/wallet/types"
+	"github.com/spf13/cobra"
 )
 
 // listCmd lists all the stored keys
@@ -17,7 +17,7 @@ var listCmd = &cobra.Command{
 	Example: "scriptcli key list",
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgPath := cmd.Flag("config").Value.String()
-		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft, true)
+		wallet, err := wallet.OpenWallet(cfgPath, wtypes.WalletTypeSoft)
 		if err != nil {
 			utils.Error("Failed to open wallet: %v\n", err)
 		}

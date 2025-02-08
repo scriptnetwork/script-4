@@ -27,10 +27,7 @@ func ExcludeTxs(txs []common.Bytes, exclusionTxMap map[string]bool, chain *block
 			continue
 		}
 		// exclude stake updating txs as well
-		if _, ok := t.(*types.DepositStakeTx); ok {
-			continue
-		}
-		if _, ok := t.(*types.WithdrawStakeTx); ok {
+		if _, ok := t.(*types.LicenseTx); ok {
 			continue
 		}
 

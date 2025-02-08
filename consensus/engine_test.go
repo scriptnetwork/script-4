@@ -5,37 +5,37 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/store/database/backend"
 	"github.com/scripttoken/script/store/kvstore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type MockValidatorManager struct {
 	PrivKey *crypto.PrivateKey
 }
 
-func (m MockValidatorManager) GetProposer(_ common.Hash, _ uint64) core.Validator {
-	stake := big.NewInt(10000)
-	return core.NewValidator(m.PrivKey.PublicKey().Address().Hex(), stake)
+func (m MockValidatorManager) GetProposer(_ common.Hash, _ uint64) common.Address {
+	//	stake := big.NewInt(10000)
+	return m.PrivKey.PublicKey().Address()
 }
 
-func (m MockValidatorManager) GetNextProposer(a common.Hash, b uint64) core.Validator {
+func (m MockValidatorManager) GetNextProposer(a common.Hash, b uint64) common.Address {
 	return m.GetProposer(a, b)
 }
 
-func (m MockValidatorManager) GetValidatorSet(_ common.Hash) *core.ValidatorSet {
-	v := core.NewValidatorSet()
-	v.AddValidator(m.GetProposer(common.Hash{}, 0))
-	return v
+func (m MockValidatorManager) GetValidators(_ common.Hash) *core.AddressSet {
+	v := core.NewAddressSet()
+	v.Add(m.GetProposer(common.Hash{}, 0))
+	return &v
 }
 
-func (m MockValidatorManager) GetNextValidatorSet(a common.Hash) *core.ValidatorSet {
-	return m.GetNextValidatorSet(a)
+func (m MockValidatorManager) GetNextValidators(a common.Hash) *core.AddressSet {
+	return m.GetNextValidators(a)
 }
 
 func (m MockValidatorManager) SetConsensusEngine(consensus core.ConsensusEngine) {}

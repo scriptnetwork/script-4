@@ -22,13 +22,13 @@ type Keystore interface {
 	ListKeyAddresses() ([]common.Address, error)
 
 	// Loads and decrypts the key from disk.
-	GetKey(address common.Address, auth string) (*Key, error)
+	GetKey(address common.Address) (*Key, error)
 
 	// Writes and encrypts the key.
-	StoreKey(k *Key, auth string) error
+	StoreKey(k *Key) error
 
 	// Deletes the key from the disk.
-	DeleteKey(address common.Address, auth string) error
+	DeleteKey(address common.Address) error
 }
 
 func writeKeyFile(file string, content common.Bytes) error {

@@ -18,8 +18,6 @@
 package keystore
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,34 +34,31 @@ const (
 	veryLightScryptP = 1
 )
 
-func tmpKeyStoreIface(t *testing.T, encrypted bool) (dir string, ks Keystore) {
+func tmpKeyStoreIface(t *testing.T) (dir string, ks Keystore) {
 	d, err := ioutil.TempDir("", "script-keystore-test")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if encrypted {
-		ks, err = NewKeystoreEncrypted(d, veryLightScryptN, veryLightScryptP)
-	} else {
-		ks, err = NewKeystorePlain(d)
-	}
+	ks, err = NewKeystorePlain(d)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return d, ks
 }
 
-func storeNewKeyTest(ks Keystore, rand io.Reader, auth string) (*Key, error) {
+func storeNewKeyTest(ks Keystore, rand io.Reader) (*Key, error) {
 	privKey, _, err := crypto.GenerateKeyPair()
 	key := NewKey(privKey)
 	if err != nil {
 		return nil, err
 	}
-	if err := ks.StoreKey(key, auth); err != nil {
+	if err := ks.StoreKey(key); err != nil {
 		return nil, err
 	}
 	return key, err
 }
 
+/*
 func loadKeyStoreTest(file string, t *testing.T) map[string]KeyStoreTest {
 	tests := make(map[string]KeyStoreTest)
 	err := loadJSONTest(file, &tests)
@@ -72,6 +67,7 @@ func loadKeyStoreTest(file string, t *testing.T) map[string]KeyStoreTest {
 	}
 	return tests
 }
+*/
 
 func loadJSONTest(file string, val interface{}) error {
 	content, err := ioutil.ReadFile(file)
@@ -101,6 +97,7 @@ func findLine(data []byte, offset int64) (line int) {
 	return
 }
 
+/*
 func testDecrypt(test KeyStoreTest, t *testing.T) {
 	keyjson, err := json.Marshal(test.Json)
 	if err != nil {
@@ -115,6 +112,7 @@ func testDecrypt(test KeyStoreTest, t *testing.T) {
 		t.Fatal(fmt.Errorf("Decrypted bytes not equal to test, expected %v have %v", test.Priv, privHex))
 	}
 }
+*/
 
 var testsSubmodule = filepath.Join("..", "..", "tests", "testdata", "KeyStoreTests")
 
@@ -135,8 +133,10 @@ func fileExist(filePath string) bool {
 
 // Test and utils for the key store tests in the Ethereum JSON tests;
 // testdataKeyStoreTests/basic_tests.json
+/*
 type KeyStoreTest struct {
 	Json     encryptedKeyJSON
 	Password string
 	Priv     string
 }
+*/

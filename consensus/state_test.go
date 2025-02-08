@@ -3,12 +3,12 @@ package consensus
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/store/database/backend"
 	"github.com/scripttoken/script/store/kvstore"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConsensusStateBasic(t *testing.T) {
@@ -25,12 +25,15 @@ func TestConsensusStateBasic(t *testing.T) {
 	vote := core.Vote{
 		Height: 10,
 	}
-	state1 := NewState(db, chain)
+
+	var forcedLastVote *core.Vote = nil
+
+	state1 := NewState(db, chain, forcedLastVote)
 	state1.SetEpoch(3)
 	state1.SetLastVote(vote)
 	state1.SetHighestCCBlock(cc)
 
-	state2 := NewState(db, chain)
+	state2 := NewState(db, chain, forcedLastVote)
 	assert.Equal(uint64(3), state2.GetEpoch())
 	assert.Equal(uint64(10), state2.GetLastVote().Height)
 	assert.NotNil(state2.GetHighestCCBlock())
@@ -50,7 +53,9 @@ func TestConsensusStateVoteSet(t *testing.T) {
 	block1 := core.CreateTestBlock("A1", "A0")
 	block2 := core.CreateTestBlock("A2", "A1")
 
-	state1 := NewState(db, chain)
+	var forcedLastVote *core.Vote = nil
+
+	state1 := NewState(db, chain, forcedLastVote)
 	vote1 := &core.Vote{
 		Block: block1.Hash(),
 		ID:    common.HexToAddress("A1"),
@@ -70,8 +75,8 @@ func TestConsensusStateVoteSet(t *testing.T) {
 	state1.AddVote(vote2)
 	state1.AddVote(vote3)
 
-	state2 := NewState(db, chain)
-	state2.Load()
+	state2 := NewState(db, chain, forcedLastVote)
+	state2.Load(forcedLastVote)
 	vs1, _ := state2.GetEpochVotes()
 	votes := vs1.Votes()
 	assert.Equal(2, len(votes))
@@ -79,8 +84,8 @@ func TestConsensusStateVoteSet(t *testing.T) {
 	assert.Equal(uint64(20), votes[0].Epoch)
 
 	db = kvstore.NewKVStore(backend.NewMemDatabase())
-	state3 := NewState(db, chain)
-	state3.Load()
+	state3 := NewState(db, chain, forcedLastVote)
+	state3.Load(forcedLastVote)
 	state3.AddEpochVote(&core.Vote{
 		Block: block1.Hash(),
 		ID:    common.HexToAddress("A2"),

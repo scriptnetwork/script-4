@@ -19,11 +19,11 @@ const (
 	// CfgForceValidateSnapshot defines wether validation of snapshot can be skipped
 	CfgForceValidateSnapshot = "snapshot.force_validate"
 
-	CfgGenesisHash = "genesis.hash"	        // CfgGenesisHash defines the hash of the genesis block
-	CfgGenesisChainID = "genesis.chainID"	// CfgGenesisChainID defines the chainID.
-	CfgGenesisEthChainID = "genesis.ethChainID"   // Ethereum bridge numeric chain id
+	CfgGenesisHash       = "genesis.hash"       // CfgGenesisHash defines the hash of the genesis block
+	CfgGenesisChainID    = "genesis.chainID"    // CfgGenesisChainID defines the chainID.
+	CfgGenesisEthChainID = "genesis.ethChainID" // Ethereum bridge numeric chain id
 
-	CfgLicenseDir = "genesis.license_dir"
+	//CfgLicenseDir = "genesis.license_dir"
 	CfgLicenseIssuer = "genesis.license_issuer"
 
 	// CfgConsensusMaxEpochLength defines the maxium length of an epoch.
@@ -35,7 +35,7 @@ const (
 	// CfgConsensusEdgeNodeVoteQueueSize defines the capacity of edge node vote message queue.
 	CfgConsensusEdgeNodeVoteQueueSize = "consensus.edgeNodeVoteQueueSize"
 	// CfgConsensusPassThroughLightningVote defines the how lightning vote is handled.
-	CfgConsensusPassThroughLightningVote   = "consensus.passThroughLightningVote"
+	CfgConsensusPassThroughLightningVote  = "consensus.passThroughLightningVote"
 	CfgConsensusForceLastVote             = "consensus.forceLastVote"
 	CfgConsensusForceLastVoteTargetBlock  = "consensus.forceLastVoteTargetBlock"
 	CfgConsensusForceLastVoteTargetHeight = "consensus.forceLastVoteTargetHeight"
@@ -187,8 +187,8 @@ func init() {
 
 	viper.SetDefault(CfgGenesisEthChainID, 0)
 	viper.SetDefault(CfgGenesisChainID, "")
-	viper.SetDefault(CfgLicenseDir, "")
-    viper.SetDefault(CfgLicenseIssuer, "")
+	//viper.SetDefault(CfgLicenseDir, "")
+	viper.SetDefault(CfgLicenseIssuer, "")
 
 	viper.SetDefault(CfgConsensusMaxEpochLength, 12)
 	viper.SetDefault(CfgConsensusMinBlockInterval, 6)

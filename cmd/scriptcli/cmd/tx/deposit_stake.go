@@ -1,5 +1,6 @@
 package tx
 
+/*
 import (
 	"encoding/hex"
 	"fmt"
@@ -203,3 +204,4 @@ func init() {
 	depositStakeCmd.MarkFlagRequired("seq")
 	depositStakeCmd.MarkFlagRequired("stake")
 }
+*/

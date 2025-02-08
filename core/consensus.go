@@ -16,14 +16,19 @@ type ConsensusEngine interface {
 	FinalizedBlocks() chan *Block
 	GetLastFinalizedBlock() *ExtendedBlock
 	GetEpochVotes() (*VoteSet, error)
-	GetValidatorSet(blockHash common.Hash) *ValidatorSet
+	//GetValidatorSet(blockHash common.Hash) *ValidatorSet
+	GetValidators(blockHash common.Hash) *AddressSet
 }
 
 // ValidatorManager is the component for managing validator related logic for consensus engine.
 type ValidatorManager interface {
 	SetConsensusEngine(consensus ConsensusEngine)
-	GetProposer(blockHash common.Hash, epoch uint64) Validator
-	GetNextProposer(blockHash common.Hash, epoch uint64) Validator
-	GetValidatorSet(blockHash common.Hash) *ValidatorSet
-	GetNextValidatorSet(blockHash common.Hash) *ValidatorSet
+	//	GetProposer(blockHash common.Hash, epoch uint64) Validator
+	GetProposer(blockHash common.Hash, epoch uint64) common.Address
+	//	GetNextProposer(blockHash common.Hash, epoch uint64) Validator
+	GetNextProposer(blockHash common.Hash, epoch uint64) common.Address
+	//	GetValidatorSet(blockHash common.Hash) *ValidatorSet
+	GetValidators(blockHash common.Hash) *AddressSet
+	//	GetNextValidatorSet(blockHash common.Hash) *ValidatorSet
+	GetNextValidators(blockHash common.Hash) *AddressSet
 }

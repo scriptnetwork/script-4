@@ -10,9 +10,9 @@ import (
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
 
+	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
@@ -39,7 +39,7 @@ var smartContractCmd = &cobra.Command{
 }
 
 func doSmartContractCmd(cmd *cobra.Command, args []string) {
-	wallet, fromAddress, err := walletUnlock(cmd, fromFlag, passwordFlag)
+	wallet, fromAddress, err := walletUnlock(cmd, fromFlag)
 	if err != nil {
 		return
 	}
@@ -124,13 +124,12 @@ func init() {
 	smartContractCmd.Flags().StringVar(&fromFlag, "from", "", "The caller address")
 	smartContractCmd.Flags().StringVar(&toFlag, "to", "", "The smart contract address")
 	smartContractCmd.Flags().StringVar(&valueFlag, "value", "0", "Value to be transferred")
-	smartContractCmd.Flags().StringVar(&gasPriceFlag, "gas_price", fmt.Sprintf("%dwei", types.MinimumGasPriceJune2021), "The gas price")
+	smartContractCmd.Flags().StringVar(&gasPriceFlag, "gas_price", fmt.Sprintf("%dwei", types.MinimumGasPrice), "The gas price")
 	smartContractCmd.Flags().Uint64Var(&gasLimitFlag, "gas_limit", 0, "The gas limit")
 	smartContractCmd.Flags().StringVar(&dataFlag, "data", "", "The data for the smart contract")
 	smartContractCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
 	smartContractCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano)")
 	smartContractCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
-	smartContractCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	smartContractCmd.MarkFlagRequired("chain")
 	smartContractCmd.MarkFlagRequired("from")

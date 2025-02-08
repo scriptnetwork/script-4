@@ -14,17 +14,13 @@ import (
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "wallet"})
 
-func OpenWallet(cfgPath string, walletType types.WalletType, encrypted bool) (types.Wallet, error) {
+func OpenWallet(cfgPath string, walletType types.WalletType) (types.Wallet, error) {
 	var wallet types.Wallet
 	var err error
 
 	keysDirPath := path.Join(cfgPath, "keys")
 	if walletType == types.WalletTypeSoft {
-//		if encrypted {
-//			wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypeEncrypted)
-//		} else {
-			wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypePlain)
-//		}
+		wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypePlain)
 		if err != nil {
 			return nil, err
 		}

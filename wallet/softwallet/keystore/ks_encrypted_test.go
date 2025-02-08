@@ -17,6 +17,7 @@
 
 package keystore
 
+/*
 import (
 	"crypto/rand"
 	"io/ioutil"
@@ -116,3 +117,4 @@ func TestKeyEncryptDecrypt(t *testing.T) {
 		}
 	}
 }
+*/

@@ -107,8 +107,8 @@ func (sv *StoreView) Traverse(prefix common.Bytes, cb func(k, v common.Bytes) bo
 	return sv.store.Traverse(prefix, cb)
 }
 
-func (sv *StoreView) ProveVCP(vcpKey []byte, vp *core.VCPProof) error {
-	return sv.store.ProveVCP(vcpKey, vp)
+func (sv *StoreView) ProveValidators(key []byte, vp *core.ValidatorsProof) error {
+	return sv.store.ProveValidators(key, vp)
 }
 
 // Delete removes the value corresponding to the key
@@ -321,6 +321,7 @@ func (sv *StoreView) GetLightnings() *core.AddressSet {
 	return lightnings
 }
 
+/*
 // GetValidatorCandidatePool gets the validator candidate pool.
 func (sv *StoreView) GetValidatorCandidatePool() *core.ValidatorCandidatePool {
 	data := sv.Get(ValidatorCandidatePoolKey())
@@ -335,15 +336,16 @@ func (sv *StoreView) GetValidatorCandidatePool() *core.ValidatorCandidatePool {
 	}
 	return vcp
 }
+*/
 
 // UpdateValidatorCandidatePool updates the validator candidate pool.
-func (sv *StoreView) UpdateValidatorCandidatePool(vcp *core.ValidatorCandidatePool) {
-	vcpBytes, err := types.ToBytes(vcp)
+// func (sv *StoreView) UpdateValidatorCandidatePool(vcp *core.ValidatorCandidatePool) {
+func (sv *StoreView) UpdateValidators(validators *core.AddressSet) {
+	bytes, err := types.ToBytes(validators)
 	if err != nil {
-		log.Panicf("Error writing validator candidate pool %v, error: %v",
-			vcp, err.Error())
+		log.Panicf("Error writing validators %v, error: %v", validators, err.Error())
 	}
-	sv.Set(ValidatorCandidatePoolKey(), vcpBytes)
+	sv.Set(ValidatorsKey(), bytes)
 }
 
 // GetLightningCandidatePool gets the lightning candidate pool.
@@ -372,8 +374,8 @@ func (sv *StoreView) UpdateLightningCandidatePool(gcp *core.LightningCandidatePo
 }
 
 // GetStakeTransactionHeightList gets the heights of blocks that contain stake related transactions
-func (sv *StoreView) GetStakeTransactionHeightList() *types.HeightList {
-	data := sv.Get(StakeTransactionHeightListKey())
+func (sv *StoreView) GetValidatorTransactionHeightList() *types.HeightList {
+	data := sv.Get(ValidatorTransactionHeightListKey())
 	if data == nil || len(data) == 0 {
 		return nil
 	}
@@ -388,13 +390,13 @@ func (sv *StoreView) GetStakeTransactionHeightList() *types.HeightList {
 }
 
 // UpdateStakeTransactionHeightList updates the heights of blocks that contain stake related transactions
-func (sv *StoreView) UpdateStakeTransactionHeightList(hl *types.HeightList) {
+func (sv *StoreView) UpdateValidatorTransactionHeightList(hl *types.HeightList) {
 	hlBytes, err := types.ToBytes(hl)
 	if err != nil {
 		log.Panicf("Error writing height list %v, error: %v",
 			hl, err.Error())
 	}
-	sv.Set(StakeTransactionHeightListKey(), hlBytes)
+	sv.Set(ValidatorTransactionHeightListKey(), hlBytes)
 }
 
 type StakeWithHolder struct {
@@ -579,6 +581,7 @@ func (sv *StoreView) GetScriptBalance(addr common.Address) *big.Int {
 	return sv.GetOrCreateAccount(addr).Balance.SCPTWei
 }
 
+/*
 // GetScriptStake returns the total amount of SCPTWei the address staked to validators and/or lightnings
 func (sv *StoreView) GetScriptStake(addr common.Address) *big.Int {
 	totalStake := big.NewInt(0)
@@ -609,6 +612,7 @@ func (sv *StoreView) GetScriptStake(addr common.Address) *big.Int {
 
 	return totalStake
 }
+*/
 
 func (sv *StoreView) GetNonce(addr common.Address) uint64 {
 	return sv.GetOrCreateAccount(addr).Sequence

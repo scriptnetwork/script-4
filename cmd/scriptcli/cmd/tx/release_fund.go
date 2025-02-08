@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	rpcc "github.com/ybbus/jsonrpc"
 )
 
 // releaseFundCmd represents the release fund command
 // Example:
-//		scriptcli tx release --chain="scriptnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8
+//
+//	scriptcli tx release --chain="scriptnet" --from=2E833968E5bB786Ae419c4d13189fB081Cc43bab  --reserve_seq=8 --seq=8
 var releaseFundCmd = &cobra.Command{
 	Use:     "release",
 	Short:   "Release fund",
@@ -25,7 +26,7 @@ var releaseFundCmd = &cobra.Command{
 }
 
 func doReleaseFundCmd(cmd *cobra.Command, args []string) {
-	wallet, fromAddress, err := walletUnlock(cmd, fromFlag, passwordFlag)
+	wallet, fromAddress, err := walletUnlock(cmd, fromFlag)
 	if err != nil {
 		return
 	}
@@ -82,11 +83,10 @@ func init() {
 	releaseFundCmd.Flags().StringVar(&chainIDFlag, "chain", "", "Chain ID")
 	releaseFundCmd.Flags().StringVar(&fromFlag, "from", "", "Reserve owner's address")
 	releaseFundCmd.Flags().Uint64Var(&seqFlag, "seq", 0, "Sequence number of the transaction")
-	releaseFundCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWeiJune2021), "Fee")
+	releaseFundCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWei), "Fee")
 	releaseFundCmd.Flags().Uint64Var(&reserveSeqFlag, "reserve_seq", 1000, "Reserve sequence")
 	releaseFundCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano)")
 	releaseFundCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
-	releaseFundCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	releaseFundCmd.MarkFlagRequired("chain")
 	releaseFundCmd.MarkFlagRequired("from")

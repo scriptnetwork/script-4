@@ -5,17 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-//	"strconv"
-//	"strings"
+
+	//	"strconv"
+	//	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
-	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
-	"github.com/scripttoken/script/crypto/bls"
 	"github.com/scripttoken/script/rlp"
 	"golang.org/x/crypto/sha3"
 )
@@ -53,8 +52,7 @@ Transaction Types:
 // )
 
 const (
-	GasRegularTx         uint64 = 10000
-	GasRegularTxJune2021 uint64 = 80000
+	GasRegularTx uint64 = 10000
 )
 
 type Tx interface {
@@ -143,9 +141,9 @@ func (a *TxInput) UnmarshalJSON(data []byte) error {
 }
 
 func (txIn TxInput) ValidateBasic() result.Result {
-	if len(txIn.Address) != 20 {
-		return result.Error("Invalid address length")
-	}
+	//if len(txIn.Address) != 20 {
+	//	return result.Error("Invalid address length")
+	//}
 	if !txIn.Coins.IsValid() {
 		return result.Error("Invalid coins: %v", txIn.Coins)
 	}
@@ -184,9 +182,9 @@ type TxOutput struct {
 }
 
 func (txOut TxOutput) ValidateBasic() result.Result {
-	if len(txOut.Address) != 20 {
-		return result.Error("Invalid address length")
-	}
+	//if len(txOut.Address) != 20 {
+	//	return result.Error("Invalid address length")
+	//}
 
 	if !txOut.Coins.IsValid() {
 		return result.Error("Invalid coins: %v", txOut.Coins)
@@ -850,155 +848,35 @@ func (tx *SmartContractTx) String() string {
 
 //-----------------------------------------------------------------------------
 
-type DepositStakeTx struct {
-	Fee     Coins    `json:"fee"`     // Fee
-	Source  TxInput  `json:"source"`  // source staker account
-	Holder  TxOutput `json:"holder"`  // stake holder account
-	Purpose uint8    `json:"purpose"` // purpose e.g. stake for validator/lightning
-}
-
-func (_ *DepositStakeTx) AssertIsTx() {}
-
-func (tx *DepositStakeTx) SignBytes(chainID string) []byte {
-	signBytes := encodeToBytes(chainID)
-	sig := tx.Source.Signature
-	tx.Source.Signature = nil
-	txBytes, _ := TxToBytes(tx)
-	signBytes = append(signBytes, txBytes...)
-	signBytes = addPrefixForSignBytes(signBytes)
-
-	tx.Source.Signature = sig
-	return signBytes
-}
-
-func (tx *DepositStakeTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
-	if tx.Source.Address == addr {
-		tx.Source.Signature = sig
-		return true
-	}
-	return false
-}
-
-func (tx *DepositStakeTx) String() string {
-	return fmt.Sprintf("DepositStakeTx{%v -> %v, stake: %v, purpose: %v}",
-		tx.Source.Address, tx.Holder.Address, tx.Source.Coins.SCPTWei, tx.Purpose)
-}
-
-type DepositStakeTxV2 struct {
-	Fee     Coins    `json:"fee"`     // Fee
-	Source  TxInput  `json:"source"`  // source staker account
-	Holder  TxOutput `json:"holder"`  // stake holder account
-	Purpose uint8    `json:"purpose"` // purpose e.g. stake for validator/lightning/elit edge node
-
-	BlsPubkey *bls.PublicKey    `rlp:"nil"`
-	BlsPop    *bls.Signature    `rlp:"nil"`
-	HolderSig *crypto.Signature `rlp:"nil"`
-}
-
-func (_ *DepositStakeTxV2) AssertIsTx() {}
-
-func (tx *DepositStakeTxV2) SignBytes(chainID string) []byte {
-	var txBytes []byte
-	sig := tx.Source.Signature
-	tx.Source.Signature = nil
-	if tx.Purpose == core.StakeForValidator {
-		tmp := &DepositStakeTx{
-			Fee:     tx.Fee,
-			Source:  tx.Source,
-			Holder:  tx.Holder,
-			Purpose: tx.Purpose,
-		}
-		txBytes, _ = TxToBytes(tmp)
-	} else if tx.Purpose == core.StakeForLightning {
-		txBytes, _ = TxToBytes(tx)
-	} else if tx.Purpose == core.StakeForEliteEdgeNode {
-		txBytes, _ = TxToBytes(tx)
-	}
-
-	signBytes := encodeToBytes(chainID)
-	signBytes = append(signBytes, txBytes...)
-	signBytes = addPrefixForSignBytes(signBytes)
-
-	tx.Source.Signature = sig
-	return signBytes
-}
-
-func (tx *DepositStakeTxV2) SetSignature(addr common.Address, sig *crypto.Signature) bool {
-	if tx.Source.Address == addr {
-		tx.Source.Signature = sig
-		return true
-	}
-	return false
-}
-
-func (tx *DepositStakeTxV2) String() string {
-	return fmt.Sprintf("DepositStakeTxV2{%v -> %v, stake: %v, purpose: %v, BlsPubkey: %v, BlsPop: %v}",
-		tx.Source.Address, tx.Holder.Address, tx.Source.Coins.SCPTWei, tx.Purpose, tx.BlsPubkey, tx.BlsPop)
-}
-
-//-----------------------------------------------------------------------------
-
-type WithdrawStakeTx struct {
-	Fee     Coins    `json:"fee"`     // Fee
-	Source  TxInput  `json:"source"`  // source staker account
-	Holder  TxOutput `json:"holder"`  // stake holder account
-	Purpose uint8    `json:"purpose"` // purpose e.g. stake for validator/lightning/elite edge node
-}
-
-func (_ *WithdrawStakeTx) AssertIsTx() {}
-
-func (tx *WithdrawStakeTx) SignBytes(chainID string) []byte {
-	signBytes := encodeToBytes(chainID)
-	sig := tx.Source.Signature
-	tx.Source.Signature = nil
-	txBytes, _ := TxToBytes(tx)
-	signBytes = append(signBytes, txBytes...)
-	signBytes = addPrefixForSignBytes(signBytes)
-
-	tx.Source.Signature = sig
-	return signBytes
-}
-
-func (tx *WithdrawStakeTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
-	if tx.Source.Address == addr {
-		tx.Source.Signature = sig
-		return true
-	}
-	return false
-}
-
-func (tx *WithdrawStakeTx) String() string {
-	return fmt.Sprintf("WithdrawStakeTx{%v <- %v, stake: %v, purpose: %v}",
-		tx.Source.Address, tx.Holder.Address, tx.Source.Coins.SCPTWei, tx.Purpose)
-}
-
-//-----------------------------------------------------------------------------
-
 type LicenseTx struct {
-	Fee      Coins     // Transaction fee
-	Licenses []core.License // Slice of License objects to be included in the transaction
-	Issuer   TxInput   // Issuer's account details
+	Address   common.Address
+	Type      string // VN LN
+	Op        string // authorize, revoke
+	Signature *crypto.Signature
 }
 
 type LicenseTxJSON struct {
-	Fee      Coins     `json:"fee"`      // Transaction fee
-	Licenses []core.License `json:"licenses"` // Slice of License objects
-	Issuer   TxInput   `json:"issuer"`   // Issuer's account details
+	Address   common.Address    `json:"address"`
+	Type      string            `json:"type"`      //VN LN
+	Op        string            `json:"op"`        //add rm
+	Signature *crypto.Signature `json:"signature"` // Depends on the PubKey type and the whole Tx
 }
 
 func NewLicenseTxJSON(a LicenseTx) LicenseTxJSON {
 	return LicenseTxJSON{
-		Fee:      a.Fee,
-		Licenses: a.Licenses,
-		Issuer:   a.Issuer,
+		Address:   a.Address,
+		Type:      a.Type,
+		Op:        a.Op,
+		Signature: a.Signature,
 	}
 }
 
 func (a LicenseTxJSON) LicenseTx() LicenseTx {
 	return LicenseTx{
-		Fee:      a.Fee,
-		Licenses: a.Licenses,
-		Issuer:   a.Issuer,
+		Address:   a.Address,
+		Type:      a.Type,
+		Op:        a.Op,
+		Signature: a.Signature,
 	}
 }
 
@@ -1019,74 +897,32 @@ func (_ *LicenseTx) AssertIsTx() {}
 
 func (tx *LicenseTx) SignBytes(chainID string) []byte {
 	signBytes := encodeToBytes(chainID)
-	sig := tx.Issuer.Signature
-	tx.Issuer.Signature = nil
+	sig := tx.Signature
+	tx.Signature = nil
 	txBytes, _ := TxToBytes(tx)
 	signBytes = append(signBytes, txBytes...)
 	signBytes = addPrefixForSignBytes(signBytes)
-
-	tx.Issuer.Signature = sig
+	tx.Signature = sig
 	return signBytes
 }
 
 func (tx *LicenseTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
-	if tx.Issuer.Address == addr {
-		tx.Issuer.Signature = sig
-		return true
-	}
-	return false
+	tx.Signature = sig
+	return true
 }
 
 func (tx *LicenseTx) String() string {
-	return fmt.Sprintf("LicenseTx{fee: %v, licenses: %v, issuer: %v}", tx.Fee, tx.Licenses, tx.Issuer)
+	return fmt.Sprintf("LicenseTx{address: %v, type: %v, op: %v}", tx.Address, tx.Type, tx.Op)
 }
 
-//-----------------------------------------------------------------------------
-
-//
-// StakeRewardDistributionTx needs to be signed and submitted by the "stake holders", i.e. a lightning or an elite edge node.
-// It allows the stake holder to specify a "beneficiary" to receive a fraction of the Script/SPAY staking reward. The split fraction
-// is defined by SplitBasisPoint/10000. The remainder of the staking reward goes back to the staker wallet.
-//
-// The purpose of this transaction is to allow lightning/elite edge node operators to charge a fee for the hosting service.
-// The service fee (i.e. split fraction) can be specified by the lightning/elite edge node operators via the SplitBasisPoint parameter.
-// The stakers can choose whether to stake to a node based on the fee it charges. Note that an operator can change the fee anytime, and
-// as a response, a staker might choose to deposit/withdraw stake depending if he/she thinks the fee is fair. This thus creates
-// a free market for lightning/elite edge node hosting service.
-//
-type StakeRewardDistributionTx struct {
-	Fee             Coins    `json:"fee"`               // transction fee, NOT the hosting service fee
-	Holder          TxInput  `json:"holder"`            // stake holder account, i.e., a lightning or an elite edge node
-	Beneficiary     TxOutput `json:"beneficiary"`       // the beneficiary to split the reward as the hosting service fee
-	SplitBasisPoint uint     `json:"split_basis_point"` // An integer between 0 and 10000, representing the fraction of the reward the beneficiary should get (in terms of 1/10000), https://en.wikipedia.org/wiki/Basis_point
-	//Purpose         uint8    `json:"purpose"`           // purpose e.g. stake for lightning/elite edge node
-}
-
-func (_ *StakeRewardDistributionTx) AssertIsTx() {}
-
-func (tx *StakeRewardDistributionTx) SignBytes(chainID string) []byte {
-	signBytes := encodeToBytes(chainID)
-	sig := tx.Holder.Signature
-	tx.Holder.Signature = nil
-	txBytes, _ := TxToBytes(tx)
-	signBytes = append(signBytes, txBytes...)
-	signBytes = addPrefixForSignBytes(signBytes)
-
-	tx.Holder.Signature = sig
-	return signBytes
-}
-
-func (tx *StakeRewardDistributionTx) SetSignature(addr common.Address, sig *crypto.Signature) bool {
-	if tx.Holder.Address == addr {
-		tx.Holder.Signature = sig
-		return true
+func (tx LicenseTx) ValidateBasic() result.Result {
+	if tx.Type != "LN" && tx.Type != "VN" {
+		return result.Error("Invalid Type: %v", tx.Type)
 	}
-	return false
-}
-
-func (tx *StakeRewardDistributionTx) String() string {
-	return fmt.Sprintf("StakeRewardDistributionTx{holder: %v, beneficiary: %v, split_basis_point: %v}",
-		tx.Holder.Address, tx.Beneficiary.Address, tx.SplitBasisPoint)
+	if tx.Op != "authorize" && tx.Op != "revoke" {
+		return result.Error("Invalid Op: %v", tx.Op)
+	}
+	return result.OK
 }
 
 // --------------- Utils --------------- //
@@ -1235,4 +1071,3 @@ func extractSubchainID(chainIDStr string) (*big.Int, error) {
 	return big.NewInt(int64(chainID)), nil
 }
 */
-
