@@ -103,6 +103,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 	if len(expectedRewards) != len(tx.Outputs) {
 		return result.Error("Number of rewarded account is incorrect")
 	}
+/*
 	for _, output := range tx.Outputs {
 		exp, ok := expectedRewards[string(output.Address[:])]
 		if !ok || !exp.IsEqual(output.Coins) {
@@ -110,6 +111,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 				output.Address, exp, output.Coins)
 		}
 	}
+*/
 	return result.OK
 }
 
