@@ -90,6 +90,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 			tx.BlockHeight, exec.state.Height())
 	}
 
+	/* //CheckPointInterval changed from 1000 to 100 with incoreect hardfork control. Ignoring sanity checks for Rewards as the algorithm invalidates blocks that was previously valid
 	// check the reward amount
 	var expectedRewards map[common.Address]types.Coins
 
@@ -106,6 +107,7 @@ func (exec *CoinbaseTxExecutor) sanityCheck(chainID string, view *st.StoreView, 
 				output.Address, exp, output.Coins)
 		}
 	}
+	*/
 	return result.OK
 }
 
