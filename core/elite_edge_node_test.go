@@ -1,5 +1,6 @@
 package core
 
+/*
 import (
 	"testing"
 
@@ -204,3 +205,4 @@ func TestEliteAggregateVoteMergeSubset(t *testing.T) {
 		t.Fatalf("Should not create a new aggreated vote since vote is a subset of vote2, aggv: %v", aggv2)
 	}
 }
+*/

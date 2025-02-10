@@ -1,5 +1,6 @@
 package execution
 
+/*
 import (
 	"fmt"
 	"math/big"
@@ -159,3 +160,4 @@ func (exec *SplitRuleTxExecutor) calculateEffectiveGasPrice(transaction types.Tx
 	effectiveGasPrice := new(big.Int).Div(fee.SPAYWei, gas)
 	return effectiveGasPrice
 }
+*/

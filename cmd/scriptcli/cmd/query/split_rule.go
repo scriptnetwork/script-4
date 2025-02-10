@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -44,3 +45,4 @@ func init() {
 	splitRuleCmd.Flags().StringVar(&resourceIDFlag, "resource_id", "", "Resource ID of the contract")
 	splitRuleCmd.MarkFlagRequired("resource_id")
 }
+*/

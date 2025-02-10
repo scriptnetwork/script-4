@@ -1,5 +1,6 @@
 package tx
 
+/*
 import (
 	"encoding/hex"
 	"fmt"
@@ -122,3 +123,4 @@ func init() {
 	reserveFundCmd.MarkFlagRequired("duration")
 	reserveFundCmd.MarkFlagRequired("resource_id")
 }
+*/

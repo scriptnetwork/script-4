@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -58,3 +59,4 @@ func init() {
 	stakeReturnsCmd.Flags().Uint64Var(&heightFlag, "height", uint64(0), "height of the block, if height=0 the command returns all the pending stake returns")
 	//stakeReturnsCmd.MarkFlagRequired("height")
 }
+*/

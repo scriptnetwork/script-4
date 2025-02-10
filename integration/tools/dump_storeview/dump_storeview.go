@@ -127,16 +127,6 @@ func fmtValue(value common.Bytes) string {
 		return fmt.Sprintf("%v", string(j))
 	}
 
-	splitRule := types.SplitRule{}
-	err = rlp.DecodeBytes(value, &splitRule)
-	if err == nil {
-		j, err := json.Marshal(splitRule)
-		if err != nil {
-			panic(err)
-		}
-		return fmt.Sprintf("%v", string(j))
-	}
-
 	validators := core.AddressSet{}
 	err = rlp.DecodeBytes(value, &validators)
 	if err == nil {

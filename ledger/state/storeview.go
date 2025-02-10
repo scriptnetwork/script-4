@@ -208,93 +208,6 @@ func (sv *StoreView) DeleteAccount(addr common.Address) {
 	sv.Delete(AccountKey(addr))
 }
 
-// SplitRuleExists checks if a split rule associated with the given resourceID already exists
-func (sv *StoreView) SplitRuleExists(resourceID string) bool {
-	return sv.GetSplitRule(resourceID) != nil
-}
-
-// AddSplitRule adds a split rule
-func (sv *StoreView) AddSplitRule(splitRule *types.SplitRule) bool {
-	if sv.SplitRuleExists(splitRule.ResourceID) {
-		return false // Each resourceID can have at most one corresponding split rule
-	}
-
-	sv.SetSplitRule(splitRule.ResourceID, splitRule)
-	return true
-}
-
-// UpdateSplitRule updates a split rule
-func (sv *StoreView) UpdateSplitRule(splitRule *types.SplitRule) bool {
-	if !sv.SplitRuleExists(splitRule.ResourceID) {
-		return false
-	}
-
-	sv.SetSplitRule(splitRule.ResourceID, splitRule)
-	return true
-}
-
-// GetSplitRule gets split rule.
-func (sv *StoreView) GetSplitRule(resourceID string) *types.SplitRule {
-	data := sv.Get(SplitRuleKey(resourceID))
-	if data == nil || len(data) == 0 {
-		return nil
-	}
-	splitRule := &types.SplitRule{}
-	err := types.FromBytes(data, splitRule)
-	if err != nil {
-		log.Panicf("Error reading splitRule %X error: %v",
-			data, err.Error())
-	}
-	return splitRule
-}
-
-// SetSplitRule sets split rule.
-func (sv *StoreView) SetSplitRule(resourceID string, splitRule *types.SplitRule) {
-	splitRuleBytes, err := types.ToBytes(splitRule)
-	if err != nil {
-		log.Panicf("Error writing splitRule %v error: %v",
-			splitRule, err.Error())
-	}
-	sv.Set(SplitRuleKey(resourceID), splitRuleBytes)
-}
-
-// DeleteSplitRule deletes a split rule.
-func (sv *StoreView) DeleteSplitRule(resourceID string) bool {
-	key := SplitRuleKey(resourceID)
-	deleted := sv.store.Delete(key)
-	return deleted
-}
-
-// DeleteExpiredSplitRules deletes a split rule.
-func (sv *StoreView) DeleteExpiredSplitRules(currentBlockHeight uint64) bool {
-	prefix := SplitRuleKeyPrefix()
-
-	expiredKeys := []common.Bytes{}
-	sv.store.Traverse(prefix, func(key, value common.Bytes) bool {
-		var splitRule types.SplitRule
-		err := types.FromBytes(value, &splitRule)
-		if err != nil {
-			log.Panicf("Error reading splitRule %X error: %v", value, err.Error())
-		}
-
-		expired := (splitRule.EndBlockHeight < currentBlockHeight)
-		if expired {
-			expiredKeys = append(expiredKeys, key)
-		}
-		return true
-	})
-
-	for _, key := range expiredKeys {
-		deleted := sv.store.Delete(key)
-		if !deleted {
-			logger.Errorf("Failed to delete expired split rules")
-			return false
-		}
-	}
-
-	return true
-}
-
 func (sv *StoreView) GetValidators() *core.AddressSet {
 	data := sv.Get(ValidatorsKey())
 	if data == nil || len(data) == 0 {
@@ -308,6 +221,7 @@ func (sv *StoreView) GetValidators() *core.AddressSet {
 	return validators
 }
 
+/*
 func (sv *StoreView) GetLightnings() *core.AddressSet {
 	data := sv.Get(LightningsKey())
 	if data == nil || len(data) == 0 {
@@ -320,7 +234,7 @@ func (sv *StoreView) GetLightnings() *core.AddressSet {
 	}
 	return lightnings
 }
-
+*/
 /*
 // GetValidatorCandidatePool gets the validator candidate pool.
 func (sv *StoreView) GetValidatorCandidatePool() *core.ValidatorCandidatePool {
@@ -349,28 +263,26 @@ func (sv *StoreView) UpdateValidators(validators *core.AddressSet) {
 }
 
 // GetLightningCandidatePool gets the lightning candidate pool.
-func (sv *StoreView) GetLightningCandidatePool() *core.LightningCandidatePool {
-	data := sv.Get(LightningCandidatePoolKey())
+func (sv *StoreView) GetLightnings() *core.AddressSet {
+	data := sv.Get(LightningsKey())
+	lightnings := core.NewAddressSet()
 	if data == nil || len(data) == 0 {
-		return core.NewLightningCandidatePool()
+		return &lightnings
 	}
-	gcp := &core.LightningCandidatePool{}
-	err := types.FromBytes(data, gcp)
+	err := types.FromBytes(data, lightnings)
 	if err != nil {
-		log.Panicf("Error reading lightning candidate pool %X, error: %v",
-			data, err.Error())
+		log.Panicf("Error reading lightning candidate pool %X, error: %v", data, err.Error())
 	}
-	return gcp
+	return &lightnings
 }
 
 // UpdateLightningCandidatePool updates the lightning candidate pool.
-func (sv *StoreView) UpdateLightningCandidatePool(gcp *core.LightningCandidatePool) {
-	gcpBytes, err := types.ToBytes(gcp)
+func (sv *StoreView) UpdateLightnings(lightnings *core.AddressSet) {
+	lightningsBytes, err := types.ToBytes(lightnings)
 	if err != nil {
-		log.Panicf("Error writing lightning candidate pool %v, error: %v",
-			gcp, err.Error())
+		log.Panicf("Error writing lightning candidate pool %v, error: %v", lightningsBytes, err.Error())
 	}
-	sv.Set(LightningCandidatePoolKey(), gcpBytes)
+	sv.Set(LightningsKey(), lightningsBytes)
 }
 
 // GetStakeTransactionHeightList gets the heights of blocks that contain stake related transactions
@@ -399,6 +311,7 @@ func (sv *StoreView) UpdateValidatorTransactionHeightList(hl *types.HeightList) 
 	sv.Set(ValidatorTransactionHeightListKey(), hlBytes)
 }
 
+/*
 type StakeWithHolder struct {
 	Holder common.Address
 	Stake  core.Stake
@@ -445,6 +358,7 @@ func (sv *StoreView) GetTotalEENStake() *big.Int {
 func (sv *StoreView) SetTotalEENStake(amount *big.Int) {
 	sv.Set(EliteEdgeNodesTotalActiveStakeKey(), amount.Bytes())
 }
+*/
 
 func (sv *StoreView) GetStore() *treestore.TreeStore {
 	return sv.store

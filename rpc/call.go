@@ -33,10 +33,7 @@ func (t *ScriptRPCService) CallSmartContract(args *CallSmartContractArgs, result
 		return err
 	}
 
-	blockHeight := ledgerState.Height() + 1 // the view points to the parent of the current block
-	if blockHeight < common.HeightEnableSmartContract {
-		return fmt.Errorf("Smart contract feature not enabled until block height %v.", common.HeightEnableSmartContract)
-	}
+	//	blockHeight := ledgerState.Height() + 1 // the view points to the parent of the current block
 
 	sctxBytes, err := hex.DecodeString(args.SctxBytes)
 	if err != nil {

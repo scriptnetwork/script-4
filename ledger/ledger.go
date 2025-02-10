@@ -144,7 +144,7 @@ func (ledger *Ledger) GetFinalizedValidators(blockHash common.Hash, isNext bool)
 }
 
 // GetLightningCandidatePool returns the lightning candidate pool of the given block.
-func (ledger *Ledger) GetLightningCandidatePool(blockHash common.Hash) (*core.LightningCandidatePool, error) {
+func (ledger *Ledger) GetLightnings(blockHash common.Hash) (*core.AddressSet, error) {
 	db := ledger.state.DB()
 	store := kvstore.NewKVStore(db)
 
@@ -164,36 +164,8 @@ func (ledger *Ledger) GetLightningCandidatePool(blockHash common.Hash) (*core.Li
 		if common.IsCheckPointHeight(block.Height) {
 			stateRoot := block.BlockHeader.StateHash
 			storeView := st.NewStoreView(block.Height, stateRoot, db)
-			gcp := storeView.GetLightningCandidatePool()
+			gcp := storeView.GetLightnings()
 			return gcp, nil
-		}
-		blockHash = block.Parent
-	}
-}
-
-// GetEliteEdgeNodePoolOfLastCheckpoint returns the elite edge node pool of the given block.
-func (ledger *Ledger) GetEliteEdgeNodePoolOfLastCheckpoint(blockHash common.Hash) (core.EliteEdgeNodePool, error) {
-	db := ledger.state.DB()
-	store := kvstore.NewKVStore(db)
-
-	// Find last checkpoint and retrieve EENP.
-	block, err := findBlock(store, blockHash)
-	if err != nil {
-		return nil, err
-	}
-	blockHash = block.Hash()
-	for {
-		logger.Debugf("Ledger.GetEliteEdgeNodePoolOfLastCheckpoint, block.height = %v", block.Height)
-
-		block, err := findBlock(store, blockHash)
-		if err != nil {
-			return nil, err
-		}
-		if common.IsCheckPointHeight(block.Height) {
-			stateRoot := block.BlockHeader.StateHash
-			storeView := st.NewStoreView(block.Height, stateRoot, db)
-			eenp := state.NewEliteEdgeNodePool(storeView, true)
-			return eenp, nil
 		}
 		blockHash = block.Parent
 	}

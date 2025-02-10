@@ -1,5 +1,6 @@
 package consensus
 
+/*
 import (
 	"context"
 	"sync"
@@ -396,3 +397,4 @@ func (e *EliteEdgeNodeEngine) checkMultipliesForRound(vote *core.AggregatedEENVo
 func (e *EliteEdgeNodeEngine) maxMultiply(k uint32) uint32 {
 	return 1 << (k * maxEENLogNeighbors)
 }
+*/

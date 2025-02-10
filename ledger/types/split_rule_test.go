@@ -1,5 +1,6 @@
 package types
 
+/*
 import (
 	"encoding/json"
 	"math"
@@ -25,3 +26,4 @@ func TestSplitRuleJSON(t *testing.T) {
 	require.Nil(err)
 	assert.Equal(uint64(math.MaxUint64), d.EndBlockHeight)
 }
+*/

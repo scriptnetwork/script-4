@@ -1,20 +1,14 @@
 package consensus
 
 import (
-	"container/list"
-	"encoding/hex"
-	"fmt"
-	"sync"
 	"time"
-
-	tcore "github.com/scripttoken/script/core"
-	tcrypto "github.com/scripttoken/script/crypto"
 )
 
 const DefaultMaxNumVotesCached = uint(5000000)
 
 const maxVoteLife = 20 * time.Minute // more than one checkpoint interval
 
+/*
 //
 // EENVoteBookkeeper keeps tracks of recently seen elite edge node votes
 //
@@ -36,6 +30,7 @@ type EENVoteRecord struct {
 func (r *EENVoteRecord) IsOutdated() bool {
 	return time.Since(r.CreatedAt) > maxVoteLife
 }
+*/
 
 type TxStatus int
 
@@ -44,6 +39,7 @@ const (
 	TxStatusAbandoned
 )
 
+/*
 func CreateEENVoteBookkeeper(maxNumTxs uint) *EENVoteBookkeeper {
 	return &EENVoteBookkeeper{
 		mutex:       &sync.Mutex{},
@@ -144,3 +140,4 @@ func getVoteHash(vote *tcore.EENVote) string {
 	txhashStr := hex.EncodeToString(txhash[:])
 	return txhashStr
 }
+*/

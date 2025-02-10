@@ -30,17 +30,10 @@ type Executor struct {
 	valMgr    core.ValidatorManager
 	ledger    core.Ledger
 
-	coinbaseTxExec *CoinbaseTxExecutor
-	// slashTxExec          *SlashTxExecutor
-	sendTxExec           *SendTxExecutor
-	reserveFundTxExec    *ReserveFundTxExecutor
-	releaseFundTxExec    *ReleaseFundTxExecutor
-	servicePaymentTxExec *ServicePaymentTxExecutor
-	splitRuleTxExec      *SplitRuleTxExecutor
-	smartContractTxExec  *SmartContractTxExecutor
-	//	depositStakeTxExec            *DepositStakeExecutor
-	//	withdrawStakeTxExec           *WithdrawStakeExecutor
-	//	stakeRewardDistributionTxExec *StakeRewardDistributionTxExecutor
+	coinbaseTxExec      *CoinbaseTxExecutor
+	sendTxExec          *SendTxExecutor
+	smartContractTxExec *SmartContractTxExecutor
+	licenseTxExec       *LicenseTxExecutor
 
 	skipSanityCheck bool
 }
@@ -48,23 +41,16 @@ type Executor struct {
 // NewExecutor creates a new instance of Executor
 func NewExecutor(db database.Database, chain *blockchain.Chain, state *st.LedgerState, consensus core.ConsensusEngine, valMgr core.ValidatorManager, ledger core.Ledger) *Executor {
 	executor := &Executor{
-		db:             db,
-		chain:          chain,
-		state:          state,
-		consensus:      consensus,
-		valMgr:         valMgr,
-		coinbaseTxExec: NewCoinbaseTxExecutor(db, chain, state, consensus, valMgr),
-		// slashTxExec:          NewSlashTxExecutor(consensus, valMgr),
-		sendTxExec:           NewSendTxExecutor(state),
-		reserveFundTxExec:    NewReserveFundTxExecutor(state),
-		releaseFundTxExec:    NewReleaseFundTxExecutor(state),
-		servicePaymentTxExec: NewServicePaymentTxExecutor(state),
-		splitRuleTxExec:      NewSplitRuleTxExecutor(state),
-		smartContractTxExec:  NewSmartContractTxExecutor(chain, state, ledger),
-		//depositStakeTxExec:            NewDepositStakeExecutor(state),
-		//withdrawStakeTxExec:           NewWithdrawStakeExecutor(state),
-		//stakeRewardDistributionTxExec: NewStakeRewardDistributionTxExecutor(state),
-		skipSanityCheck: false,
+		db:                  db,
+		chain:               chain,
+		state:               state,
+		consensus:           consensus,
+		valMgr:              valMgr,
+		coinbaseTxExec:      NewCoinbaseTxExecutor(db, chain, state, consensus, valMgr),
+		sendTxExec:          NewSendTxExecutor(state),
+		smartContractTxExec: NewSmartContractTxExecutor(chain, state, ledger),
+		licenseTxExec:       NewLicenseTxExecutor(state),
+		skipSanityCheck:     false,
 	}
 
 	return executor
@@ -129,10 +115,6 @@ func (exec *Executor) sanityCheck(chainID string, view *st.StoreView, viewSel co
 		return result.OK
 	}
 
-	if !exec.isTxTypeSupported(view, tx) {
-		return result.Error("tx type not supported yet")
-	}
-
 	var sanityCheckResult result.Result
 	txExecutor := exec.getTxExecutor(tx)
 	if txExecutor != nil {
@@ -148,10 +130,6 @@ func (exec *Executor) process(chainID string, view *st.StoreView, viewSel core.V
 	var processResult result.Result
 	var txHash common.Hash
 
-	if !exec.isTxTypeSupported(view, tx) {
-		return txHash, result.Error("tx type not supported yet")
-	}
-
 	txExecutor := exec.getTxExecutor(tx)
 	if txExecutor != nil {
 		txHash, processResult = txExecutor.process(chainID, view, viewSel, tx)
@@ -165,50 +143,17 @@ func (exec *Executor) process(chainID string, view *st.StoreView, viewSel core.V
 	return txHash, processResult
 }
 
-func (exec *Executor) isTxTypeSupported(view *st.StoreView, tx types.Tx) bool {
-	blockHeight := view.Height() + 1
-
-	switch tx.(type) {
-	case *types.SmartContractTx:
-		if blockHeight < common.HeightEnableSmartContract {
-			return false
-		}
-	default:
-		return true
-	}
-
-	return true
-}
-
 func (exec *Executor) getTxExecutor(tx types.Tx) TxExecutor {
 	var txExecutor TxExecutor
 	switch tx.(type) {
 	case *types.CoinbaseTx:
 		txExecutor = exec.coinbaseTxExec
-	// case *types.SlashTx:
-	// 	txExecutor = exec.slashTxExec
 	case *types.SendTx:
 		txExecutor = exec.sendTxExec
-	case *types.ReserveFundTx:
-		txExecutor = exec.reserveFundTxExec
-	case *types.ReleaseFundTx:
-		txExecutor = exec.releaseFundTxExec
-	case *types.ServicePaymentTx:
-		txExecutor = exec.servicePaymentTxExec
-	case *types.SplitRuleTx:
-		txExecutor = exec.splitRuleTxExec
 	case *types.SmartContractTx:
 		txExecutor = exec.smartContractTxExec
-		/*
-			case *types.DepositStakeTx:
-				txExecutor = exec.depositStakeTxExec
-			case *types.WithdrawStakeTx:
-				txExecutor = exec.withdrawStakeTxExec
-			case *types.DepositStakeTxV2:
-				txExecutor = exec.depositStakeTxExec
-			case *types.StakeRewardDistributionTx:
-				txExecutor = exec.stakeRewardDistributionTxExec
-		*/
+	case *types.LicenseTx:
+		txExecutor = exec.licenseTxExec
 	default:
 		txExecutor = nil
 	}

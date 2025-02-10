@@ -13,7 +13,7 @@ func Sample(entries []string, sampleSize int) []string {
 	if sampleSize < 0 {
 		return []string{}
 	}
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 	rand.Shuffle(len(entries), func(i, j int) {
 		entries[i], entries[j] = entries[j], entries[i]
 	})

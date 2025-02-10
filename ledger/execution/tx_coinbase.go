@@ -1,18 +1,12 @@
 package execution
 
 import (
-	"crypto/rand"
-	"encoding/binary"
-	"encoding/hex"
 	"math/big"
-	"sort"
 
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
-	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/core"
-	"github.com/scripttoken/script/ledger/state"
 	st "github.com/scripttoken/script/ledger/state"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/store/database"
@@ -138,50 +132,17 @@ func (exec *CoinbaseTxExecutor) process(chainID string, view *st.StoreView, view
 	return txHash, result.OK
 }
 
-func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, lightningVotes *core.AggregatedVotes,
-	eliteEdgeNodeVotes *core.AggregatedEENVotes) (lightningPool *core.LightningCandidatePool, eliteEdgeNodePool core.EliteEdgeNodePool) {
-	lightningPool = nil
-	eliteEdgeNodePool = nil
-
-	/*
-		if blockHeight < common.HeightEnableScript2 {
-			lightningPool = nil
-			eliteEdgeNodePool = nil
-		} else if blockHeight < common.HeightEnableScript3 {
-			if lightningVotes != nil {
-				guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
-				if err != nil {
-					logger.Panic(err)
-				}
-				storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
-				lightningPool = storeView.GetLightningCandidatePool()
-			}
-		} else { // blockHeight >= common.HeightEnableScript3
-			// won't reward the elite edge nodes without the lightning votes, since we need to lightning votes to confirm that
-			// the edge nodes vote for the correct checkpoint
-	*/
+func RetrievePools(ledger core.Ledger, chain *blockchain.Chain, db database.Database, blockHeight uint64, lightningVotes *core.AggregatedVotes) (lightnings *core.AddressSet) {
 	if lightningVotes != nil {
-		guradianVoteBlock, err := chain.FindBlock(lightningVotes.Block)
+		lightningVoteBlock, err := chain.FindBlock(lightningVotes.Block)
 		if err != nil {
 			logger.Panic(err)
 		}
-		storeView := st.NewStoreView(guradianVoteBlock.Height, guradianVoteBlock.StateHash, db)
-		lightningPool = storeView.GetLightningCandidatePool()
-
-		if eliteEdgeNodeVotes != nil {
-			if eliteEdgeNodeVotes.Block == lightningVotes.Block {
-				eliteEdgeNodePool = st.NewEliteEdgeNodePool(storeView, true)
-			} else {
-				logger.Warnf("Elite edge nodes vote for block %v, while lightnings vote for block %v, skip rewarding the elite edge nodes",
-					eliteEdgeNodeVotes.Block.Hex(), lightningVotes.Block.Hex())
-			}
-		} else {
-			logger.Warnf("Elite edge nodes have no vote for block %v", lightningVotes.Block.Hex())
-		}
+		storeView := st.NewStoreView(lightningVoteBlock.Height, lightningVoteBlock.StateHash, db)
+		lightningPool := storeView.GetLightnings()
+		return lightningPool
 	}
-	//	}
-
-	return lightningPool, eliteEdgeNodePool
+	return nil
 }
 
 func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address]types.Coins {
@@ -213,9 +174,9 @@ func CalculateReward2(ledger core.Ledger, view *st.StoreView) map[common.Address
 	return rewardMap
 }
 
+/*
 // grant uptime mining rewards to active elite edge nodes (they are the spay stakers)
-func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningVotes *core.AggregatedVotes, eliteEdgeNodeVotes *core.AggregatedEENVotes,
-	eliteEdgeNodePool core.EliteEdgeNodePool, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
+func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningVotes *core.AggregatedVotes, accountReward *map[common.Address]types.Coins, blockHeight uint64) {
 	if !common.IsCheckPointHeight(blockHeight) {
 		return
 	}
@@ -289,6 +250,7 @@ func grantEliteEdgeNodeReward(ledger core.Ledger, view *st.StoreView, lightningV
 	issueFixedReward(effectiveStakes, totalEffectiveStake, accountReward, totalReward, srdsr, "EEN  ")
 
 }
+*/
 
 func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map[common.Address]types.Coins) {
 	rewardCoins := types.Coins{
@@ -307,6 +269,7 @@ func addRewardToMap(receiver common.Address, amount *big.Int, accountReward *map
 	}
 }
 
+/*
 func handleSplit(stake *core.Stake, srdsr *st.StakeRewardDistributionRuleSet, reward *big.Int, accountRewardMap *map[common.Address]types.Coins) {
 	if srdsr == nil {
 		// Should not happen
@@ -492,6 +455,8 @@ func issueRandomizedReward(ledger core.Ledger, lightningVotes *core.AggregatedVo
 	}
 
 }
+
+*/
 
 func (exec *CoinbaseTxExecutor) getTxInfo(transaction types.Tx) *core.TxInfo {
 	return &core.TxInfo{

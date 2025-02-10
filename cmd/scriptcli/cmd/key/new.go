@@ -28,7 +28,7 @@ var newCmd = &cobra.Command{
 		//			utils.Error("Failed to get password: %v\n", err)
 		//		}
 
-		address, err := wallet.NewKey("")
+		address, err := wallet.NewKey()
 		if err != nil {
 			utils.Error("Failed to generate new key: %v\n", err)
 		}

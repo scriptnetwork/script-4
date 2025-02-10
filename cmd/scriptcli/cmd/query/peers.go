@@ -14,7 +14,8 @@ import (
 
 // peersCmd represents the peers command.
 // Example:
-//		scriptcli query peers
+//
+//	scriptcli query peers
 var peersCmd = &cobra.Command{
 	Use:     "peers",
 	Short:   "Get currently connected peers",
@@ -23,9 +24,7 @@ var peersCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		client := rpcc.NewRPCClient(viper.GetString(utils.CfgRemoteRPCEndpoint))
 
-		res, err := client.Call("script.GetPeers", rpc.GetPeersArgs{
-			SkipEdgeNode: skipEdgeNodeFlag,
-		})
+		res, err := client.Call("script.GetPeers", rpc.GetPeersArgs{})
 		if err != nil {
 			utils.Error("Failed to get peers: %v\n", err)
 		}
@@ -41,5 +40,4 @@ var peersCmd = &cobra.Command{
 }
 
 func init() {
-	peersCmd.Flags().BoolVar(&skipEdgeNodeFlag, "skip_edge_node", true, "skip peer edge nodes")
 }

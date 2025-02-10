@@ -456,6 +456,7 @@ func (c *transferScript) Run(evm *EVM, input []byte, callerAddr common.Address, 
 	return common.Bytes{}, nil
 }
 
+/*
 // stakeToLightning stake Script to Lightning node
 type stakeToLightning struct {
 }
@@ -494,7 +495,9 @@ func (c *unstakeFromLightning) Run(evm *EVM, input []byte, callerAddr common.Add
 	}
 	return common.Bytes{}, nil
 }
+*/
 
+/*
 // stakeToEEN stake SPAY to EEN
 type stakeToEEN struct {
 }
@@ -519,6 +522,7 @@ func (c *stakeToEEN) Run(evm *EVM, input []byte, callerAddr common.Address, cont
 type unstakeFromEEN struct {
 }
 
+
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *unstakeFromEEN) RequiredGas(input []byte, blockHeight uint64) uint64 {
 	return params.UnstakeFromLightningGas
@@ -532,3 +536,4 @@ func (c *unstakeFromEEN) Run(evm *EVM, input []byte, callerAddr common.Address, 
 	}
 	return common.Bytes{}, nil
 }
+*/

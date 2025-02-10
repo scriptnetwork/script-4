@@ -404,11 +404,7 @@ const (
 	// ChannelIDNATMapping indicates the channel for NAT Mapping messages between peers
 	ChannelIDNATMapping
 
-	// ChannelIDEliteEdgeNode indicates the channel for Elite Edge Node vote messages
-	ChannelIDEliteEdgeNodeVote
-
-	// ChannelIDAggregatedEliteEdgeNodeVotes indicates the channel for Elite Edge Node aggregated vote messages
-	ChannelIDAggregatedEliteEdgeNodeVotes
+	ChannelIDMax
 )
 
 // P2POptEnum defines the p2p network
@@ -434,9 +430,6 @@ const (
 	// NodeTypeInvalid indicates an invalid type of node
 	NodeTypeInvalid NodeType = iota
 
-	// NodeTypeBlockchainNode indicates the node/peer is a blockchain node (i.e. validator/lightning/wallet node)
+	// NodeTypeBlockchainNode indicates the node/peer is a blockchain node (i.e. validator/lightning)
 	NodeTypeBlockchainNode
-
-	// NodeTypeEdgeNode indicates the node/peer is an edge node
-	NodeTypeEdgeNode
 )

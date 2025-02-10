@@ -139,7 +139,6 @@ func init() {
 	sendCmd.Flags().StringVar(&feeFlag, "fee", fmt.Sprintf("%dwei", types.MinimumTransactionFeeSPAYWei), "Fee")
 	sendCmd.Flags().StringVar(&walletFlag, "wallet", "soft", "Wallet type (soft|nano|trezor)")
 	sendCmd.Flags().BoolVar(&asyncFlag, "async", false, "block until tx has been included in the blockchain")
-	sendCmd.Flags().StringVar(&passwordFlag, "password", "", "password to unlock the wallet")
 
 	sendCmd.MarkFlagRequired("chain")
 	//sendCmd.MarkFlagRequired("from")

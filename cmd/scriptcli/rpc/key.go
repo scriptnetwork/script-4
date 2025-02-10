@@ -7,8 +7,7 @@ import (
 // ------------------------------- UnlockKey -----------------------------------
 
 type UnlockKeyArgs struct {
-	Address  string `json:"address"`
-	Password string `json:"password"`
+	Address string `json:"address"`
 }
 
 type UnlockKeyResult struct {
@@ -17,8 +16,7 @@ type UnlockKeyResult struct {
 
 func (t *ScriptCliRPCService) UnlockKey(args *UnlockKeyArgs, result *UnlockKeyResult) (err error) {
 	address := common.HexToAddress(args.Address)
-	password := args.Password
-	err = t.wallet.Unlock(address, password, nil)
+	err = t.wallet.Unlock(address, nil)
 	if err != nil {
 		result.Unlocked = false
 		return err
@@ -67,7 +65,6 @@ func (t *ScriptCliRPCService) IsKeyUnlocked(args *IsKeyUnlockedArgs, result *IsK
 // ------------------------------- NewKey -----------------------------------
 
 type NewKeyArgs struct {
-	Password string `json:"password"`
 }
 
 type NewKeyResult struct {
@@ -75,13 +72,10 @@ type NewKeyResult struct {
 }
 
 func (t *ScriptCliRPCService) NewKey(args *NewKeyArgs, result *NewKeyResult) (err error) {
-	password := args.Password
-
-	address, err := t.wallet.NewKey(password)
+	address, err := t.wallet.NewKey()
 	if err != nil {
 		return err
 	}
-
 	result.Address = address.Hex()
 	return nil
 }

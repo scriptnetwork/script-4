@@ -121,29 +121,6 @@ func (t *ScriptRPCService) GetAccount(args *GetAccountArgs, result *GetAccountRe
 	return nil
 }
 
-// ------------------------------- GetSplitRule -----------------------------------
-
-type GetSplitRuleArgs struct {
-	ResourceID string `json:"resource_id"`
-}
-
-type GetSplitRuleResult struct {
-	*types.SplitRule
-}
-
-func (t *ScriptRPCService) GetSplitRule(args *GetSplitRuleArgs, result *GetSplitRuleResult) (err error) {
-	if args.ResourceID == "" {
-		return errors.New("ResourceID must be specified")
-	}
-	resourceID := args.ResourceID
-	ledgerState, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-	result.SplitRule = ledgerState.GetSplitRule(resourceID)
-	return nil
-}
-
 // ------------------------------ GetTransaction -----------------------------------
 
 type GetTransactionArgs struct {
@@ -348,17 +325,16 @@ type GetBlockResult struct {
 type GetBlocksResult []*GetBlockResultInner
 
 type GetBlockResultInner struct {
-	ChainID            string                   `json:"chain_id"`
-	Epoch              common.JSONUint64        `json:"epoch"`
-	Height             common.JSONUint64        `json:"height"`
-	Parent             common.Hash              `json:"parent"`
-	TxHash             common.Hash              `json:"transactions_hash"`
-	StateHash          common.Hash              `json:"state_hash"`
-	Timestamp          *common.JSONBig          `json:"timestamp"`
-	Proposer           common.Address           `json:"proposer"`
-	HCC                core.CommitCertificate   `json:"hcc"`
-	LightningVotes     *core.AggregatedVotes    `json:"lightning_votes"`
-	EliteEdgeNodeVotes *core.AggregatedEENVotes `json:"elite_edge_node_votes"`
+	ChainID        string                 `json:"chain_id"`
+	Epoch          common.JSONUint64      `json:"epoch"`
+	Height         common.JSONUint64      `json:"height"`
+	Parent         common.Hash            `json:"parent"`
+	TxHash         common.Hash            `json:"transactions_hash"`
+	StateHash      common.Hash            `json:"state_hash"`
+	Timestamp      *common.JSONBig        `json:"timestamp"`
+	Proposer       common.Address         `json:"proposer"`
+	HCC            core.CommitCertificate `json:"hcc"`
+	LightningVotes *core.AggregatedVotes  `json:"lightning_votes"`
 
 	Children []common.Hash    `json:"children"`
 	Status   core.BlockStatus `json:"status"`
@@ -376,12 +352,7 @@ const (
 	TxTypeReserveFund
 	TxTypeReleaseFund
 	TxTypeServicePayment
-	TxTypeSplitRule
 	TxTypeSmartContract
-	TxTypeDepositStake
-	TxTypeWithdrawStake
-	TxTypeDepositStakeTxV2
-	TxTypeStakeRewardDistributionTx
 )
 
 func (t *ScriptRPCService) GetBlock(args *GetBlockArgs, result *GetBlockResult) (err error) {
@@ -477,7 +448,6 @@ func (t *ScriptRPCService) GetBlockByHeight(args *GetBlockByHeightArgs, result *
 	result.Status = block.Status
 	result.HCC = block.HCC
 	result.LightningVotes = block.LightningVotes
-	result.EliteEdgeNodeVotes = block.EliteEdgeNodeVotes
 
 	result.Hash = block.Hash()
 
@@ -586,7 +556,6 @@ func (t *ScriptRPCService) GetBlocksByRange(args *GetBlocksByRangeArgs, result *
 		blkInner.Status = block.Status
 		blkInner.HCC = block.HCC
 		blkInner.LightningVotes = block.LightningVotes
-		blkInner.EliteEdgeNodeVotes = block.EliteEdgeNodeVotes
 
 		blkInner.Hash = block.Hash()
 
@@ -697,7 +666,7 @@ type GetPeerURLsResult struct {
 }
 
 func (t *ScriptRPCService) GetPeerURLs(args *GetPeersArgs, result *GetPeerURLsResult) (err error) {
-	peerURLs := t.dispatcher.PeerURLs(args.SkipEdgeNode)
+	peerURLs := t.dispatcher.PeerURLs()
 
 	numPeers := len(peerURLs)
 	rand.Seed(time.Now().UnixNano())
@@ -715,7 +684,6 @@ func (t *ScriptRPCService) GetPeerURLs(args *GetPeersArgs, result *GetPeerURLsRe
 // ------------------------------ GetPeers -----------------------------------
 
 type GetPeersArgs struct {
-	SkipEdgeNode bool `json:"skip_edge_node"`
 }
 
 type GetPeersResult struct {
@@ -723,7 +691,7 @@ type GetPeersResult struct {
 }
 
 func (t *ScriptRPCService) GetPeers(args *GetPeersArgs, result *GetPeersResult) (err error) {
-	peers := t.dispatcher.Peers(args.SkipEdgeNode)
+	peers := t.dispatcher.Peers()
 	result.Peers = peers
 
 	return
@@ -776,22 +744,22 @@ func (t *ScriptRPCService) GetValidatorsByHeight(args *GetValidatorsByHeightArgs
 	return nil
 }
 
-// ------------------------------ GetGcp -----------------------------------
+// ------------------------------ GetLightnings -----------------------------------
 
-type GetGcpByHeightArgs struct {
+type GetLightningsByHeightArgs struct {
 	Height common.JSONUint64 `json:"height"`
 }
 
-type GetGcpResult struct {
-	BlockHashGcpPairs []BlockHashGcpPair
+type GetLightningsResult struct {
+	BlockHashLightningsPairs []BlockHashLightningsPair
 }
 
-type BlockHashGcpPair struct {
-	BlockHash common.Hash
-	Gcp       *core.LightningCandidatePool
+type BlockHashLightningsPair struct {
+	BlockHash  common.Hash
+	Lightnings *core.AddressSet
 }
 
-func (t *ScriptRPCService) GetGcpByHeight(args *GetGcpByHeightArgs, result *GetGcpResult) (err error) {
+func (t *ScriptRPCService) GetLightningsByHeight(args *GetLightningsByHeightArgs, result *GetLightningsResult) (err error) {
 	deliveredView, err := t.ledger.GetDeliveredSnapshot()
 	if err != nil {
 		return err
@@ -800,7 +768,7 @@ func (t *ScriptRPCService) GetGcpByHeight(args *GetGcpByHeightArgs, result *GetG
 	db := deliveredView.GetDB()
 	height := uint64(args.Height)
 
-	blockHashGcpPairs := []BlockHashGcpPair{}
+	blockHashLightningsPairs := []BlockHashLightningsPair{}
 	blocks := t.chain.FindBlocksByHeight(height)
 	for _, b := range blocks {
 		blockHash := b.Hash()
@@ -809,14 +777,14 @@ func (t *ScriptRPCService) GetGcpByHeight(args *GetGcpByHeightArgs, result *GetG
 		if blockStoreView == nil { // might have been pruned
 			return fmt.Errorf("the GCP for height %v does not exists, it might have been pruned", height)
 		}
-		gcp := blockStoreView.GetLightningCandidatePool()
-		blockHashGcpPairs = append(blockHashGcpPairs, BlockHashGcpPair{
-			BlockHash: blockHash,
-			Gcp:       gcp,
+		lightnings := blockStoreView.GetLightnings()
+		blockHashLightningsPairs = append(blockHashLightningsPairs, BlockHashLightningsPair{
+			BlockHash:  blockHash,
+			Lightnings: lightnings,
 		})
 	}
 
-	result.BlockHashGcpPairs = blockHashGcpPairs
+	result.BlockHashLightningsPairs = blockHashLightningsPairs
 
 	return nil
 }
@@ -850,222 +818,6 @@ func (t *ScriptRPCService) GetLightningInfo(args *GetLightningInfoArgs, result *
 		return fmt.Errorf("Failed to generate signature: %v", err.Error())
 	}
 	result.Signature = hex.EncodeToString(sig.ToBytes())
-
-	return nil
-}
-
-// ------------------------------ GetEenp -----------------------------------
-
-type GetEenpByHeightArgs struct {
-	Height common.JSONUint64 `json:"height"`
-}
-
-type GetEenpResult struct {
-	BlockHashEenpPairs []BlockHashEenpPair
-}
-
-type BlockHashEenpPair struct {
-	BlockHash common.Hash
-	EENs      []*core.EliteEdgeNode
-}
-
-func (t *ScriptRPCService) GetEenpByHeight(args *GetEenpByHeightArgs, result *GetEenpResult) (err error) {
-	deliveredView, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-
-	db := deliveredView.GetDB()
-	height := uint64(args.Height)
-
-	blockHashEenpPairs := []BlockHashEenpPair{}
-	b := t.chain.FindBestBlockByHeight(height)
-	if b != nil {
-		blockHash := b.Hash()
-		stateRoot := b.StateHash
-		blockStoreView := state.NewStoreView(height, stateRoot, db)
-		if blockStoreView == nil { // might have been pruned
-			return fmt.Errorf("the EENP for height %v does not exists, it might have been pruned", height)
-		}
-		eenp := state.NewEliteEdgeNodePool(blockStoreView, true)
-		eens := eenp.GetAll(false)
-		blockHashEenpPairs = append(blockHashEenpPairs, BlockHashEenpPair{
-			BlockHash: blockHash,
-			EENs:      eens,
-		})
-	}
-
-	result.BlockHashEenpPairs = blockHashEenpPairs
-
-	return nil
-}
-
-// ------------------------------ GetEenpStake -----------------------------------
-
-type GetEenpStakeByHeightArgs struct {
-	Height        common.JSONUint64 `json:"height"`
-	Source        common.Address    `json:"source"`
-	Holder        common.Address    `json:"holder"`
-	WithdrawnOnly bool              `json:"withdrawn_only"`
-}
-
-type GetEenpStakeResult struct {
-	Stake core.Stake `json:"stake"`
-}
-
-func (t *ScriptRPCService) GetEenpStakeByHeight(args *GetEenpStakeByHeightArgs, result *GetEenpStakeResult) (err error) {
-	deliveredView, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-
-	db := deliveredView.GetDB()
-	height := uint64(args.Height)
-
-	var stake *core.Stake
-	b := t.chain.FindBestBlockByHeight(height)
-	if b == nil {
-		return fmt.Errorf("Can't find block for height %v", height)
-	}
-
-	stateRoot := b.StateHash
-	blockStoreView := state.NewStoreView(height, stateRoot, db)
-	if blockStoreView == nil { // might have been pruned
-		return fmt.Errorf("the EENP for height %v does not exists, it might have been pruned", height)
-	}
-	eenp := state.NewEliteEdgeNodePool(blockStoreView, true)
-	stake, err = eenp.GetStake(args.Source, args.Holder, args.WithdrawnOnly)
-	if err != nil {
-		return err
-	}
-
-	result.Stake = *stake
-
-	return nil
-}
-
-// ------------------------------ GetStakeRewardDistributionRuleSetByHeight -----------------------------------
-
-type GetStakeRewardDistributionRuleSetByHeightArgs struct {
-	Height  common.JSONUint64 `json:"height"`
-	Address string            `json:"address"` // the address of the stake holder, i.e. the lightning or elite edge node
-}
-
-type GetStakeRewardDistributionRuleSetResult struct {
-	BlockHashStakeRewardDistributionRuleSetPairs []BlockHashStakeRewardDistributionRuleSetPair
-}
-
-type BlockHashStakeRewardDistributionRuleSetPair struct {
-	BlockHash                      common.Hash
-	StakeRewardDistributionRuleSet []*core.RewardDistribution
-}
-
-func (t *ScriptRPCService) GetStakeRewardDistributionByHeight(
-	args *GetStakeRewardDistributionRuleSetByHeightArgs, result *GetStakeRewardDistributionRuleSetResult) (err error) {
-	deliveredView, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-
-	db := deliveredView.GetDB()
-	height := uint64(args.Height)
-	addressStr := args.Address
-
-	blockHashSrdrsPairs := []BlockHashStakeRewardDistributionRuleSetPair{}
-	blocks := t.chain.FindBlocksByHeight(height)
-	for _, b := range blocks {
-		blockHash := b.Hash()
-		stateRoot := b.StateHash
-		blockStoreView := state.NewStoreView(height, stateRoot, db)
-		if blockStoreView == nil { // might have been pruned
-			return fmt.Errorf("the EENP for height %v does not exists, it might have been pruned", height)
-		}
-		srdrs := state.NewStakeRewardDistributionRuleSet(blockStoreView)
-
-		var stakeDistrList []*core.RewardDistribution
-		if addressStr != "" {
-			address := common.HexToAddress(addressStr)
-			rewardDistr := srdrs.Get(address)
-			stakeDistrList = []*core.RewardDistribution{rewardDistr}
-		} else {
-			stakeDistrList = srdrs.GetAll()
-		}
-
-		blockHashSrdrsPairs = append(blockHashSrdrsPairs, BlockHashStakeRewardDistributionRuleSetPair{
-			BlockHash:                      blockHash,
-			StakeRewardDistributionRuleSet: stakeDistrList,
-		})
-	}
-
-	result.BlockHashStakeRewardDistributionRuleSetPairs = blockHashSrdrsPairs
-
-	return nil
-}
-
-// ------------------------------ GetEliteEdgeNodeStakeReturnsByHeight -----------------------------------
-
-type GetEliteEdgeNodeStakeReturnsByHeightArgs struct {
-	Height common.JSONUint64 `json:"height"`
-}
-
-type GetEliteEdgeNodeStakeReturnsByHeightResult struct {
-	EENStakeReturns []state.StakeWithHolder
-}
-
-func (t *ScriptRPCService) GetEliteEdgeNodeStakeReturnsByHeight(
-	args *GetEliteEdgeNodeStakeReturnsByHeightArgs, result *GetEliteEdgeNodeStakeReturnsByHeightResult) (err error) {
-	deliveredView, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-
-	height := uint64(args.Height)
-	result.EENStakeReturns = deliveredView.GetEliteEdgeNodeStakeReturns(height)
-
-	return nil
-}
-
-// ------------------------------ GetAllPendingEliteEdgeNodeStakeReturns -----------------------------------
-
-type HeightStakeReturnsPair struct {
-	HeightKey       string
-	EENStakeReturns []state.StakeWithHolder
-}
-
-type GetAllPendingEliteEdgeNodeStakeReturnsArgs struct {
-}
-
-type GetAllPendingEliteEdgeNodeStakeReturnsResult struct {
-	EENHeightStakeReturnsPairs []HeightStakeReturnsPair
-}
-
-func (t *ScriptRPCService) GetAllPendingEliteEdgeNodeStakeReturns(
-	args *GetAllPendingEliteEdgeNodeStakeReturnsArgs, result *GetAllPendingEliteEdgeNodeStakeReturnsResult) (err error) {
-	deliveredView, err := t.ledger.GetDeliveredSnapshot()
-	if err != nil {
-		return err
-	}
-
-	eenHeightStakeReturnsPairs := []HeightStakeReturnsPair{}
-	cb := func(k, v common.Bytes) bool {
-		srList := []state.StakeWithHolder{}
-		err := types.FromBytes(v, &srList)
-		if err != nil {
-			log.Panicf("GetAllPendingEliteEdgeNodeStakeReturns: Error reading StakeWithHolder %X, error: %v",
-				v, err.Error())
-		}
-
-		eenHeightStakeReturnsPairs = append(eenHeightStakeReturnsPairs, HeightStakeReturnsPair{
-			HeightKey:       string(k),
-			EENStakeReturns: srList,
-		})
-		return true
-	}
-
-	prefix := state.EliteEdgeNodeStakeReturnsKeyPrefix()
-	deliveredView.Traverse(prefix, cb)
-
-	result.EENHeightStakeReturnsPairs = eenHeightStakeReturnsPairs
 
 	return nil
 }
@@ -1253,8 +1005,6 @@ func getTxType(tx types.Tx) byte {
 		t = TxTypeReleaseFund
 	case *types.ServicePaymentTx:
 		t = TxTypeServicePayment
-	case *types.SplitRuleTx:
-		t = TxTypeSplitRule
 	case *types.SmartContractTx:
 		t = TxTypeSmartContract
 	}

@@ -31,9 +31,7 @@ const (
 	dbKey = "peers"
 )
 
-//
 // PeerTable is a lookup table for peers
-//
 type PeerTable struct {
 	mutex *sync.Mutex
 
@@ -137,8 +135,7 @@ func (pt *PeerTable) PeerExists(peerID pr.ID) bool {
 }
 
 // GetAllPeers returns all the peers
-func (pt *PeerTable) GetAllPeers(skipEdgeNode bool) *([]*Peer) {
-	// TODO: support skipEdgeNode
+func (pt *PeerTable) GetAllPeers() *([]*Peer) {
 	pt.mutex.Lock()
 	defer pt.mutex.Unlock()
 
@@ -241,8 +238,7 @@ func (pt *PeerTable) GetSelection() (peerIDAddrs []pr.ID) {
 }
 
 // GetTotalNumPeers returns the total number of peers in the PeerTable
-func (pt *PeerTable) GetTotalNumPeers(skipEdgeNode bool) uint {
-	// TODO: support skipEdgeNode
+func (pt *PeerTable) GetTotalNumPeers() uint {
 	pt.mutex.Lock()
 	defer pt.mutex.Unlock()
 

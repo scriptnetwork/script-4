@@ -481,7 +481,7 @@ func (rm *RequestManager) downloadBranch(branchTipHash common.Hash) {
 			}
 
 			request.Entries = append(request.Entries, blockHash.String())
-			selectedPeers := rm.syncMgr.dispatcher.Peers(true)
+			selectedPeers := rm.syncMgr.dispatcher.Peers()
 			rand.Seed(time.Now().UnixNano())
 			rand.Shuffle(len(selectedPeers), func(i, j int) {
 				selectedPeers[i], selectedPeers[j] = selectedPeers[j], selectedPeers[i]
@@ -776,7 +776,7 @@ func (rm *RequestManager) getInventory(req dispatcher.InventoryRequest) {
 	prioritizeSeedPeers := viper.GetBool(common.CfgP2PPrioritizeSeedPeersForBlockSync)
 	if prioritizeSeedPeers {
 		peersToRequest = []string{}
-		allPeers := rm.syncMgr.dispatcher.Peers(true) // skip edge nodes
+		allPeers := rm.syncMgr.dispatcher.Peers() // skip edge nodes
 		for _, pid := range allPeers {
 			if rm.syncMgr.dispatcher.IsSeedPeer(pid) {
 				peersToRequest = append(peersToRequest, pid)
@@ -808,7 +808,7 @@ func (rm *RequestManager) getInventory(req dispatcher.InventoryRequest) {
 		targetSize += 2
 	}
 	if len(peersToRequest) < targetSize { // resample
-		allPeers := rm.syncMgr.dispatcher.Peers(true) // skip edge nodes
+		allPeers := rm.syncMgr.dispatcher.Peers() // skip edge nodes
 		samples := util.Sample(allPeers, targetSize)
 		for _, sample := range samples {
 			duplicate := false

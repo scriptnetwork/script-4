@@ -9,10 +9,10 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/p2p/netutil"
 	pr "github.com/scripttoken/script/p2p/peer"
+	"github.com/spf13/viper"
 
 	gonetutil "golang.org/x/net/netutil"
 )
@@ -154,8 +154,7 @@ func (ipl *InboundPeerListener) listenRoutine() {
 				logger.Infof("Accept inbound connection from seed peer %v", remoteAddr.String())
 			}
 		} else {
-			skipEdgeNode := !viper.GetBool(common.CfgP2PIsBootstrapNode)
-			numPeers := int(ipl.discMgr.peerTable.GetTotalNumPeers(skipEdgeNode))
+			numPeers := int(ipl.discMgr.peerTable.GetTotalNumPeers())
 			if numPeers >= maxNumPeers {
 				if viper.GetBool(common.CfgP2PConnectionFIFO) {
 					purgedPeer := ipl.discMgr.peerTable.PurgeOldestPeer()
@@ -202,7 +201,7 @@ func (ipl *InboundPeerListener) listenRoutine() {
 func (ipl *InboundPeerListener) purgeAllNonSeedPeers() {
 	logger.Infof("Purge all non-seed peers")
 
-	allPeers := ipl.discMgr.peerTable.GetAllPeers(false)
+	allPeers := ipl.discMgr.peerTable.GetAllPeers()
 	for _, peer := range *allPeers {
 		if !peer.IsSeed() {
 			ipl.discMgr.peerTable.DeletePeer(peer.ID())

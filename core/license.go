@@ -40,10 +40,18 @@ func (e *AddressSet) Has(addr common.Address) bool {
 	return false
 }
 
+func (e *AddressSet) Hash() common.Hash {
+	var buffer bytes.Buffer
+	for addr := range *e {
+		buffer.Write(addr.Bytes())
+	}
+	return common.BytesToHash(buffer.Bytes())
+}
+
 func (e AddressSet) Copy() AddressSet {
 	newSet := make(AddressSet)
 	for addr := range e {
-		newSet[addr] = struct{}{}
+		newSet[addr] = e[addr]
 	}
 	return newSet
 }
@@ -58,6 +66,17 @@ func (e *AddressSet) ToSortedSlice() []common.Address {
 	})
 	return slice
 }
+
+/*
+func (e *AddressSet) PubKeys() []*crypto.PublicKey {
+	pubKeys := make([]*crypto.PublicKey, 0, len(*e))
+	for _, pubKey := range *e {
+		pubKeyCopy := pubKey
+		pubKeys = append(pubKeys, &pubKeyCopy)
+	}
+	return pubKeys
+}
+*/
 
 func NewAddressSet() AddressSet {
 	return make(AddressSet)
@@ -138,6 +157,15 @@ func IsValidator(address common.Address) bool {
 	licenses__mx.RLock()
 	defer licenses__mx.RUnlock()
 	if _, exists := validators[address]; exists {
+		return true
+	}
+	return false
+}
+
+func IsLightning(address common.Address) bool {
+	licenses__mx.RLock()
+	defer licenses__mx.RUnlock()
+	if _, exists := lightnings[address]; exists {
 		return true
 	}
 	return false

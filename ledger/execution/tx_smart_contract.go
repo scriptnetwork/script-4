@@ -49,17 +49,10 @@ func (exec *SmartContractTxExecutor) sanityCheck(chainID string, view *st.StoreV
 	// Check signatures
 	signBytes := tx.SignBytes(chainID)
 	nativeSignatureValid := tx.From.Signature.Verify(signBytes, tx.From.Address)
-	if blockHeight >= common.HeightTxWrapperExtension {
-		signBytesV2 := types.ChangeEthereumTxWrapper(signBytes, 2)
-		nativeSignatureValid = nativeSignatureValid || tx.From.Signature.Verify(signBytesV2, tx.From.Address)
-	}
+	signBytesV2 := types.ChangeEthereumTxWrapper(signBytes, 2)
+	nativeSignatureValid = nativeSignatureValid || tx.From.Signature.Verify(signBytesV2, tx.From.Address)
 
 	if !nativeSignatureValid {
-		if blockHeight < common.HeightRPCCompatibility {
-			return result.Error("Signature verification failed, SignBytes: %v",
-				hex.EncodeToString(signBytes)).WithErrorCode(result.CodeInvalidSignature)
-		}
-
 		// interpret the signature as ETH tx signature
 		if tx.From.Coins.SCPTWei.Cmp(big.NewInt(0)) != 0 {
 			return result.Error("Sending Script with ETH transaction is not allowed") // extra check, since ETH transaction only signs the SPAY part (i.e., value, gasPrice, gasLimit, etc)
@@ -113,12 +106,10 @@ func (exec *SmartContractTxExecutor) sanityCheck(chainID string, view *st.StoreV
 			WithErrorCode(result.CodeInvalidGasLimit)
 	}
 
-	if vm.SupportWrappedScript(blockHeight) {
-		err := exec.checkIntrinsicGas(tx)
-		if err != nil {
-			return result.Error("Intrinsic gas check failed: %v", err).
-				WithErrorCode(result.CodeInvalidGasLimit)
-		}
+	err := exec.checkIntrinsicGas(tx)
+	if err != nil {
+		return result.Error("Intrinsic gas check failed: %v", err).
+			WithErrorCode(result.CodeInvalidGasLimit)
 	}
 
 	zero := big.NewInt(0)
@@ -131,18 +122,11 @@ func (exec *SmartContractTxExecutor) sanityCheck(chainID string, view *st.StoreV
 	}
 
 	var minimalBalance types.Coins
-	value := coins.SPAYWei      // NoNil() already guarantees value is NOT nil
+	value := coins.SPAYWei       // NoNil() already guarantees value is NOT nil
 	scriptValue := coins.SCPTWei // NoNil() already guarantees value is NOT nil
-	if !vm.SupportScriptTransferInEVM(blockHeight) {
-		minimalBalance = types.Coins{
-			SCPTWei: zero,
-			SPAYWei: feeLimit.Add(feeLimit, value),
-		}
-	} else {
-		minimalBalance = types.Coins{
-			SCPTWei: scriptValue,
-			SPAYWei: feeLimit.Add(feeLimit, value),
-		}
+	minimalBalance = types.Coins{
+		SCPTWei: scriptValue,
+		SPAYWei: feeLimit.Add(feeLimit, value),
 	}
 
 	if !fromAccount.Balance.IsGTE(minimalBalance) {

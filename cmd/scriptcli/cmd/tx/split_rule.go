@@ -1,5 +1,6 @@
 package tx
 
+/*
 import (
 	"encoding/hex"
 	"fmt"
@@ -131,3 +132,4 @@ func init() {
 	splitRuleCmd.MarkFlagRequired("resource_id")
 	splitRuleCmd.MarkFlagRequired("duration")
 }
+*/

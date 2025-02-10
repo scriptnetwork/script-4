@@ -102,12 +102,6 @@ func fmtValue(value []byte) string {
 		return fmt.Sprintf("%v", account)
 	}
 
-	splitRule := types.SplitRule{}
-	err = rlp.DecodeBytes(value, &splitRule)
-	if err == nil {
-		return fmt.Sprintf("%v", splitRule)
-	}
-
 	validators := core.AddressSet{}
 	err = rlp.DecodeBytes(value, &validators)
 	if err == nil {

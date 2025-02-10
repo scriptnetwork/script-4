@@ -14,7 +14,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/blockchain"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
@@ -22,6 +21,7 @@ import (
 	"github.com/scripttoken/script/core"
 	dp "github.com/scripttoken/script/dispatcher"
 	"github.com/scripttoken/script/version"
+	"github.com/spf13/viper"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "reporter"})
@@ -97,7 +97,7 @@ func (rp *Reporter) Wait() {
 	rp.wg.Wait()
 }
 
-//report online & sync
+// report online & sync
 func (rp *Reporter) reportOnlineAndSync() {
 	for {
 		select {
@@ -146,7 +146,7 @@ func (rp *Reporter) handlePeers() {
 }
 
 func (rp *Reporter) peersToString() string {
-	p := rp.disp.Peers(true) // skip edge nodes
+	p := rp.disp.Peers() // skip edge nodes
 	var sb strings.Builder
 	for i, peer := range p {
 		if i > 0 {

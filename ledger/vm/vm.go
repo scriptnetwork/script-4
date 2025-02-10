@@ -24,7 +24,6 @@ import (
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/crypto/bls"
-	"github.com/scripttoken/script/ledger/state"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/ledger/vm/params"
 )
@@ -38,14 +37,6 @@ type (
 	// and is used by the BLOCKHASH EVM op code.
 	GetHashFunc func(uint64) common.Hash
 )
-
-func SupportScriptTransferInEVM(blockHeight uint64) bool {
-	return blockHeight >= common.HeightSupportScriptTokenInSmartContract
-}
-
-func SupportWrappedScript(blockHeight uint64) bool {
-	return blockHeight >= common.HeightSupportWrappedScript
-}
 
 // CanTransfer checks whether there are enough funds in the address' account to make a transfer.
 // This does not take the necessary gas in to account to make the transfer valid.
@@ -124,133 +115,132 @@ func checkBlsSummary(blsPubkey *bls.PublicKey, blsPop *bls.Signature, holderSig 
 	return true
 }
 
+/*
 // StakeToLightning stake Script to given lightning node.
-func StakeToLightning(db StateDB, sender common.Address, lightningSummary []byte, amount *big.Int) bool {
-	// if amount.Cmp(core.MinLightningStakeDeposit) < 0 {
-	// 	return false
-	// }
-	if db.GetScriptBalance(sender).Cmp(amount) < 0 {
-		return false
-	}
 
-	lightningAddr, blsPubkey, blsPop, holderSig, ok := parseBLSSummary(lightningSummary)
-	if !ok {
-		return false
-	}
-
-	view := db.(*state.StoreView)
-	gcp := view.GetLightningCandidatePool()
-	if !gcp.Contains(lightningAddr) {
-		if !checkBlsSummary(blsPubkey, blsPop, holderSig, lightningAddr) {
+	func StakeToLightning(db StateDB, sender common.Address, lightningSummary []byte, amount *big.Int) bool {
+		// if amount.Cmp(core.MinLightningStakeDeposit) < 0 {
+		// 	return false
+		// }
+		if db.GetScriptBalance(sender).Cmp(amount) < 0 {
 			return false
 		}
+
+		lightningAddr, blsPubkey, blsPop, holderSig, ok := parseBLSSummary(lightningSummary)
+		if !ok {
+			return false
+		}
+
+		view := db.(*state.StoreView)
+		gcp := view.GetLightningCandidatePool()
+		if !gcp.Contains(lightningAddr) {
+			if !checkBlsSummary(blsPubkey, blsPop, holderSig, lightningAddr) {
+				return false
+			}
+		}
+
+		err := gcp.DepositStake(sender, lightningAddr, amount, blsPubkey, view.GetBlockHeight())
+		if err != nil {
+			return false
+		}
+
+		view.UpdateLightningCandidatePool(gcp)
+		db.SubScriptBalance(sender, amount)
+
+		return true
 	}
-
-	err := gcp.DepositStake(sender, lightningAddr, amount, blsPubkey, view.GetBlockHeight())
-	if err != nil {
-		return false
-	}
-
-	view.UpdateLightningCandidatePool(gcp)
-	db.SubScriptBalance(sender, amount)
-
-	return true
-}
 
 // UnstakeFromLightning unstake from Lightnings.
-func UnstakeFromLightning(db StateDB, addr common.Address, lightningAddr common.Address) bool {
-	view := db.(*state.StoreView)
-	gcp := view.GetLightningCandidatePool()
-	currentHeight := view.Height()
-	err := gcp.WithdrawStake(addr, lightningAddr, currentHeight)
-	if err != nil {
-		return false
-	}
 
-	view.UpdateLightningCandidatePool(gcp)
-	return true
-}
+	func UnstakeFromLightning(db StateDB, addr common.Address, lightningAddr common.Address) bool {
+		view := db.(*state.StoreView)
+		gcp := view.GetLightningCandidatePool()
+		currentHeight := view.Height()
+		err := gcp.WithdrawStake(addr, lightningAddr, currentHeight)
+		if err != nil {
+			return false
+		}
+
+		view.UpdateLightningCandidatePool(gcp)
+		return true
+	}
 
 // StakeToEEN stake to given EEN node.
-func StakeToEEN(db StateDB, sender common.Address, summary []byte, amount *big.Int) bool {
-	// minEliteEdgeNodeStake := core.MinEliteEdgeNodeStakeDeposit
-	// maxEliteEdgeNodeStake := core.MaxEliteEdgeNodeStakeDeposit
 
-	// if amount.Cmp(minEliteEdgeNodeStake) < 0 {
-	// 	return false
-	// }
+	func StakeToEEN(db StateDB, sender common.Address, summary []byte, amount *big.Int) bool {
+		// minEliteEdgeNodeStake := core.MinEliteEdgeNodeStakeDeposit
+		// maxEliteEdgeNodeStake := core.MaxEliteEdgeNodeStakeDeposit
 
-	eenAddr, blsPubkey, blsPop, holderSig, ok := parseBLSSummary(summary)
-	if !ok {
-		return false
+		// if amount.Cmp(minEliteEdgeNodeStake) < 0 {
+		// 	return false
+		// }
+
+		eenAddr, blsPubkey, blsPop, holderSig, ok := parseBLSSummary(summary)
+		if !ok {
+			return false
+		}
+
+		view := db.(*state.StoreView)
+
+		// currentStake := big.NewInt(0)
+
+		eenp := state.NewEliteEdgeNodePool(view, false)
+		een := eenp.Get(eenAddr)
+		// if een != nil {
+		// 	currentStake = een.TotalStake()
+		// }
+
+		// expectedStake := big.NewInt(0).Add(currentStake, amount)
+		// if expectedStake.Cmp(maxEliteEdgeNodeStake) > 0 {
+		// 	return false
+		// }
+
+		if db.GetBalance(sender).Cmp(amount) < 0 {
+			return false
+		}
+
+		if een == nil && !checkBlsSummary(blsPubkey, blsPop, holderSig, eenAddr) {
+			return false
+		}
+
+		err := eenp.DepositStake(sender, eenAddr, amount, blsPubkey, view.GetBlockHeight())
+		if err != nil {
+			return false
+		}
+
+		db.SubBalance(sender, amount)
+
+		return true
 	}
-
-	view := db.(*state.StoreView)
-
-	// currentStake := big.NewInt(0)
-
-	eenp := state.NewEliteEdgeNodePool(view, false)
-	een := eenp.Get(eenAddr)
-	// if een != nil {
-	// 	currentStake = een.TotalStake()
-	// }
-
-	// expectedStake := big.NewInt(0).Add(currentStake, amount)
-	// if expectedStake.Cmp(maxEliteEdgeNodeStake) > 0 {
-	// 	return false
-	// }
-
-	if db.GetBalance(sender).Cmp(amount) < 0 {
-		return false
-	}
-
-	if een == nil && !checkBlsSummary(blsPubkey, blsPop, holderSig, eenAddr) {
-		return false
-	}
-
-	err := eenp.DepositStake(sender, eenAddr, amount, blsPubkey, view.GetBlockHeight())
-	if err != nil {
-		return false
-	}
-
-	db.SubBalance(sender, amount)
-
-	return true
-}
 
 // UnstakeFromEEN unstake from EEN.
-func UnstakeFromEEN(db StateDB, addr common.Address, eenAddr common.Address) bool {
-	view := db.(*state.StoreView)
 
-	eenp := state.NewEliteEdgeNodePool(view, false)
+	func UnstakeFromEEN(db StateDB, addr common.Address, eenAddr common.Address) bool {
+		view := db.(*state.StoreView)
 
-	currentHeight := view.Height()
+		eenp := state.NewEliteEdgeNodePool(view, false)
 
-	withdrawnStake, err := eenp.WithdrawStake(addr, eenAddr, currentHeight)
-	if err != nil || withdrawnStake == nil {
-		return false
+		currentHeight := view.Height()
+
+		withdrawnStake, err := eenp.WithdrawStake(addr, eenAddr, currentHeight)
+		if err != nil || withdrawnStake == nil {
+			return false
+		}
+
+		returnHeight := withdrawnStake.ReturnHeight
+		stakesToBeReturned := view.GetEliteEdgeNodeStakeReturns(returnHeight)
+		stakesToBeReturned = append(stakesToBeReturned, state.StakeWithHolder{
+			Holder: eenAddr,
+			Stake:  *withdrawnStake,
+		})
+		view.SetEliteEdgeNodeStakeReturns(returnHeight, stakesToBeReturned)
+
+		return true
 	}
-
-	returnHeight := withdrawnStake.ReturnHeight
-	stakesToBeReturned := view.GetEliteEdgeNodeStakeReturns(returnHeight)
-	stakesToBeReturned = append(stakesToBeReturned, state.StakeWithHolder{
-		Holder: eenAddr,
-		Stake:  *withdrawnStake,
-	})
-	view.SetEliteEdgeNodeStakeReturns(returnHeight, stakesToBeReturned)
-
-	return true
-}
-
+*/
 func getPrecompiledContracts(blockHeight uint64) map[common.Address]PrecompiledContract {
 	var precompiles map[common.Address]PrecompiledContract
-	if blockHeight < common.HeightSupportScriptTokenInSmartContract {
-		precompiles = PrecompiledContractsByzantium
-	} else if blockHeight < common.HeightSupportWrappedScript {
-		precompiles = PrecompiledContractsScriptSupport
-	} else {
-		precompiles = PrecompiledContractsWrappedScriptSupport
-	}
+	precompiles = PrecompiledContractsWrappedScriptSupport
 	return precompiles
 }
 
@@ -391,7 +381,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, gas, ErrInsufficientBalance
 	}
 
-	if SupportScriptTransferInEVM(blockHeight) && !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
+	if !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
 		return nil, gas, ErrInsufficientScriptBlance
 	}
 
@@ -410,18 +400,10 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			}
 			return nil, gas, nil
 		}
-
-		if !SupportScriptTransferInEVM(blockHeight) { // just for backward compatibility
-			evm.StateDB.CreateAccount(addr)
-		} else { // should not wipe out the Script/SPAY balance sent to the contract address prior to contract creation
-			evm.StateDB.CreateAccountWithPreviousBalance(addr)
-		}
+		evm.StateDB.CreateAccountWithPreviousBalance(addr)
 	}
 	Transfer(evm.StateDB, caller.Address(), to.Address(), value)
-
-	if SupportScriptTransferInEVM(blockHeight) {
-		TransferScript(evm.StateDB, caller.Address(), to.Address(), scriptValue)
-	}
+	TransferScript(evm.StateDB, caller.Address(), to.Address(), scriptValue)
 
 	// Initialise a new contract and set the code that is to be used by the EVM.
 	// The contract is a scoped environment for this execution context only.
@@ -463,8 +445,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		return nil, gas, ErrInsufficientBalance
 	}
 
-	blockHeight := evm.StateDB.GetBlockHeight()
-	if SupportWrappedScript(blockHeight) && !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
+	if !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
 		return nil, gas, ErrInsufficientScriptBlance
 	}
 
@@ -580,8 +561,8 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 		return nil, common.Address{}, gas, ErrInsufficientBalance
 	}
 
-	blockHeight := evm.StateDB.GetBlockHeight()
-	if SupportScriptTransferInEVM(blockHeight) && !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
+	//blockHeight := evm.StateDB.GetBlockHeight()
+	if !CanTransferScript(evm.StateDB, caller.Address(), scriptValue) {
 		return nil, common.Address{}, gas, ErrInsufficientScriptBlance
 	}
 	nonce := evm.StateDB.GetNonce(caller.Address())
@@ -595,16 +576,10 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	// Create a new account on the state
 	snapshot := evm.StateDB.Snapshot()
 
-	if !SupportScriptTransferInEVM(blockHeight) { // just for backward compatibility
-		evm.StateDB.CreateAccount(address)
-	} else { // should not wipe out the Script/SPAY balance sent to the contract address prior to contract creation
-		evm.StateDB.CreateAccountWithPreviousBalance(address)
-	}
-	Transfer(evm.StateDB, caller.Address(), address, value)
+	evm.StateDB.CreateAccountWithPreviousBalance(address)
 
-	if SupportScriptTransferInEVM(blockHeight) {
-		TransferScript(evm.StateDB, caller.Address(), address, scriptValue)
-	}
+	Transfer(evm.StateDB, caller.Address(), address, value)
+	TransferScript(evm.StateDB, caller.Address(), address, scriptValue)
 
 	// initialise a new contract and set the code that is to be used by the
 	// EVM. The contract is a scoped environment for this execution context
@@ -624,10 +599,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	ret, err := run(evm, contract, nil, false)
 
 	// check whether the max code size has been exceeded
-	maxCodeSize := params.MaxCodeSize
-	if blockHeight >= common.HeightEnableMetachainSupport {
-		maxCodeSize = params.MaxCodeSizeForMetachain
-	}
+	maxCodeSize := params.MaxCodeSizeForMetachain
 
 	maxCodeSizeExceeded := len(ret) > maxCodeSize
 	// if the contract creation ran successfully and no errors were returned

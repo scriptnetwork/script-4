@@ -5,38 +5,25 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
 	"github.com/scripttoken/script/common"
 	ks "github.com/scripttoken/script/wallet/softwallet/keystore"
 )
 
-//
 // Usage:   sign_hex_msg -signer=<signer_address> -keys_dir=<keys_dir> -msg=<hex_msg_to_be_signed> -encrypted=<true/false>
 //
-// Example: sign_hex_msg -signer=2E833968E5bB786Ae419c4d13189fB081Cc43bab -keys_dir=$HOME/.scriptcli/keys -msg=02f8a4c78085e8d4a51000f86ff86d942e833968e5 -encrypted=true
-//
+// Example: sign_hex_msg -signer=2E833968E5bB786Ae419c4d13189fB081Cc43bab -keys_dir=$HOME/.scriptcli/keys -msg=02f8a4c78085e8d4a51000f86ff86d942e833968e5
 func main() {
-	signerAddress, keysDir, message, encrypted := parseArguments()
+	signerAddress, keysDir, message := parseArguments()
 
 	var keystore ks.Keystore
 	var err error
-	password := ""
-	if encrypted {
-		prompt := fmt.Sprintf("Please enter password: ")
-		password, err = utils.GetPassword(prompt)
-		if err != nil {
-			panic(fmt.Sprintf("\n[ERROR] Failed to get password: %v\n", err))
-		}
-		keystore, err = ks.NewKeystoreEncrypted(keysDir, ks.StandardScryptN, ks.StandardScryptP)
-	} else {
-		keystore, err = ks.NewKeystorePlain(keysDir)
-	}
+	keystore, err = ks.NewKeystorePlain(keysDir)
 	if err != nil {
 		fmt.Printf("\n[ERROR] Failed to create keystore: %v\n", err)
 		return
 	}
 
-	key, err := keystore.GetKey(signerAddress, password)
+	key, err := keystore.GetKey(signerAddress)
 	if err != nil {
 		fmt.Printf("\n[ERROR] Failed to get key: %v\n", err)
 		return
@@ -61,17 +48,15 @@ func main() {
 	fmt.Println("")
 }
 
-func parseArguments() (signerAddress common.Address, keysDir, message string, encrypted bool) {
+func parseArguments() (signerAddress common.Address, keysDir, message string) {
 	signerAddressPtr := flag.String("signer", "", "the address of the signer")
 	keysDirPtr := flag.String("keys_dir", "./keys", "the folder that contains the keys of the signers")
 	messagePtr := flag.String("msg", "", "the message to be signed")
-	encryptedPtr := flag.Bool("encrypted", true, "whether the private key is encrypted")
 
 	flag.Parse()
 
 	signerAddress = common.HexToAddress(*signerAddressPtr)
 	keysDir = *keysDirPtr
 	message = *messagePtr
-	encrypted = *encryptedPtr
 	return
 }

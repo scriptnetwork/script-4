@@ -1,5 +1,6 @@
 package core
 
+/*
 import (
 	"bytes"
 	"errors"
@@ -310,3 +311,5 @@ type EliteEdgeNodePool interface {
 	WithdrawStake(source common.Address, holder common.Address, currentHeight uint64) (*Stake, error)
 	RandomRewardWeight(block common.Hash, eenAddr common.Address) int
 }
+
+*/

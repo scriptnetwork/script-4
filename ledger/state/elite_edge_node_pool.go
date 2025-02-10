@@ -1,25 +1,11 @@
 package state
 
-import (
-	crand "crypto/rand"
-	"fmt"
-	"io"
-	"log"
-	"math/big"
-
-	"github.com/scripttoken/script/common"
-	"github.com/scripttoken/script/common/util"
-	"github.com/scripttoken/script/core"
-	"github.com/scripttoken/script/crypto/bls"
-	"github.com/scripttoken/script/ledger/types"
-)
-
 const eenpRewardN = 800 // Reward receiver sampling params
 
 //
 // ------- EliteEdgeNodePool ------- //
 //
-
+/*
 type EliteEdgeNodePool struct {
 	readOnly bool
 	sv       *StoreView
@@ -323,3 +309,4 @@ func (eenp *EliteEdgeNodePool) ReturnStake(currentHeight uint64, holder common.A
 
 	return nil
 }
+*/

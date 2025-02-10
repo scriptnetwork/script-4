@@ -45,15 +45,15 @@ func LightningsKey() common.Bytes {
 }
 
 // LightningCandidatePoolKey returns the state key for the guadian stake holder set
-func LightningCandidatePoolKey() common.Bytes {
-	return common.Bytes("ls/gcp")
-}
+//func LightningsKey() common.Bytes {
+//	return common.Bytes("ls/lightnings")
+//}
 
 // // EliteEdgeNodePoolKey returns the state key for the elite edge node SPAY stake holder set
 // func EliteEdgeNodePoolKey() common.Bytes {
 // 	return common.Bytes("ls/eenp")
 // }
-
+/*
 // EliteEdgeNodeKeyPrefix returns the prefix of the elite edge node key
 func EliteEdgeNodeKeyPrefix() common.Bytes {
 	return common.Bytes("ls/een/")
@@ -64,7 +64,7 @@ func EliteEdgeNodeKey(addr common.Address) common.Bytes {
 	prefix := EliteEdgeNodeKeyPrefix()
 	return append(prefix, addr[:]...)
 }
-
+*/
 /*
 // StakeTransactionHeightListKey returns the state key the heights of blocks
 // that contain stake related transactions (i.e. StakeDeposit, StakeWithdraw, etc)

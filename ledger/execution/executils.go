@@ -197,10 +197,8 @@ func validateInputAdvanced(acc *types.Account, signBytes []byte, in types.TxInpu
 
 	// Check signatures
 	signatureValid := in.Signature.Verify(signBytes, acc.Address)
-	if blockHeight >= common.HeightTxWrapperExtension {
-		signBytesV2 := types.ChangeEthereumTxWrapper(signBytes, 2)
-		signatureValid = signatureValid || in.Signature.Verify(signBytesV2, acc.Address)
-	}
+	signBytesV2 := types.ChangeEthereumTxWrapper(signBytes, 2)
+	signatureValid = signatureValid || in.Signature.Verify(signBytesV2, acc.Address)
 
 	if !signatureValid {
 		return result.Error("Signature verification failed, SignBytes: %v",

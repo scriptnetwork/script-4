@@ -17,9 +17,7 @@ import (
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "dispatcher"})
 
-//
 // Dispatcher dispatches messages to approporiate destinations
-//
 type Dispatcher struct {
 	p2pnet  p2p.Network
 	p2plnet p2pl.Network
@@ -79,7 +77,7 @@ func (dp *Dispatcher) Wait() {
 // GetInventory sends out the InventoryRequest
 func (dp *Dispatcher) GetInventory(peerIDs []string, invreq InventoryRequest) {
 	if len(peerIDs) == 0 {
-		dp.broadcastToNeighbors(invreq.ChannelID, invreq, true /* never ask an edge node for inventory */)
+		dp.broadcastToNeighbors(invreq.ChannelID, invreq)
 	} else {
 		dp.send(peerIDs, invreq.ChannelID, invreq)
 	}
@@ -88,7 +86,7 @@ func (dp *Dispatcher) GetInventory(peerIDs []string, invreq InventoryRequest) {
 // SendInventory sends out the InventoryResponse
 func (dp *Dispatcher) SendInventory(peerIDs []string, invrsp InventoryResponse) {
 	if len(peerIDs) == 0 {
-		dp.broadcastToNeighbors(invrsp.ChannelID, invrsp, false /* should send to both blockchain and edge nodes */)
+		dp.broadcastToNeighbors(invrsp.ChannelID, invrsp)
 	} else {
 		dp.send(peerIDs, invrsp.ChannelID, invrsp)
 	}
@@ -97,7 +95,7 @@ func (dp *Dispatcher) SendInventory(peerIDs []string, invrsp InventoryResponse) 
 // GetData sends out the DataRequest
 func (dp *Dispatcher) GetData(peerIDs []string, datareq DataRequest) {
 	if len(peerIDs) == 0 {
-		dp.broadcastToNeighbors(datareq.ChannelID, datareq, true /* never ask an edge node for data */)
+		dp.broadcastToNeighbors(datareq.ChannelID, datareq)
 	} else {
 		dp.send(peerIDs, datareq.ChannelID, datareq)
 	}
@@ -107,17 +105,13 @@ func (dp *Dispatcher) GetData(peerIDs []string, datareq DataRequest) {
 func (dp *Dispatcher) SendData(peerIDs []string, datarsp DataResponse) {
 	if len(peerIDs) == 0 {
 		if datarsp.ChannelID == common.ChannelIDProposal {
-			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp, false /* should send to both blockchain and edge nodes */)
+			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp)
 		} else if datarsp.ChannelID == common.ChannelIDLightning {
-			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp, true /* no need to send lightning votes to edge nodes */)
-		} else if datarsp.ChannelID == common.ChannelIDEliteEdgeNodeVote {
-			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp, false /* should send to both blockchain and edge nodes */)
-		} else if datarsp.ChannelID == common.ChannelIDAggregatedEliteEdgeNodeVotes {
-			dp.broadcastToAll(datarsp.ChannelID, datarsp, true /* no need to send the aggregated edge node votes back to edge nodes */)
+			dp.broadcastToNeighbors(datarsp.ChannelID, datarsp)
 		} else if datarsp.ChannelID == common.ChannelIDHeader {
-			dp.broadcastToAll(datarsp.ChannelID, datarsp, false /* should send to both blockchain and edge nodes */)
+			dp.broadcastToAll(datarsp.ChannelID, datarsp)
 		} else {
-			dp.broadcastToAll(datarsp.ChannelID, datarsp, true /* backward compatibility, only broadcast to blockchain nodes */)
+			dp.broadcastToAll(datarsp.ChannelID, datarsp)
 		}
 	} else {
 		dp.send(peerIDs, datarsp.ChannelID, datarsp)
@@ -148,23 +142,23 @@ func (dp Dispatcher) LibP2PID() string {
 }
 
 // Peers returns the IDs of all peers
-func (dp *Dispatcher) Peers(skipEdgeNode bool) []string {
+func (dp *Dispatcher) Peers() []string {
 	if !reflect.ValueOf(dp.p2pnet).IsNil() {
-		return dp.p2pnet.Peers(skipEdgeNode)
+		return dp.p2pnet.Peers()
 	}
 	if !reflect.ValueOf(dp.p2plnet).IsNil() {
-		return dp.p2plnet.Peers(skipEdgeNode)
+		return dp.p2plnet.Peers()
 	}
 	return []string{}
 }
 
 // Peers returns the IDs of all peers
-func (dp *Dispatcher) PeerURLs(skipEdgeNode bool) []string {
+func (dp *Dispatcher) PeerURLs() []string {
 	if !reflect.ValueOf(dp.p2pnet).IsNil() {
-		return dp.p2pnet.PeerURLs(skipEdgeNode)
+		return dp.p2pnet.PeerURLs()
 	}
 	if !reflect.ValueOf(dp.p2plnet).IsNil() {
-		return dp.p2plnet.PeerURLs(skipEdgeNode)
+		return dp.p2plnet.PeerURLs()
 	}
 	return []string{}
 }
@@ -219,7 +213,7 @@ func (dp *Dispatcher) send(peerIDs []string, channelID common.ChannelIDEnum, con
 
 // broadcastToAll publishes given message through gossip. Usually the message is only immediately delivered to
 // a subset of neighbors.
-func (dp *Dispatcher) broadcastToAll(channelID common.ChannelIDEnum, content interface{}, skipEdgeNode bool) {
+func (dp *Dispatcher) broadcastToAll(channelID common.ChannelIDEnum, content interface{}) {
 	messageOld := p2ptypes.Message{
 		ChannelID: channelID,
 		Content:   content,
@@ -229,15 +223,15 @@ func (dp *Dispatcher) broadcastToAll(channelID common.ChannelIDEnum, content int
 		Content:   content,
 	}
 	if !reflect.ValueOf(dp.p2pnet).IsNil() {
-		dp.p2pnet.Broadcast(messageOld, skipEdgeNode)
+		dp.p2pnet.Broadcast(messageOld)
 	}
 	if !reflect.ValueOf(dp.p2plnet).IsNil() {
-		dp.p2plnet.Broadcast(message, skipEdgeNode)
+		dp.p2plnet.Broadcast(message)
 	}
 }
 
 // broadcastToNeighbors delivers given message to all neighbors.
-func (dp *Dispatcher) broadcastToNeighbors(channelID common.ChannelIDEnum, content interface{}, skipEdgeNode bool) {
+func (dp *Dispatcher) broadcastToNeighbors(channelID common.ChannelIDEnum, content interface{}) {
 	messageOld := p2ptypes.Message{
 		ChannelID: channelID,
 		Content:   content,
@@ -249,9 +243,9 @@ func (dp *Dispatcher) broadcastToNeighbors(channelID common.ChannelIDEnum, conte
 	maxNumPeersToBroadcast := viper.GetInt(common.CfgP2PMaxNumPeersToBroadcast)
 	if !reflect.ValueOf(dp.p2pnet).IsNil() {
 		//dp.p2pnet.Broadcast(messageOld)
-		dp.p2pnet.BroadcastToNeighbors(messageOld, maxNumPeersToBroadcast, skipEdgeNode)
+		dp.p2pnet.BroadcastToNeighbors(messageOld, maxNumPeersToBroadcast)
 	}
 	if !reflect.ValueOf(dp.p2plnet).IsNil() {
-		dp.p2plnet.BroadcastToNeighbors(message, maxNumPeersToBroadcast, skipEdgeNode)
+		dp.p2plnet.BroadcastToNeighbors(message, maxNumPeersToBroadcast)
 	}
 }

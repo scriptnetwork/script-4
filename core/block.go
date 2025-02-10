@@ -121,21 +121,22 @@ func CalculateRootHash(items []common.Bytes) common.Hash {
 
 // BlockHeader contains the essential information of a block.
 type BlockHeader struct {
-	ChainID            string
-	Epoch              uint64
-	Height             uint64
-	Parent             common.Hash
-	HCC                CommitCertificate
-//    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
-	LightningVotes      *AggregatedVotes    `rlp:"nil"` // Added in Script2.0 fork.
-	EliteEdgeNodeVotes *AggregatedEENVotes `rlp:"nil"` // Added in Script3.0 fork.
-	TxHash             common.Hash
-	ReceiptHash        common.Hash `json:"-"`
-	Bloom              Bloom       `json:"-"`
-	StateHash          common.Hash
-	Timestamp          *big.Int
-	Proposer           common.Address
-	Signature          *crypto.Signature
+	ChainID string
+	Epoch   uint64
+	Height  uint64
+	Parent  common.Hash
+	HCC     CommitCertificate
+	//    Licenses           *LicenseSet    `rlp:"nil"` // With rlp:"nil", RLP will encode nil pointers as 0xC0, which represents an empty list.
+	//	LightningVotes *AggregatedVotes `rlp:"nil"` // Added in Script2.0 fork.
+	LightningVotes *AggregatedVotes `rlp:"nil"` // Added in Script2.0 fork.
+	//	EliteEdgeNodeVotes *AggregatedEENVotes `rlp:"nil"` // Added in Script3.0 fork.
+	TxHash      common.Hash
+	ReceiptHash common.Hash `json:"-"`
+	Bloom       Bloom       `json:"-"`
+	StateHash   common.Hash
+	Timestamp   *big.Int
+	Proposer    common.Address
+	Signature   *crypto.Signature
 
 	hash common.Hash // Cache of calculated hash.
 }
@@ -152,43 +153,42 @@ func (h *BlockHeader) EncodeRLP(w io.Writer) error {
 
 	if h.Height < common.Height_hf2 {
 
-        return rlp.Encode(w, []interface{}{
-            h.ChainID,
-            h.Epoch,
-            h.Height,
-            h.Parent,
-            h.HCC,
-            h.TxHash,
-            h.ReceiptHash,
-            h.Bloom,
-            h.StateHash,
-            h.Timestamp,
-            h.Proposer,
-            h.Signature,
-            h.LightningVotes,
-            h.EliteEdgeNodeVotes,
-        })
+		return rlp.Encode(w, []interface{}{
+			h.ChainID,
+			h.Epoch,
+			h.Height,
+			h.Parent,
+			h.HCC,
+			h.TxHash,
+			h.ReceiptHash,
+			h.Bloom,
+			h.StateHash,
+			h.Timestamp,
+			h.Proposer,
+			h.Signature,
+			h.LightningVotes,
+			//h.EliteEdgeNodeVotes,
+		})
 
-    }
+	}
 
-
-    return rlp.Encode(w, []interface{}{
-        h.ChainID,
-        h.Epoch,
-        h.Height,
-        h.Parent,
-        h.HCC,
-        h.TxHash,
-        h.ReceiptHash,
-        h.Bloom,
-        h.StateHash,
-        h.Timestamp,
-        h.Proposer,
-        h.Signature,
-        h.LightningVotes,
-        h.EliteEdgeNodeVotes,
-//        h.Licenses,
-    })
+	return rlp.Encode(w, []interface{}{
+		h.ChainID,
+		h.Epoch,
+		h.Height,
+		h.Parent,
+		h.HCC,
+		h.TxHash,
+		h.ReceiptHash,
+		h.Bloom,
+		h.StateHash,
+		h.Timestamp,
+		h.Proposer,
+		h.Signature,
+		h.LightningVotes,
+		//h.EliteEdgeNodeVotes,
+		//        h.Licenses,
+	})
 
 }
 
@@ -261,63 +261,63 @@ func (h *BlockHeader) DecodeRLP(stream *rlp.Stream) error {
 		return err
 	}
 
-    {
-        raw, err := stream.Raw()
-        if err != nil {
-            return err
-        }
-        if common.Bytes2Hex(raw) == "c0" {
-            h.LightningVotes = nil
-        } else {
-            gvotes := &AggregatedVotes{}
-            // err = stream.Decode(gvotes)
-            rlp.DecodeBytes(raw, gvotes)
-            if err != nil {
-                return err
-            }
-            h.LightningVotes = gvotes
-        }
-    }
+	{
+		raw, err := stream.Raw()
+		if err != nil {
+			return err
+		}
+		if common.Bytes2Hex(raw) == "c0" {
+			h.LightningVotes = nil
+		} else {
+			gvotes := &AggregatedVotes{}
+			// err = stream.Decode(gvotes)
+			rlp.DecodeBytes(raw, gvotes)
+			if err != nil {
+				return err
+			}
+			h.LightningVotes = gvotes
+		}
+	}
+	/*
+		{
+			raw, err := stream.Raw()
+			if err != nil {
+				return err
+			}
+			if common.Bytes2Hex(raw) == "c0" {
+				h.EliteEdgeNodeVotes = nil
+			} else {
+				evotes := &AggregatedEENVotes{}
+				rlp.DecodeBytes(raw, evotes)
+				if err != nil {
+					return err
+				}
+				h.EliteEdgeNodeVotes = evotes
+			}
+		}
+	*/
+	logger.Debugf("RLP: Decoder. h.Height = %v, common.Height_hf2 = %v", h.Height, common.Height_hf2)
 
-    {
-        raw, err := stream.Raw()
-        if err != nil {
-            return err
-        }
-        if common.Bytes2Hex(raw) == "c0" {
-            h.EliteEdgeNodeVotes = nil
-        } else {
-            evotes := &AggregatedEENVotes{}
-            rlp.DecodeBytes(raw, evotes)
-            if err != nil {
-                return err
-            }
-            h.EliteEdgeNodeVotes = evotes
-        }
-    }
+	/*
+	   if h.Height >= common.Height_hf2 {
+	       raw, err := stream.Raw()
+	       if err != nil {
+	           return err
+	       }
+	       if common.Bytes2Hex(raw) == "c0" {
+	           h.Licenses = nil
+	       } else {
+	           licenses := &LicenseSet{}
+	           rlp.DecodeBytes(raw, licenses)
+	           if err != nil {
+	               return err
+	           }
+	           h.Licenses = licenses
+	       }
+	   }
+	*/
 
-    logger.Debugf("RLP: Decoder. h.Height = %v, common.Height_hf2 = %v", h.Height, common.Height_hf2)
-
-/*
-    if h.Height >= common.Height_hf2 {
-        raw, err := stream.Raw()
-        if err != nil {
-            return err
-        }
-        if common.Bytes2Hex(raw) == "c0" {
-            h.Licenses = nil
-        } else {
-            licenses := &LicenseSet{}
-            rlp.DecodeBytes(raw, licenses)
-            if err != nil {
-                return err
-            }
-            h.Licenses = licenses
-        }
-    }
-*/
-
-    return stream.ListEnd()
+	return stream.ListEnd()
 }
 
 // Hash of header.
@@ -402,11 +402,11 @@ Block status transitions:
 +-------+          +-------+                          +-------------------+
 |Pending+---+------>Invalid|                    +----->IndirectlyFinalized|
 +-------+   |      +-------+                    |     +-------------------+
-            |                                   |
-            |      +-----+        +---------+   |     +-----------------+
-            +------>Valid+-------->Committed+---+----->DirectlyFinalized|
-                   +-----+        +---------+         +-----------------+
 
+	|                                   |
+	|      +-----+        +---------+   |     +-----------------+
+	+------>Valid+-------->Committed+---+----->DirectlyFinalized|
+	       +-----+        +---------+         +-----------------+
 */
 const (
 	BlockStatusPending BlockStatus = BlockStatus(iota)

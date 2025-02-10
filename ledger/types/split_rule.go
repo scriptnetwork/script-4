@@ -1,5 +1,6 @@
 package types
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -78,3 +79,4 @@ func (sc *SplitRule) String() string {
 	return fmt.Sprintf("SplitRule{%v %v %v %v}",
 		sc.InitiatorAddress.Hex(), string(sc.ResourceID), sc.Splits, sc.EndBlockHeight)
 }
+*/

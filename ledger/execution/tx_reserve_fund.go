@@ -1,5 +1,6 @@
 package execution
 
+/*
 import (
 	"fmt"
 	"math/big"
@@ -132,3 +133,4 @@ func (exec *ReserveFundTxExecutor) calculateEffectiveGasPrice(transaction types.
 	effectiveGasPrice := new(big.Int).Div(fee.SPAYWei, gas)
 	return effectiveGasPrice
 }
+*/

@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -45,3 +46,4 @@ func init() {
 	eenpCmd.Flags().Uint64Var(&heightFlag, "height", uint64(0), "height of the block")
 	eenpCmd.MarkFlagRequired("height")
 }
+*/

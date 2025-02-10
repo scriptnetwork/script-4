@@ -57,7 +57,7 @@ func runStart(cmd *cobra.Command, args []string) {
 		dbPath = cfgPath
 	}
 
-	core.LicenseIssuer := common.HexToAddress(viper.GetString(common.CfgLicenseIssuer))
+	core.LicenseIssuer = common.HexToAddress(viper.GetString(common.CfgLicenseIssuer))
 
 	fmt.Printf("License Issuer %v\n", core.LicenseIssuer)
 
@@ -279,7 +279,7 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		}
 
 		key := ks.NewKey(privKey)
-		err = keystore.StoreKey(key, "")
+		err = keystore.StoreKey(key)
 		if err != nil {
 			return nil, err
 		}
@@ -288,21 +288,10 @@ func loadOrCreateKey() (*crypto.PrivateKey, error) {
 		printCountdown()
 
 	} else {
-		/*
-			prompt := fmt.Sprintf("Please enter the password to launch the Script node: ")
-			if len(nodePassword) != 0 {
-				password = nodePassword
-			} else {
-				password, err = utils.GetPassword(prompt)
-			}
-			if err != nil {
-				return nil, fmt.Errorf("Failed to get password: %v", err)
-			}
-		*/
 		nodeAddrss = addresses[0]
 	}
 
-	nodeKey, err := keystore.GetKey(nodeAddrss, "")
+	nodeKey, err := keystore.GetKey(nodeAddrss)
 	if err != nil {
 		return nil, err
 	}

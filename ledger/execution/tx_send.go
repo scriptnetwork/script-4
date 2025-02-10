@@ -63,12 +63,10 @@ func (exec *SendTxExecutor) sanityCheck(chainID string, view *st.StoreView, view
 	}
 
 	blockHeight := view.Height() + 1
-	if blockHeight >= common.HeightEnableSmartContract {
-		for _, outAcc := range accounts {
-			if outAcc.IsASmartContract() {
-				return result.Error(
-					fmt.Sprintf("Sending Script/SPAY to a smart contract (%v) through a SendTx transaction is not allowed", outAcc.Address))
-			}
+	for _, outAcc := range accounts {
+		if outAcc.IsASmartContract() {
+			return result.Error(
+				fmt.Sprintf("Sending Script/SPAY to a smart contract (%v) through a SendTx transaction is not allowed", outAcc.Address))
 		}
 	}
 

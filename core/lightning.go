@@ -6,7 +6,7 @@ import (
 
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/result"
-	"github.com/scripttoken/script/crypto/bls"
+	"github.com/scripttoken/script/crypto"
 	"github.com/scripttoken/script/rlp"
 )
 
@@ -14,94 +14,139 @@ import (
 // ------- AggregatedVotes ------- //
 //
 
-// AggregatedVotes represents votes on a block.
-type AggregatedVotes struct {
-	Block      common.Hash    // Hash of the block.
-	Lightnings common.Hash    // Hash of lightning candidate pool.
-	Multiplies []uint32       // Multiplies of each signer.
-	Signature  *bls.Signature // Aggregated signiature.
+type Signatures map[common.Address]*crypto.Signature
+
+// Copy creates a deep copy of the Signatures map.
+func (s Signatures) Copy() Signatures {
+	clone := make(Signatures, len(s))
+	for addr, sig := range s {
+		// Create a deep copy of the signature.
+		// Assuming common.Bytes is a slice of bytes, we copy the slice using append.
+		var dataCopy common.Bytes
+		if sig != nil {
+			dataCopy = append(common.Bytes(nil), sig.ToBytes()...) // using a getter or field access
+		}
+
+		newSig, err := crypto.SignatureFromBytes(dataCopy) // create a new signature from the copied bytes
+		if err != nil {
+			// Handle the error appropriately, for example, by logging it or returning it.
+			fmt.Printf("Error copying signature for address %s: %v\n", addr.Hex(), err)
+			continue
+		}
+
+		clone[addr] = newSig
+	}
+	return clone
 }
 
-func NewAggregateVotes(block common.Hash, gcp *LightningCandidatePool) *AggregatedVotes {
+func (this Signatures) Verify(msg *common.Bytes) bool {
+	for addr, sig := range this {
+		if !sig.Verify(*msg, addr) {
+			return false
+		}
+	}
+	return true
+}
+
+func (this Signatures) Has(addr common.Address) bool {
+	if _, exists := this[addr]; exists {
+		return true
+	}
+	return false
+}
+
+func (this Signatures) Add(addr common.Address, sig *crypto.Signature) {
+	this[addr] = sig
+}
+
+// AggregatedVotes represents votes on a block.
+type AggregatedVotes struct {
+	Block      common.Hash // Hash of the block.
+	Lightnings common.Hash // Hash of lightning candidate pool.
+	Signatures Signatures
+}
+
+func NewAggregateVotes(block common.Hash, lightnings *AddressSet) *AggregatedVotes {
 	return &AggregatedVotes{
 		Block:      block,
-		Gcp:        gcp.Hash(),
-		Multiplies: make([]uint32, gcp.WithStake().Len()),
-		Signature:  bls.NewAggregateSignature(),
+		Lightnings: lightnings.Hash(),
+		Signatures: make(Signatures),
 	}
 }
 
 func (a *AggregatedVotes) String() string {
-	return fmt.Sprintf("AggregatedVotes{Block: %s, Gcp: %s,  Multiplies: %v}", a.Block.Hex(), a.Gcp.Hex(), a.Multiplies)
+	return fmt.Sprintf("AggregatedVotes{Block: %s, Lightnings: %s}", a.Block.Hex(), a.Lightnings.Hex())
+}
+
+func (a *AggregatedVotes) Copy() *AggregatedVotes {
+	clone := &AggregatedVotes{
+		Block:      a.Block,
+		Lightnings: a.Lightnings,
+		Signatures: a.Signatures.Copy(),
+	}
+	return clone
 }
 
 // signBytes returns the bytes to be signed.
 func (a *AggregatedVotes) signBytes() common.Bytes {
 	tmp := &AggregatedVotes{
-		Block: a.Block,
-		Gcp:   a.Gcp,
+		Block:      a.Block,
+		Lightnings: a.Lightnings,
 	}
 	b, _ := rlp.EncodeToBytes(tmp)
 	return b
 }
 
 // Sign adds signer's signature. Returns false if signer has already signed.
-func (a *AggregatedVotes) Sign(key *bls.SecretKey, signerIdx int) bool {
-	if a.Multiplies[signerIdx] > 0 {
-		// Already signed, do nothing.
-		return false
+func (this *AggregatedVotes) Sign(key *crypto.PrivateKey) bool {
+	addr := key.PublicKey().Address()
+	if this.Signatures.Has(addr) {
+		return false // Already signed, do nothing.
 	}
-
-	a.Multiplies[signerIdx] = 1
-	a.Signature.Aggregate(key.Sign(a.signBytes()))
+	sig, _ := key.Sign(this.signBytes())
+	this.Signatures.Add(addr, sig)
 	return true
 }
 
 // Merge creates a new aggregation that combines two vote sets. Returns nil, nil if input vote
 // is a subset of current vote.
-func (a *AggregatedVotes) Merge(b *AggregatedVotes) (*AggregatedVotes, error) {
-	if a.Block != b.Block || a.Gcp != b.Gcp {
+func (this *AggregatedVotes) Merge(other *AggregatedVotes) (*AggregatedVotes, error) {
+	if this.Block != other.Block || this.Lightnings != other.Lightnings {
 		return nil, errors.New("Cannot merge incompatible votes")
 	}
-	newMultiplies := make([]uint32, len(a.Multiplies))
-	isSubset := true
-	for i := 0; i < len(a.Multiplies); i++ {
-		newMultiplies[i] = a.Multiplies[i] + b.Multiplies[i]
-		if newMultiplies[i] < a.Multiplies[i] || newMultiplies[i] < b.Multiplies[i] {
-			return nil, errors.New("Signiature multipliers overflowed")
-		}
-		if a.Multiplies[i] == 0 && b.Multiplies[i] != 0 {
-			isSubset = false
+	flag := false
+	for addr, sig := range other.Signatures {
+		if !this.Signatures.Has(addr) {
+			this.Signatures.Add(addr, sig)
+			flag = true
 		}
 	}
-	if isSubset {
+	if flag {
 		// The other vote is a subset of current vote
 		return nil, nil
 	}
-	newSig := a.Signature.Copy()
-	newSig.Aggregate(b.Signature)
-	return &AggregatedVotes{
-		Block:      a.Block,
-		Gcp:        a.Gcp,
-		Multiplies: newMultiplies,
-		Signature:  newSig,
-	}, nil
+	return this, nil
 }
 
 // Abs returns the number of voted lightnings in the vote
-func (a *AggregatedVotes) Abs() int {
-	ret := 0
-	for i := 0; i < len(a.Multiplies); i++ {
-		if a.Multiplies[i] != 0 {
-			ret += 1
-		}
-	}
-	return ret
+func (this *AggregatedVotes) Abs() int {
+	return len(this.Signatures)
+	/*
+	   ret := 0
+
+	   	for i := 0; i < len(a.Multiplies); i++ {
+	   		if a.Multiplies[i] != 0 {
+	   			ret += 1
+	   		}
+	   	}
+
+	   return ret
+	*/
 }
 
 // Pick selects better vote from two votes.
 func (a *AggregatedVotes) Pick(b *AggregatedVotes) (*AggregatedVotes, error) {
-	if a.Block != b.Block || a.Gcp != b.Gcp {
+	if a.Block != b.Block || a.Lightnings != b.Lightnings {
 		return nil, errors.New("Cannot compare incompatible votes")
 	}
 	if b.Abs() > a.Abs() {
@@ -111,39 +156,23 @@ func (a *AggregatedVotes) Pick(b *AggregatedVotes) (*AggregatedVotes, error) {
 }
 
 // Validate verifies the voteset.
-func (a *AggregatedVotes) Validate(gcp *LightningCandidatePool) result.Result {
-	if gcp.Hash() != a.Gcp {
-		return result.Error("gcp hash mismatch: gcp.Hash(): %s, vote.Gcp: %s", gcp.Hash().Hex(), a.Gcp.Hex())
+func (this *AggregatedVotes) Validate(lightnings *AddressSet) result.Result {
+	if lightnings.Hash() != this.Lightnings {
+		return result.Error("lightnings hash mismatch: lightnings.Hash(): %s, vote.Lightnings: %s", lightnings.Hash().Hex(), this.Lightnings.Hex())
 	}
-	if len(a.Multiplies) != gcp.WithStake().Len() {
-		return result.Error("multiplies size %d is not equal to gcp size %d", len(a.Multiplies), gcp.WithStake().Len())
+	//	if len(a.Multiplies) != gcp.WithStake().Len() {
+	//		return result.Error("multiplies size %d is not equal to gcp size %d", len(a.Multiplies), gcp.WithStake().Len())
+	//	}
+	if this.Signatures == nil {
+		return result.Error("signatures cannot be nil")
 	}
-	if a.Signature == nil {
-		return result.Error("signature cannot be nil")
-	}
-	pubKeys := gcp.WithStake().PubKeys()
-	aggPubkey := bls.AggregatePublicKeysVec(pubKeys, a.Multiplies)
-	if !a.Signature.Verify(a.signBytes(), aggPubkey) {
+	//pubKeys := lightnings.PubKeys()
+	//aggPubkey := bls.AggregatePublicKeysVec(pubKeys, a.Multiplies)
+	msg := this.signBytes()
+	if !this.Signatures.Verify(&msg) {
 		return result.Error("signature verification failed")
 	}
 	return result.OK
-}
-
-// Copy clones the aggregated votes
-func (a *AggregatedVotes) Copy() *AggregatedVotes {
-	clone := &AggregatedVotes{
-		Block: a.Block,
-		Gcp:   a.Gcp,
-	}
-	if a.Multiplies != nil {
-		clone.Multiplies = make([]uint32, len(a.Multiplies))
-		copy(clone.Multiplies, a.Multiplies)
-	}
-	if a.Signature != nil {
-		clone.Signature = a.Signature.Copy()
-	}
-
-	return clone
 }
 
 /*

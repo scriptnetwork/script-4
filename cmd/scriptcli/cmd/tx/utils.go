@@ -46,7 +46,7 @@ func ColdWalletUnlock(walletType wtypes.WalletType, derivationPath types.Derivat
 		return nil, common.Address{}, err
 	}
 
-	err = wallet.Unlock(common.Address{}, "", derivationPath)
+	err = wallet.Unlock(common.Address{}, derivationPath)
 	if err != nil {
 		fmt.Printf("Failed to unlock wallet: %v\n", err)
 		return nil, common.Address{}, err
@@ -77,7 +77,7 @@ func SoftWalletUnlock(cfgPath, addressStr string) (wtypes.Wallet, common.Address
 		return nil, common.Address{}, err
 	}
 	address := common.HexToAddress(addressStr)
-	err = wallet.Unlock(address, password, nil)
+	err = wallet.Unlock(address, nil)
 	if err != nil {
 		fmt.Printf("Failed to unlock address %v: %v\n", address.Hex(), err)
 		return nil, common.Address{}, err

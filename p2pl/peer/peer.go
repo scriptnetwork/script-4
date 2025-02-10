@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	cmn "github.com/scripttoken/script/common"
 	p2ptypes "github.com/scripttoken/script/p2p/types"
 	"github.com/scripttoken/script/p2pl/transport"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/scripttoken/script/rlp"
@@ -30,13 +30,9 @@ var Channels = []cmn.ChannelIDEnum{
 	cmn.ChannelIDPeerDiscovery,
 	cmn.ChannelIDPing,
 	cmn.ChannelIDLightning,
-	cmn.ChannelIDEliteEdgeNodeVote,
-	cmn.ChannelIDAggregatedEliteEdgeNodeVotes,
 }
 
-//
 // Peer models a peer node in a network
-//
 type Peer struct {
 	addrInfo   pr.AddrInfo
 	isOutbound bool
@@ -53,11 +49,11 @@ type Peer struct {
 	onError     ErrorHandler
 
 	// Life cycle
-	wg      *sync.WaitGroup
-	quit    chan struct{}
-	ctx     context.Context
-	cancel  context.CancelFunc
-	stopped bool
+	wg *sync.WaitGroup
+	//quit    chan struct{}
+	ctx    context.Context
+	cancel context.CancelFunc
+	//stopped bool
 }
 
 func CreatePeer(addrInfo pr.AddrInfo, isOutbound bool) *Peer {

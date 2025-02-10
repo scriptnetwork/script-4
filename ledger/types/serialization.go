@@ -26,17 +26,8 @@ type TxType uint16
 
 const (
 	TxCoinbase TxType = iota
-	TxSlash
 	TxSend
-	TxReserveFund
-	TxReleaseFund
-	TxServicePayment
-	TxSplitRule
 	TxSmartContract
-	TxDepositStake
-	TxWithdrawStake
-	TxDepositStakeV2
-	TxStakeRewardDistribution
 	TxLicense
 )
 
@@ -71,28 +62,8 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		data := &CoinbaseTx{}
 		err = s.Decode(data)
 		return data, err
-	} else if txType == TxSlash {
-		data := &SlashTx{}
-		err = s.Decode(data)
-		return data, err
 	} else if txType == TxSend {
 		data := &SendTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxReserveFund {
-		data := &ReserveFundTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxReleaseFund {
-		data := &ReleaseFundTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxServicePayment {
-		data := &ServicePaymentTx{}
-		err = s.Decode(data)
-		return data, err
-	} else if txType == TxSplitRule {
-		data := &SplitRuleTx{}
 		err = s.Decode(data)
 		return data, err
 	} else if txType == TxSmartContract {
@@ -104,7 +75,7 @@ func TxFromBytes(raw []byte) (Tx, error) {
 		err = s.Decode(data)
 		return data, err
 	} else {
-		return nil, fmt.Errorf("Unknown TX type: %v", txType)
+		return nil, fmt.Errorf("unknown TX type: %v", txType)
 	}
 }
 
@@ -114,18 +85,8 @@ func TxToBytes(t Tx) ([]byte, error) {
 	switch t.(type) {
 	case *CoinbaseTx:
 		txType = TxCoinbase
-	case *SlashTx:
-		txType = TxSlash
 	case *SendTx:
 		txType = TxSend
-	case *ReserveFundTx:
-		txType = TxReserveFund
-	case *ReleaseFundTx:
-		txType = TxReleaseFund
-	case *ServicePaymentTx:
-		txType = TxServicePayment
-	case *SplitRuleTx:
-		txType = TxSplitRule
 	case *SmartContractTx:
 		txType = TxSmartContract
 	case *LicenseTx:

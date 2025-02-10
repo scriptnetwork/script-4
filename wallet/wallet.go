@@ -20,7 +20,7 @@ func OpenWallet(cfgPath string, walletType types.WalletType) (types.Wallet, erro
 
 	keysDirPath := path.Join(cfgPath, "keys")
 	if walletType == types.WalletTypeSoft {
-		wallet, err = sw.NewSoftWallet(keysDirPath, sw.KeystoreTypePlain)
+		wallet, err = sw.NewSoftWallet(keysDirPath)
 		if err != nil {
 			return nil, err
 		}

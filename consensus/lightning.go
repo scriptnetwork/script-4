@@ -7,7 +7,6 @@ import (
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/util"
 	"github.com/scripttoken/script/core"
-	"github.com/scripttoken/script/crypto/bls"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -20,8 +19,8 @@ const (
 type LightningEngine struct {
 	logger *log.Entry
 
-	engine  *ConsensusEngine
-	privKey *bls.SecretKey
+	engine *ConsensusEngine
+	//privKey *bls.SecretKey
 
 	// State for current voting
 	block          common.Hash
@@ -30,25 +29,23 @@ type LightningEngine struct {
 	nextVote       *core.AggregatedVotes
 	lightnings     *core.AddressSet
 	lightningsHash common.Hash
-	signerIndex    int // Signer's index in current lightnings
+	//signerIndex    int // Signer's index in current lightnings
 
 	incoming chan *core.AggregatedVotes
 	mu       *sync.Mutex
 }
 
-func NewLightningEngine(c *ConsensusEngine, privateKey *bls.SecretKey) *LightningEngine {
+func NewLightningEngine(c *ConsensusEngine) *LightningEngine {
 	return &LightningEngine{
-		logger:  util.GetLoggerForModule("lightning"),
-		engine:  c,
-		privKey: privateKey,
-
+		logger:   util.GetLoggerForModule("lightning"),
+		engine:   c,
 		incoming: make(chan *core.AggregatedVotes, viper.GetInt(common.CfgConsensusMessageQueueSize)),
 		mu:       &sync.Mutex{},
 	}
 }
 
 func (g *LightningEngine) isLightning() bool {
-	return g.signerIndex >= 0
+	return core.IsLightning(g.engine.privateKey.PublicKey().Address())
 }
 
 func (g *LightningEngine) StartNewBlock(block common.Hash) {
@@ -60,24 +57,24 @@ func (g *LightningEngine) StartNewBlock(block common.Hash) {
 	g.currVote = nil
 	g.round = 1
 
-	gcp, err := g.engine.GetLedger().GetLightningCandidatePool(block)
+	lightnings, err := g.engine.GetLedger().GetLightnings(block)
 	if err != nil {
 		// Should not happen
 		g.logger.Panic(err)
 	}
-	g.gcp = gcp
-	g.gcpHash = gcp.Hash()
-	g.signerIndex = gcp.WithStake().Index(g.privKey.PublicKey())
+	g.lightnings = lightnings
+	g.lightningsHash = lightnings.Hash()
+	//g.signerIndex = lightnings.Index(g.privKey.PublicKey())
 
 	g.logger.WithFields(log.Fields{
-		"block":       block.Hex(),
-		"gcp":         g.gcpHash.Hex(),
-		"signerIndex": g.signerIndex,
+		"block":      block.Hex(),
+		"lightnings": g.lightningsHash.Hex(),
+		//		"signerIndex": g.signerIndex,
 	}).Debug("Starting new block")
 
 	if g.isLightning() {
-		g.nextVote = core.NewAggregateVotes(block, gcp)
-		g.nextVote.Sign(g.privKey, g.signerIndex)
+		g.nextVote = core.NewAggregateVotes(block, lightnings)
+		g.nextVote.Sign(g.engine.PrivateKey())
 		g.currVote = g.nextVote.Copy()
 	} else {
 		g.nextVote = nil
@@ -151,10 +148,8 @@ func (g *LightningEngine) processVote(vote *core.AggregatedVotes) {
 				"g.block":               g.block.Hex(),
 				"g.round":               g.round,
 				"vote.block":            vote.Block.Hex(),
-				"vote.Mutiplies":        vote.Multiplies,
-				"vote.GCP":              vote.Gcp.Hex(),
-				"g.nextVote.Multiplies": g.nextVote.Multiplies,
-				"g.nextVote.GCP":        g.nextVote.Gcp.Hex(),
+				"vote.Lightnings":       vote.Lightnings.Hex(),
+				"g.nextVote.Lightnings": g.nextVote.Lightnings.Hex(),
 				"g.nextVote.Block":      g.nextVote.Block.Hex(),
 				"error":                 err.Error(),
 			}).Debug("Failed to pick lightning vote")
@@ -162,8 +157,7 @@ func (g *LightningEngine) processVote(vote *core.AggregatedVotes) {
 		if candidate == g.nextVote {
 			// Incoming vote is not better than the current nextVote.
 			g.logger.WithFields(log.Fields{
-				"vote.block":     vote.Block.Hex(),
-				"vote.Mutiplies": vote.Multiplies,
+				"vote.block": vote.Block.Hex(),
 			}).Debug("Skipping vote: not better")
 			return
 		}
@@ -174,10 +168,8 @@ func (g *LightningEngine) processVote(vote *core.AggregatedVotes) {
 				"g.block":               g.block.Hex(),
 				"g.round":               g.round,
 				"vote.block":            vote.Block.Hex(),
-				"vote.Mutiplies":        vote.Multiplies,
-				"vote.GCP":              vote.Gcp.Hex(),
-				"g.nextVote.Multiplies": g.nextVote.Multiplies,
-				"g.nextVote.GCP":        g.nextVote.Gcp.Hex(),
+				"vote.Lightnings":       vote.Lightnings.Hex(),
+				"g.nextVote.Lightnings": g.nextVote.Lightnings.Hex(),
 				"g.nextVote.Block":      g.nextVote.Block.Hex(),
 				"error":                 err.Error(),
 			}).Debug("Failed to merge lightning vote")
@@ -185,30 +177,26 @@ func (g *LightningEngine) processVote(vote *core.AggregatedVotes) {
 		if candidate == nil {
 			// Incoming vote is subset of the current nextVote.
 			g.logger.WithFields(log.Fields{
-				"vote.block":     vote.Block.Hex(),
-				"vote.Mutiplies": vote.Multiplies,
+				"vote.block": vote.Block.Hex(),
 			}).Debug("Skipping vote: no new index")
 			return
 		}
 	}
-
-	if !g.checkMultipliesForRound(candidate, g.round+1) {
-		g.logger.WithFields(log.Fields{
-			"local.block":           g.block.Hex(),
-			"local.round":           g.round,
-			"vote.block":            vote.Block.Hex(),
-			"vote.Mutiplies":        vote.Multiplies,
-			"local.vote.Multiplies": g.nextVote.Multiplies,
-		}).Debug("Skipping vote: candidate vote overflows")
-		return
-	}
-
+	/*
+		if !g.checkMultipliesForRound(candidate, g.round+1) {
+			g.logger.WithFields(log.Fields{
+				"local.block": g.block.Hex(),
+				"local.round": g.round,
+				"vote.block":  vote.Block.Hex(),
+			}).Debug("Skipping vote: candidate vote overflows")
+			return
+		}
+	*/
 	g.nextVote = candidate
 
 	g.logger.WithFields(log.Fields{
-		"local.block":           g.block.Hex(),
-		"local.round":           g.round,
-		"local.vote.Multiplies": g.nextVote.Multiplies,
+		"local.block": g.block.Hex(),
+		"local.round": g.round,
 	}).Debug("New lightning vote")
 }
 
@@ -224,53 +212,50 @@ func (g *LightningEngine) HandleVote(vote *core.AggregatedVotes) {
 func (g *LightningEngine) validateVote(vote *core.AggregatedVotes) (res bool) {
 	if g.block.IsEmpty() {
 		g.logger.WithFields(log.Fields{
-			"local.block":    g.block.Hex(),
-			"local.round":    g.round,
-			"vote.block":     vote.Block.Hex(),
-			"vote.Mutiplies": vote.Multiplies,
+			"local.block": g.block.Hex(),
+			"local.round": g.round,
+			"vote.block":  vote.Block.Hex(),
 		}).Debug("Ignoring lightning vote: local not ready")
 		return
 	}
 	if vote.Block != g.block {
 		g.logger.WithFields(log.Fields{
-			"local.block":    g.block.Hex(),
-			"local.round":    g.round,
-			"vote.block":     vote.Block.Hex(),
-			"vote.Mutiplies": vote.Multiplies,
+			"local.block": g.block.Hex(),
+			"local.round": g.round,
+			"vote.block":  vote.Block.Hex(),
 		}).Debug("Ignoring lightning vote: block hash does not match with local candidate")
 		return
 	}
-	if vote.Gcp != g.gcpHash {
+	if vote.Lightnings != g.lightningsHash {
 		g.logger.WithFields(log.Fields{
-			"local.block":    g.block.Hex(),
-			"local.round":    g.round,
-			"vote.block":     vote.Block.Hex(),
-			"vote.Mutiplies": vote.Multiplies,
-			"vote.gcp":       vote.Gcp.Hex(),
-			"local.gcp":      g.gcpHash.Hex(),
+			"local.block":      g.block.Hex(),
+			"local.round":      g.round,
+			"vote.block":       vote.Block.Hex(),
+			"vote.lightnings":  vote.Lightnings.Hex(),
+			"local.lightnings": g.lightningsHash.Hex(),
 		}).Debug("Ignoring lightning vote: gcp hash does not match with local value")
 		return
 	}
-	if !g.checkMultipliesForRound(vote, g.round) {
+	/*
+		if !g.checkMultipliesForRound(vote, g.round) {
+			g.logger.WithFields(log.Fields{
+				"local.block":    g.block.Hex(),
+				"local.round":    g.round,
+				"vote.block":     vote.Block.Hex(),
+				"vote.gcp":       vote.Gcp.Hex(),
+				"local.gcp":      g.gcpHash.Hex(),
+			}).Debug("Ignoring lightning vote: mutiplies exceed limit for round")
+			return
+		}
+	*/
+	if result := vote.Validate(g.lightnings); result.IsError() {
 		g.logger.WithFields(log.Fields{
-			"local.block":    g.block.Hex(),
-			"local.round":    g.round,
-			"vote.block":     vote.Block.Hex(),
-			"vote.Mutiplies": vote.Multiplies,
-			"vote.gcp":       vote.Gcp.Hex(),
-			"local.gcp":      g.gcpHash.Hex(),
-		}).Debug("Ignoring lightning vote: mutiplies exceed limit for round")
-		return
-	}
-	if result := vote.Validate(g.gcp); result.IsError() {
-		g.logger.WithFields(log.Fields{
-			"local.block":    g.block.Hex(),
-			"local.round":    g.round,
-			"vote.block":     vote.Block.Hex(),
-			"vote.Mutiplies": vote.Multiplies,
-			"vote.gcp":       vote.Gcp.Hex(),
-			"local.gcp":      g.gcpHash.Hex(),
-			"error":          result.Message,
+			"local.block":      g.block.Hex(),
+			"local.round":      g.round,
+			"vote.block":       vote.Block.Hex(),
+			"vote.lightnings":  vote.Lightnings.Hex(),
+			"local.lightnings": g.lightningsHash.Hex(),
+			"error":            result.Message,
 		}).Debug("Ignoring lightning vote: invalid vote")
 		return
 	}
@@ -278,6 +263,7 @@ func (g *LightningEngine) validateVote(vote *core.AggregatedVotes) (res bool) {
 	return
 }
 
+/*
 func (g *LightningEngine) checkMultipliesForRound(vote *core.AggregatedVotes, k uint32) bool {
 	for _, m := range vote.Multiplies {
 		if m > g.maxMultiply(k) {
@@ -290,3 +276,4 @@ func (g *LightningEngine) checkMultipliesForRound(vote *core.AggregatedVotes, k 
 func (g *LightningEngine) maxMultiply(k uint32) uint32 {
 	return 1 << (k * maxLogNeighbors)
 }
+*/

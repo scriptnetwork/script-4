@@ -13,7 +13,6 @@ var (
 	hashFlag                     string
 	startFlag                    uint64
 	endFlag                      uint64
-	skipEdgeNodeFlag             bool
 	includeEthTxHashFlag         bool
 	upstreamFlag                 bool
 	includeUnfinalizedBlocksFlag bool
@@ -31,16 +30,11 @@ var QueryCmd = &cobra.Command{
 func init() {
 	QueryCmd.AddCommand(statusCmd)
 	QueryCmd.AddCommand(accountCmd)
-	QueryCmd.AddCommand(lightningCmd)
 	QueryCmd.AddCommand(blockCmd)
 	QueryCmd.AddCommand(traceBlocksCmd)
 	QueryCmd.AddCommand(txCmd)
-	QueryCmd.AddCommand(splitRuleCmd)
 	QueryCmd.AddCommand(validatorsCmd)
-	QueryCmd.AddCommand(gcpCmd)
-	QueryCmd.AddCommand(eenpCmd)
-	QueryCmd.AddCommand(srdrsCmd)
-	QueryCmd.AddCommand(stakeReturnsCmd)
+	QueryCmd.AddCommand(lightningsCmd)
 	QueryCmd.AddCommand(peersCmd)
 	QueryCmd.AddCommand(versionCmd)
 }

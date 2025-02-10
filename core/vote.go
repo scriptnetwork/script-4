@@ -83,48 +83,48 @@ type Vote struct {
 	Signature *crypto.Signature
 }
 
-func (v Vote) String() string {
-	return fmt.Sprintf("Vote{ID: %s, block: %s,  Epoch: %v}", v.ID, v.Block.Hex(), v.Epoch)
+func (this Vote) String() string {
+	return fmt.Sprintf("Vote{block: %s, Height: %s, Epoch: %v}", this.Block.Hex(), this.Height, this.Epoch)
 }
 
 // SignBytes returns raw bytes to be signed.
-func (v Vote) SignBytes() common.Bytes {
+func (this Vote) SignBytes() common.Bytes {
 	vv := Vote{
-		Block: v.Block,
-		Epoch: v.Epoch,
-		ID:    v.ID,
+		Block: this.Block,
+		Epoch: this.Epoch,
+		ID:    this.ID,
 	}
 	raw, _ := rlp.EncodeToBytes(vv)
 	return raw
 }
 
 // Sign signs the vote using given private key.
-func (v *Vote) Sign(priv *crypto.PrivateKey) {
-	sig, err := priv.Sign(v.SignBytes())
+func (this *Vote) Sign(priv *crypto.PrivateKey) {
+	sig, err := priv.Sign(this.SignBytes())
 	if err != nil {
 		// Should not happen.
 		logger.WithFields(log.Fields{"error": err}).Panic("Failed to sign vote")
 	}
-	v.SetSignature(sig)
+	this.SetSignature(sig)
 }
 
 // SetSignature sets given signature in vote.
-func (v *Vote) SetSignature(sig *crypto.Signature) {
-	v.Signature = sig
+func (this *Vote) SetSignature(sig *crypto.Signature) {
+	this.Signature = sig
 }
 
 // Validate checks the vote is legitimate.
-func (v Vote) Validate() result.Result {
-	if v.Block.IsEmpty() {
+func (this Vote) Validate() result.Result {
+	if this.Block.IsEmpty() {
 		return result.Error("Block is not specified")
 	}
-	if v.ID.IsEmpty() {
+	if this.ID.IsEmpty() {
 		return result.Error("Voter is not specified")
 	}
-	if v.Signature == nil || v.Signature.IsEmpty() {
+	if this.Signature == nil || this.Signature.IsEmpty() {
 		return result.Error("Vote is not signed")
 	}
-	if !v.Signature.Verify(v.SignBytes(), v.ID) {
+	if !this.Signature.Verify(this.SignBytes(), this.ID) {
 		return result.Error("Signature verification failed")
 	}
 	return result.OK
@@ -302,7 +302,7 @@ func (s *VoteSet) FilterByValidators(validators *AddressSet) *VoteSet {
 	return ret
 }
 
-// VoteByID implements sort.Interface for []Vote based on Voter's ID.
+// VoteDataByID implements sort.Interface for []Vote based on Voter's ID.
 type VoteByID []Vote
 
 func (a VoteByID) Len() int           { return len(a) }

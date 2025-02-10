@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -48,3 +49,4 @@ func init() {
 	srdrsCmd.Flags().StringVar(&addressFlag, "address", "", "Address of the account")
 	srdrsCmd.MarkFlagRequired("height")
 }
+*/

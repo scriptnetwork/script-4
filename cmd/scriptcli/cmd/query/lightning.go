@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -77,3 +78,4 @@ func doLightningCmd(cmd *cobra.Command, args []string) {
 }
 
 func init() {}
+*/

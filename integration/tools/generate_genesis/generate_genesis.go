@@ -171,29 +171,35 @@ func loadInitialBalances(erc20SnapshotJSONFilePath string) *state.StoreView {
 }
 
 func initialValidators(validatorsFilePath string, genesisHeight uint64, sv *state.StoreView) *core.AddressSet {
-	//	var stakeDeposits []StakeDeposit
-	var addresses []string
+
+	var saddresses []string
 
 	validatorsFile, err := os.Open(validatorsFilePath)
+	if err != nil {
+		panic(fmt.Sprintf("failed to open initial validators file: %v", err))
+	}
+	defer validatorsFile.Close()
+
 	validatorsByteValue, err := io.ReadAll(validatorsFile)
 	if err != nil {
-		panic(fmt.Sprintf("failed to read initial stake deposit file: %v", err))
+		panic(fmt.Sprintf("failed to read initial validators file: %v", err))
 	}
 
-	json.Unmarshal(validatorsByteValue, &addresses)
+	err = json.Unmarshal(validatorsByteValue, &saddresses)
+	if err != nil {
+		panic(fmt.Sprintf("failed to unmarshal initial validators: %v", err))
+	}
+
 	var validators core.AddressSet = make(core.AddressSet)
 
-	for _, addr := range addresses {
-		if !common.IsHexAddress(addr) {
-			panic(fmt.Sprintf("Invalid address: %v", addr))
-		}
-		a := common.HexToAddress(addr)
-		account := sv.GetAccount(a)
+	for _, saddress := range saddresses {
+		address := common.HexToAddress(saddress)
+		account := sv.GetAccount(address)
 		if account == nil {
-			panic(fmt.Sprintf("Failed to retrieve account for source address: %v", a))
+			panic(fmt.Sprintf("Failed to retrieve account for address: %v", address))
 		}
-		validators[a] = struct{}{}
-		sv.SetAccount(a, account)
+		validators.Add(address)
+		sv.SetAccount(address, account)
 	}
 
 	sv.UpdateValidators(&validators)

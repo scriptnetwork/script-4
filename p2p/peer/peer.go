@@ -6,29 +6,25 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"github.com/scripttoken/script/common"
 	cmn "github.com/scripttoken/script/common"
+	"github.com/scripttoken/script/core"
 	"github.com/scripttoken/script/crypto"
 	cn "github.com/scripttoken/script/p2p/connection"
 	nu "github.com/scripttoken/script/p2p/netutil"
 	p2ptypes "github.com/scripttoken/script/p2p/types"
 	"github.com/scripttoken/script/rlp"
-	"github.com/scripttoken/script/core"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "p2p"})
 
 const maxExtraHandshakeInfo = 4096
 
-//
 // Peer models a peer node in a network
-//
 type Peer struct {
 	connection *cn.Connection
 
@@ -36,10 +32,9 @@ type Peer struct {
 	isOutbound   bool
 	isSeed       bool
 	netAddress   *nu.NetAddress
-	isLicenseValid bool
+	//	isLicenseValid bool
 
 	nodeInfo p2ptypes.NodeInfo // information of the blockchain node of the peer
-	nodeType cmn.NodeType
 	config   PeerConfig
 
 	// Life cycle
@@ -50,9 +45,7 @@ type Peer struct {
 	stopped bool
 }
 
-//
 // PeerConfig specifies the configuration of a peer
-//
 type PeerConfig struct {
 	HandshakeTimeout time.Duration
 	DialTimeout      time.Duration
@@ -155,15 +148,9 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 
 	// Forward compatibility.
 	localChainID := viper.GetString(cmn.CfgGenesisChainID)
-	selfNodeType := viper.GetInt(cmn.CfgNodeType)
-	var peerType int
 	cmn.Parallel(
 		func() {
 			sendError = rlp.Encode(peer.connection.GetBufNetconn(), localChainID)
-			if sendError != nil {
-				return
-			}
-			sendError = rlp.Encode(peer.connection.GetBufNetconn(), strconv.Itoa(selfNodeType))
 			if sendError != nil {
 				return
 			}
@@ -188,17 +175,6 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 			if recvError != nil {
 				return
 			}
-			var convErr error
-			peerType, convErr = strconv.Atoi(msg)
-			if convErr != nil {
-				//recvError = fmt.Errorf("Cannot parse the peer type: %v", msg)
-
-				peerType = int(cmn.NodeTypeBlockchainNode)          // for backward compatibility, by default consider the peer as a blockchain node
-				logger.Warnf("Cannot parse the peer type: %v", msg) // for backward compatibility, just print a warning instead of setting the recvError
-				return
-			}
-			logger.Infof("Peer Type: %v", peerType)
-
 			for {
 				recvError = s.Decode(&msg)
 				if recvError != nil {
@@ -219,17 +195,13 @@ func (peer *Peer) Handshake(sourceNodeInfo *p2ptypes.NodeInfo) error {
 		return recvError
 	}
 
-	peer.nodeType = common.NodeType(peerType)
-
-	if (peer.nodeType == common.NodeTypeBlockchainNode) { //	NodeTypeBlockchainNode
-        if core.Has_license_peer(targetPeerNodeInfo.PubKey.Address()) {
-			logger.Infof("License validation succeeded")
-			peer.isLicenseValid = true
-        } else {
-	  		peer.isLicenseValid = false
-			logger.Warnf("License validation failed: %v\n", err)
-			return errors.New("KO 33092 Peer is not licensed.")
-	  }
+	if core.Has_license_peer(targetPeerNodeInfo.PubKey.Address()) {
+		logger.Infof("License validation succeeded")
+		//peer.isLicenseValid = true
+	} else {
+		//peer.isLicenseValid = false
+		logger.Warnf("License validation failed: %v\n", err)
+		return errors.New("KO 33092 Peer is not licensed.")
 	}
 	//set licenseValid in node above^
 
@@ -300,11 +272,6 @@ func (peer *Peer) IsPersistent() bool {
 // IsOutbound returns whether the peer is an outbound peer
 func (peer *Peer) IsOutbound() bool {
 	return peer.isOutbound
-}
-
-// NodeType returns the node type of the peer
-func (peer *Peer) NodeType() cmn.NodeType {
-	return peer.nodeType
 }
 
 // SetSeed sets the isSeed for the given peer

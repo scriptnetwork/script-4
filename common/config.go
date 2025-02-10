@@ -14,8 +14,6 @@ const (
 	// CfgKeyPath defines custom key path
 	CfgKeyPath = "key.path"
 
-	// CfgNodeType indicates the type of the node, e.g. blockchain node/edge node
-	CfgNodeType = "node.type"
 	// CfgForceValidateSnapshot defines wether validation of snapshot can be skipped
 	CfgForceValidateSnapshot = "snapshot.force_validate"
 
@@ -182,7 +180,6 @@ p2p:
 `
 
 func init() {
-	viper.SetDefault(CfgNodeType, 1) // 1: blockchain node, 2: edge node
 	viper.SetDefault(CfgForceValidateSnapshot, false)
 
 	viper.SetDefault(CfgGenesisEthChainID, 0)

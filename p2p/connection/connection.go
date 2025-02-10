@@ -11,22 +11,20 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/common/timer"
 	"github.com/scripttoken/script/p2p/connection/flowrate"
 	"github.com/scripttoken/script/p2p/types"
 	p2ptypes "github.com/scripttoken/script/p2p/types"
 	"github.com/scripttoken/script/rlp"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logger *log.Entry = log.WithFields(log.Fields{"prefix": "p2p"})
 
-//
 // Connection models the connection between the current node and a peer node.
 // A connection has a ChannelGroup which can contain multiple Channels
-//
 type Connection struct {
 	netconn net.Conn
 
@@ -67,9 +65,7 @@ type Connection struct {
 	stopped bool
 }
 
-//
 // ConnectionConfig specifies the configurations of the Connection
-//
 type ConnectionConfig struct {
 	SendRate        int64
 	RecvRate        int64
@@ -111,8 +107,6 @@ func CreateConnection(netconn net.Conn, config ConnectionConfig) *Connection {
 	channelPing := createDefaultChannel(common.ChannelIDPing)
 	channelLightning := createDefaultChannel(common.ChannelIDLightning)
 	channelNATMapping := createDefaultChannel(common.ChannelIDNATMapping)
-	channelEliteEdgeNodeVote := createDefaultChannel(common.ChannelIDEliteEdgeNodeVote)
-	channelEliteAggregatedEdgeNodeVotes := createDefaultChannel(common.ChannelIDAggregatedEliteEdgeNodeVotes)
 	channels := []*Channel{
 		&channelCheckpoint,
 		&channelHeader,
@@ -124,8 +118,6 @@ func CreateConnection(netconn net.Conn, config ConnectionConfig) *Connection {
 		&channelPing,
 		&channelLightning,
 		&channelNATMapping,
-		&channelEliteEdgeNodeVote,
-		&channelEliteAggregatedEdgeNodeVotes,
 	}
 
 	success, channelGroup := createChannelGroup(getDefaultChannelGroupConfig(), channels)

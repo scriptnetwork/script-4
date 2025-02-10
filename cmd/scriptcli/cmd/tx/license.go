@@ -4,10 +4,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/scripttoken/script/cmd/scriptcli/cmd/utils"
-	"github.com/scripttoken/script/core"
+	"github.com/scripttoken/script/common"
 	"github.com/scripttoken/script/ledger/types"
 	"github.com/scripttoken/script/rpc"
 	"github.com/spf13/cobra"
@@ -20,7 +19,7 @@ import (
 var licenseCmd = &cobra.Command{
 	Use:     "license",
 	Short:   "Create a License transaction",
-	Example: `scriptcli tx license --license='{"licensee":"5A2C2C8D4D2C6C8B7C5D4F8A6D7C6E6A4E3B2B3A", "type": "VN/LN", "op": "authorize/revoke"}'`,
+	Example: `scriptcli tx license --license='{"address":"5A2C2C8D4D2C6C8B7C5D4F8A6D7C6E6A4E3B2B3A", "type": "VN/LN", "op": "authorize/revoke"}'`,
 	Run:     doLicenseCmd,
 }
 
@@ -37,21 +36,16 @@ func doLicenseCmd(cmd *cobra.Command, args []string) {
 	}
 	defer wallet.Lock(fromAddress)
 
-	var licenses []core.License
-	if err := json.Unmarshal([]byte(licenseFlag), &licenses); err != nil {
-		utils.Error("Failed to parse license JSON: %v\n", err)
-		return
+	licenseTx := &types.LicenseTx{
+		Address:   common.HexToAddress("0x00"),
+		Type:      "",
+		Op:        "",
+		Signature: nil,
 	}
 
-	licenseTx := &types.LicenseTx{
-		Fee: types.Coins{
-			SCPTWei: new(big.Int).SetUint64(0), // Assuming no script fee for now
-			SPAYWei: new(big.Int).SetUint64(0), // Set appropriate fee here
-		},
-		Licenses: licenses, // Use the parsed licenses
-		Issuer: types.TxInput{
-			Address: fromAddress, // Set the issuer's address
-		},
+	if err := json.Unmarshal([]byte(licenseFlag), &licenseTx); err != nil {
+		utils.Error("Failed to parse license JSON: %v\n", err)
+		return
 	}
 
 	sig, err := wallet.Sign(fromAddress, licenseTx.SignBytes(chainIDFlag))

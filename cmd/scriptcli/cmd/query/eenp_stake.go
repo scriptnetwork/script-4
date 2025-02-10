@@ -1,5 +1,6 @@
 package query
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -54,3 +55,4 @@ func init() {
 	eenpStakeCmd.MarkFlagRequired("holder")
 	eenpStakeCmd.MarkFlagRequired("height")
 }
+*/
