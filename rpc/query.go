@@ -121,6 +121,53 @@ func (t *ScriptRPCService) GetAccount(args *GetAccountArgs, result *GetAccountRe
 	return nil
 }
 
+// ------------------------------- GetAccounts -----------------------------------
+
+type GetAccountsArgs struct {
+}
+
+type GetAccountsResultAcc struct {
+	Address string `json:"address"`
+	SCPTWei string `json:"scpt"`
+	SPAYWei string `json:"spay"`
+}
+
+type GetAccountsResult struct {
+	Accounts []*GetAccountsResultAcc `json:"accounts"`
+}
+
+func (t *ScriptRPCService) GetAccounts(args *GetAccountsArgs, result *GetAccountsResult) (err error) {
+	var ledgerState *state.StoreView
+	ledgerState, err = t.ledger.GetFinalizedSnapshot()
+	if err != nil {
+		return err
+	}
+	log.Debugf("Traversing ledger")
+
+	ledgerState.Traverse(common.Bytes("ls/a/"), func(k, v common.Bytes) bool {
+		acc := &types.Account{}
+		s := ""
+		types.FromBytes(k, s)
+		log.Debugf("Traversing account key: %s", k)
+		err := types.FromBytes(v, acc)
+		if err != nil {
+			log.Panicf("Error reading account. error: %v", err.Error())
+		}
+		log.Debugf("Account deserialized: %+v", acc)
+		acc.UpdateToHeight(ledgerState.Height())
+		a := &GetAccountsResultAcc{
+			Address: acc.Address.Hex(),
+			SCPTWei: acc.Balance.SCPTWei.String(),
+			SPAYWei: acc.Balance.SPAYWei.String(),
+		}
+		result.Accounts = append(result.Accounts, a)
+		return true
+	})
+	log.Debugf("Number of accounts %v", len(result.Accounts))
+
+	return nil
+}
+
 // ------------------------------- GetSplitRule -----------------------------------
 
 type GetSplitRuleArgs struct {
@@ -357,7 +404,7 @@ type GetBlockResultInner struct {
 	Timestamp          *common.JSONBig          `json:"timestamp"`
 	Proposer           common.Address           `json:"proposer"`
 	HCC                core.CommitCertificate   `json:"hcc"`
-	LightningVotes      *core.AggregatedVotes    `json:"lightning_votes"`
+	LightningVotes     *core.AggregatedVotes    `json:"lightning_votes"`
 	EliteEdgeNodeVotes *core.AggregatedEENVotes `json:"elite_edge_node_votes"`
 
 	Children []common.Hash    `json:"children"`
@@ -448,7 +495,7 @@ func (t *ScriptRPCService) GetBlockByHeight(args *GetBlockByHeightArgs, result *
 		//if t.consensus.Chain().ChainID == core.MainnetChainID {
 		//	genesisHash = common.HexToHash(core.MainnetGenesisBlockHash)
 		//} else {
-			genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
+		genesisHash = common.HexToHash(viper.GetString(common.CfgGenesisHash))
 		//}
 
 		result.GetBlockResultInner = &GetBlockResultInner{}
@@ -835,8 +882,8 @@ type GetLightningInfoResult struct {
 
 func (t *ScriptRPCService) GetLightningInfo(args *GetLightningInfoArgs, result *GetLightningInfoResult) (err error) {
 	privKey := t.consensus.PrivateKey()
-//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PublicKey().ToBytes())))   //Script version
-	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.ToBytes())))  //Using unpredictable seed, keeping random oracle properties
+	//	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.PublicKey().ToBytes())))   //Script version
+	blsKey, err := bls.GenKey(strings.NewReader(common.Bytes2Hex(privKey.ToBytes()))) //Using unpredictable seed, keeping random oracle properties
 	if err != nil {
 		return fmt.Errorf("Failed to get BLS key: %v", err.Error())
 	}

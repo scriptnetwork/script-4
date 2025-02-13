@@ -31,6 +31,7 @@ var QueryCmd = &cobra.Command{
 func init() {
 	QueryCmd.AddCommand(statusCmd)
 	QueryCmd.AddCommand(accountCmd)
+	QueryCmd.AddCommand(accountsCmd)
 	QueryCmd.AddCommand(lightningCmd)
 	QueryCmd.AddCommand(blockCmd)
 	QueryCmd.AddCommand(traceBlocksCmd)
